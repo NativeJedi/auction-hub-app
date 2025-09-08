@@ -7,7 +7,6 @@ import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { TokenService } from './token.service';
-import { Role } from '../../types/roles';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 
 @Injectable()
@@ -50,20 +49,18 @@ export class AuthService {
     const user = await this.usersService.create({
       email,
       password: hashedPassword,
-      role: Role.OWNER,
     });
 
     const { accessToken, refreshToken } =
       await this.tokenService.generateTokens({
         sub: user.id,
         email: user.email,
-        role: user.role,
       });
 
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: { id: user.id, email: user.email },
     };
   }
 
@@ -78,7 +75,6 @@ export class AuthService {
       await this.tokenService.generateTokens({
         sub: user.id,
         email: user.email,
-        role: user.role,
       });
 
     return {

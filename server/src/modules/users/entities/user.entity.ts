@@ -1,4 +1,3 @@
-import { Role } from '../../../types/roles';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Auction } from '../../auctions/entities/auction.entity';
 
@@ -12,9 +11,6 @@ export class User {
 
   @Column({ length: 255, select: false })
   password: string;
-
-  @Column({ type: 'enum', enum: Role, default: Role.PARTICIPANT })
-  role: Role;
 
   @OneToMany(() => Auction, (auction) => auction.owner)
   auctions?: Auction[];

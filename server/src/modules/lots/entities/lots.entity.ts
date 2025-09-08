@@ -12,7 +12,6 @@ import { Currency } from '../../../types/currency';
 
 export enum LotStatus {
   CREATED = 'created',
-  PUBLISHED = 'published',
   SOLD = 'sold',
   UNSOLD = 'unsold',
 }
@@ -45,9 +44,6 @@ export class Lot {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  finishDate?: Date;
 
   @ManyToOne(() => Auction, (auction) => auction.lots, { nullable: false })
   auction: User;

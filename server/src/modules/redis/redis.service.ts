@@ -1,14 +1,12 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { AppConfigService } from '../../config/app-config.service';
+import { RedisSimpleRepository } from './repositories/simple.repository';
+import { RedisQueueRepository } from './repositories/queue.repository';
+import { RedisHashRepository } from './repositories/hash.repository';
 
 @Injectable()
-export class RedisService implements OnModuleInit, OnModuleDestroy {
+export class RedisService implements OnModuleDestroy {
   private readonly client: Redis;
 
   private readonly logger = new Logger(RedisService.name);
@@ -17,31 +15,31 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client = new Redis(this.appConfig.urls.REDIS_URL);
   }
 
-  async onModuleInit() {
-    await this.client.connect();
-    this.logger.log('Redis connected');
-  }
-
   async onModuleDestroy() {
     await this.client.quit();
 
     this.logger.log('Redis disconnected');
   }
 
-  async get(key: string) {
-    return this.client.get(key);
+  createHashRepository<T>(
+    key: string,
+    ttlSeconds: number,
+  ): RedisHashRepository<T> {
+    return new RedisHashRepository<T>(this.client, key, ttlSeconds);
   }
 
-  async set(key: string, value: string, ttlSeconds?: number) {
-    if (ttlSeconds) {
-      return this.client.set(key, value, 'EX', ttlSeconds);
-    }
-
-    return this.client.set(key, value);
+  createSimpleRepository<T>(
+    key: string,
+    ttlSeconds: number,
+  ): RedisSimpleRepository<T> {
+    return new RedisSimpleRepository<T>(this.client, key, ttlSeconds);
   }
 
-  async del(key: string) {
-    return this.client.del(key);
+  createQueueRepository<T>(
+    key: string,
+    ttlSeconds: number,
+  ): RedisQueueRepository<T> {
+    return new RedisQueueRepository<T>(this.client, key, ttlSeconds);
   }
 
   getClient() {

@@ -1,13 +1,27 @@
 import { AppConfigService } from '../../config/app-config.service';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '../../types/roles';
 import { RedisService } from '../redis/redis.service';
 import { Injectable } from '@nestjs/common';
+import { RedisSimpleRepository } from '../redis/repositories/simple.repository';
+import { RoomRole } from '../../guards/room-roles/room-roles.constants';
 
 export type TokenPayload = {
   sub: string;
   email: string;
-  role?: Role;
+};
+
+export type RoomInviteTokenPayload = {
+  sub: string;
+  email: string;
+};
+
+export type RoomTokenPayload = {
+  sub: string;
+  email: string;
+  name?: string;
+  auctionId: string;
+  roomId: string;
+  role: RoomRole;
 };
 
 class JWTToken<T extends object> {
@@ -26,17 +40,25 @@ class JWTToken<T extends object> {
     });
   }
 
-  validate(token: string): T {
-    return this.jwtService.verify<T>(token, {
-      secret: this.secret,
-    });
+  validate(token: string): T | null {
+    try {
+      return this.jwtService.verify<T>(token, {
+        secret: this.secret,
+      });
+    } catch {
+      return null;
+    }
   }
 }
 
 @Injectable()
 export class TokenService {
-  accessToken: JWTToken<TokenPayload>;
-  refreshToken: JWTToken<TokenPayload>;
+  private readonly accessToken: JWTToken<TokenPayload>;
+  private readonly refreshToken: JWTToken<TokenPayload>;
+  private readonly roomMemberInviteToken: JWTToken<RoomInviteTokenPayload>;
+  private readonly roomMemberToken: JWTToken<RoomTokenPayload>;
+
+  private readonly refreshTokens: RedisSimpleRepository<string>;
 
   constructor(
     private readonly appConfig: AppConfigService,
@@ -54,51 +76,73 @@ export class TokenService {
       this.appConfig.jwt.JWT_REFRESH_TTL,
       this.jwtService,
     );
+
+    this.roomMemberInviteToken = new JWTToken<RoomInviteTokenPayload>(
+      this.appConfig.jwt.JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET,
+      this.appConfig.jwt.JWT_ROOM_MEMBER_INVITE_TOKEN_TTL,
+      this.jwtService,
+    );
+
+    this.roomMemberToken = new JWTToken<RoomTokenPayload>(
+      this.appConfig.jwt.JWT_ROOM_MEMBER_TOKEN_SECRET,
+      this.appConfig.jwt.JWT_ROOM_TTL,
+      this.jwtService,
+    );
+
+    this.refreshTokens = new RedisSimpleRepository<string>(
+      this.redis.getClient(),
+      'refresh_tokens',
+      this.appConfig.jwt.JWT_REFRESH_TTL,
+    );
   }
 
-  async generateTokens({ sub, email, role }: TokenPayload) {
-    const payload: TokenPayload = { sub, email, role };
-
+  async generateTokens(payload: TokenPayload) {
     const accessToken = this.accessToken.generate(payload);
 
     const refreshToken = this.refreshToken.generate(payload);
 
-    await this.redis.set(
-      `refresh_tokens:${sub}`,
-      refreshToken,
-      this.appConfig.jwt.JWT_REFRESH_TTL,
-    );
+    await this.refreshTokens.set(payload.sub, refreshToken);
 
     return { accessToken, refreshToken };
   }
 
   async validateRefreshToken(token: string): Promise<TokenPayload | null> {
-    try {
-      const payload = this.refreshToken.validate(token);
+    const payload = this.refreshToken.validate(token);
 
-      const storedToken = await this.redis.get(`refresh_tokens:${payload.sub}`);
-
-      if (token !== storedToken) {
-        return null;
-      }
-
-      return payload;
-    } catch (e) {
-      console.error(e);
-
+    if (!payload) {
       return null;
     }
+
+    const storedToken = await this.refreshTokens.get(payload.sub);
+
+    if (!storedToken || token !== storedToken) {
+      return null;
+    }
+
+    return payload;
   }
 
   validateAccessToken(token: string): TokenPayload | null {
-    try {
-      return this.accessToken.validate(token);
-    } catch {
-      return null;
-    }
+    return this.accessToken.validate(token);
   }
 
   deleteRefreshToken(sub: TokenPayload['sub']) {
-    return this.redis.del(`refresh_tokens:${sub}`);
+    return this.refreshTokens.del(sub);
+  }
+
+  generateRoomInviteToken(payload: RoomInviteTokenPayload) {
+    return this.roomMemberInviteToken.generate(payload);
+  }
+
+  validateRoomInviteToken(token: string): RoomInviteTokenPayload | null {
+    return this.roomMemberInviteToken.validate(token);
+  }
+
+  validateRoomToken(token: string): RoomTokenPayload | null {
+    return this.roomMemberToken.validate(token);
+  }
+
+  generateRoomToken(payload: RoomTokenPayload) {
+    return this.roomMemberToken.generate(payload);
   }
 }
