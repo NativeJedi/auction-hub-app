@@ -1,7 +1,0 @@
-{
-  "name": "auction-hub-app",
-  "private": true,
-  "scripts": {
-    "dev": "docker compose --profile dev up --build"
-  }
-}
