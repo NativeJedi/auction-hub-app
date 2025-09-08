@@ -1,0 +1,17 @@
+{
+  "name": "rxjs-nest-chat-monorepo",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "docker compose -f docker-compose.yml up --build --scale server=2",
+    "build": "pnpm -r run build",
+    "start:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
+    "clear-db": "pnpm --filter server run clear-db"
+  },
+  "devDependencies": {
+    "pnpm": "^9.2.0"
+  }
+}
