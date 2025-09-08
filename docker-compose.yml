@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis/redis-stack:latest
+    container_name: auction-redis
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis-data:/data
+
+  db:
+    image: postgres:16
+    container_name: auction-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auction-hub-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      retries: 5
+
+  api-dev:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: auction-api-dev
+    profiles: ["dev"]
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+      PORT: 3000
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/:/usr/src/app
+
+  api-prod:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: auction-api
+    profiles: [ "prod" ]
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+    ports:
+      - "3000:3000"
+
+  client-dev:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: auction-client-dev
+    profiles: [ "dev" ]
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./client:/usr/src/app
+    depends_on:
+      - api-dev
+
+  client-prod:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: auction-client-prod
+    profiles: [ "prod" ]
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-prod
+
+volumes:
+  redis-data:
+  pgdata:
