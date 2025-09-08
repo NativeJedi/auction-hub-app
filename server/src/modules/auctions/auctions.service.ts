@@ -1,10 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateAuctionDto, CreateAuctionDto } from './dto/auction.dto';
+import {
+  UpdateAuctionDto,
+  CreateAuctionDto,
+  AuctionDto,
+} from './dto/auction.dto';
 import { User } from '../../modules/users/entities/user.entity';
 import { UsersService } from '../../modules/users/users.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Auction } from './entities/auction.entity';
 import { Repository } from 'typeorm';
+import {
+  PaginatedResponseDto,
+  QueryPaginationDto,
+} from '../pagination/pagination.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -24,7 +32,10 @@ export class AuctionsService {
     return owner;
   }
 
-  async create({ name, description }: CreateAuctionDto, ownerId: User['id']) {
+  async create(
+    { name, description }: CreateAuctionDto,
+    ownerId: User['id'],
+  ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
 
     const auction = {
@@ -33,16 +44,37 @@ export class AuctionsService {
       owner,
     };
 
-    return this.auctionsRepository.save(auction);
+    const { owner: aucOwner, ...response } =
+      await this.auctionsRepository.save(auction);
+
+    return response;
   }
 
-  async findAll(ownerId: User['id']) {
+  async findAll(
+    ownerId: User['id'],
+    { page, limit }: QueryPaginationDto,
+  ): Promise<PaginatedResponseDto<AuctionDto>> {
     const owner = await this.findOwner(ownerId);
 
-    return this.auctionsRepository.findBy({ owner });
+    const [items, count] = await this.auctionsRepository.findAndCount({
+      where: { owner },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    return {
+      items,
+      total: count,
+      page,
+      totalPages: Math.ceil(count / limit),
+      limit,
+    };
   }
 
-  async findOne(id: Auction['id'], ownerId: User['id'], withLots = false) {
+  async findOne(ownerId: User['id'], id: Auction['id'], withLots = false) {
     const owner = await this.findOwner(ownerId);
 
     const auction = await this.auctionsRepository.findOne({
@@ -61,7 +93,7 @@ export class AuctionsService {
     id: Auction['id'],
     updateAuctionDto: UpdateAuctionDto,
     ownerId: User['id'],
-  ) {
+  ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
 
     const auction = await this.auctionsRepository.preload({
@@ -74,12 +106,15 @@ export class AuctionsService {
       throw new NotFoundException(`Auction with id ${id} not found`);
     }
 
-    return this.auctionsRepository.save(auction);
+    const { owner: aucOwner, ...response } =
+      await this.auctionsRepository.save(auction);
+
+    return response;
   }
 
   async removeOne(id: Auction['id'], ownerId: User['id']) {
     const owner = await this.findOwner(ownerId);
 
-    return this.auctionsRepository.delete({ owner, id });
+    await this.auctionsRepository.delete({ owner, id });
   }
 }

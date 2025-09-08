@@ -1,17 +1,23 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Param,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
-import { RoomResponseDto } from './dto/room.dto';
-import { AuthGuard, AuthorizedRequest } from '../auth/auth.guard';
+import {
+  CreateRoomDto,
+  InviteConfirmResponseDto,
+  RoomDto,
+} from './dto/room.dto';
+import { AuthGuard } from '../auth/auth.guard';
 import { ConfirmInviteDto, CreateInviteDto } from './dto/invite.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthUser } from '../auth/decorators/auth-user.decorator';
+import { TokenPayload } from '../auth/token.service';
 
 @Controller('auctions/:auctionId/room')
 export class RoomController {
@@ -20,20 +26,34 @@ export class RoomController {
   @ApiOperation({ summary: 'Create a room for an auction' })
   @ApiResponse({
     status: 201,
-    type: RoomResponseDto,
+    type: CreateRoomDto,
   })
   @UseGuards(AuthGuard)
   @Post()
   createRoom(
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
     @Param('auctionId') auctionId: string,
-  ): Promise<RoomResponseDto> {
+  ): Promise<CreateRoomDto> {
     const owner = {
-      id: req.user.sub,
-      email: req.user.email,
+      id: user.sub,
+      email: user.email,
     };
 
     return this.roomService.createRoom(owner, auctionId);
+  }
+
+  @ApiOperation({ summary: 'Get auction room by id' })
+  @ApiResponse({
+    status: 200,
+    type: RoomDto,
+  })
+  @UseGuards(AuthGuard)
+  @Get(':roomId')
+  getAuctionRoom(
+    @Param('auctionId') auctionId: string,
+    @Param('roomId') roomId: string,
+  ): Promise<RoomDto> {
+    return this.roomService.findRoom(auctionId, roomId);
   }
 
   @ApiOperation({ summary: 'Send room invite to user email' })
@@ -42,22 +62,26 @@ export class RoomController {
   })
   @HttpCode(200)
   @Post(':roomId/invite')
-  createRoomInvite(
+  sendRoomInvite(
     @Param('auctionId') auctionId: string,
     @Param('roomId') roomId: string,
     @Body() dto: CreateInviteDto,
   ) {
-    return this.roomService.createRoomInvite(auctionId, roomId, dto);
+    return this.roomService.sendRoomInvite(auctionId, roomId, dto);
   }
 
   @ApiOperation({ summary: 'Confirm room invite' })
+  @ApiResponse({
+    status: 200,
+    type: [InviteConfirmResponseDto],
+  })
   @HttpCode(200)
   @Post(':roomId/invite/confirm')
   confirmRoomInvite(
     @Param('auctionId') auctionId: string,
     @Param('roomId') roomId: string,
     @Body() dto: ConfirmInviteDto,
-  ) {
+  ): Promise<InviteConfirmResponseDto> {
     return this.roomService.confirmRoomInvite(auctionId, roomId, dto.token);
   }
 }

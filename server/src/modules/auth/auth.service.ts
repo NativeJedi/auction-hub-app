@@ -91,12 +91,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    return await this.tokenService.generateTokens(payload);
+    return await this.tokenService.generateTokens({
+      sub: payload.sub,
+      email: payload.email,
+    });
   }
 
   async logout(userId: User['id']) {
     await this.tokenService.deleteRefreshToken(userId);
-
-    return { success: true };
   }
 }

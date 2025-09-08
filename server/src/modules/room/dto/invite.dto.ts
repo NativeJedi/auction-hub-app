@@ -15,5 +15,7 @@ export class CreateInviteDto {
 
 export class ConfirmInviteDto {
   @ApiProperty({ description: 'Invite token', example: '1234567890' })
+  @IsString()
+  @IsNotEmpty()
   token: string;
 }

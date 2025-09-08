@@ -1,4 +1,4 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AuctionStatus } from '../entities/auction.entity';
 
@@ -27,8 +27,6 @@ export class CreateAuctionDto extends PickType(AuctionDto, [
   'description',
 ]) {}
 
-export class UpdateAuctionDto extends PickType(AuctionDto, [
-  'name',
-  'description',
-  'status',
-]) {}
+export class UpdateAuctionDto extends PartialType(
+  PickType(AuctionDto, ['name', 'description', 'status']),
+)  {}

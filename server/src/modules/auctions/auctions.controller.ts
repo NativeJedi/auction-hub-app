@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req,
+  Query,
 } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
 import {
@@ -15,8 +15,15 @@ import {
   UpdateAuctionDto,
   CreateAuctionDto,
 } from './dto/auction.dto';
-import { AuthGuard, AuthorizedRequest } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthUser } from '../auth/decorators/auth-user.decorator';
+import { TokenPayload } from '../auth/token.service';
+import {
+  PaginatedResponseDto,
+  QueryPaginationDto,
+} from '../pagination/pagination.dto';
+import { ApiPaginatedResponse } from '../pagination/pagination.decorator';
 
 @ApiBearerAuth('access-token')
 @UseGuards(AuthGuard)
@@ -33,20 +40,19 @@ export class AuctionsController {
   @Post()
   create(
     @Body() createAuctionDto: CreateAuctionDto,
-    @Req() { user }: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
     return this.auctionsService.create(createAuctionDto, user.sub);
   }
 
-  @ApiOperation({ summary: 'Get all user auctions' })
-  @ApiResponse({
-    status: 200,
-    description: 'User auctions list',
-    type: [AuctionDto],
-  })
+  @ApiOperation({ summary: 'Get paginated user auctions' })
+  @ApiPaginatedResponse(AuctionDto)
   @Get()
-  findAll(@Req() { user }: AuthorizedRequest): Promise<AuctionDto[]> {
-    return this.auctionsService.findAll(user.sub);
+  findAll(
+    @AuthUser() user: TokenPayload,
+    @Query() query: QueryPaginationDto,
+  ): Promise<PaginatedResponseDto<AuctionDto>> {
+    return this.auctionsService.findAll(user.sub, query);
   }
 
   @ApiOperation({ summary: 'Get auction by id' })
@@ -54,7 +60,7 @@ export class AuctionsController {
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Req() { user }: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
     return this.auctionsService.findOne(id, user.sub);
   }
@@ -69,7 +75,7 @@ export class AuctionsController {
   update(
     @Param('id') id: string,
     @Body() updateAuctionDto: UpdateAuctionDto,
-    @Req() { user }: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
     return this.auctionsService.updateOne(id, updateAuctionDto, user.sub);
   }
@@ -77,7 +83,7 @@ export class AuctionsController {
   @ApiOperation({ summary: 'Delete auction' })
   @ApiResponse({ status: 200, description: 'Auction deleted' })
   @Delete(':id')
-  remove(@Param('id') id: string, @Req() { user }: AuthorizedRequest) {
+  remove(@Param('id') id: string, @AuthUser() user: TokenPayload) {
     return this.auctionsService.removeOne(id, user.sub);
   }
 }

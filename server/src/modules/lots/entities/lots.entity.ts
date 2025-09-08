@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
 import { Auction } from '../../auctions/entities/auction.entity';
 import { Currency } from '../../../types/currency';
 
@@ -46,5 +45,5 @@ export class Lot {
   updatedAt: Date;
 
   @ManyToOne(() => Auction, (auction) => auction.lots, { nullable: false })
-  auction: User;
+  auction: Auction;
 }

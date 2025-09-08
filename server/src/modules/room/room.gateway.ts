@@ -26,7 +26,7 @@ type AuctionEvent = {
   data: any;
 };
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ path: '/ws/room', cors: true })
 export class RoomGateway {
   private readonly pub: Redis;
   private readonly sub: Redis;
@@ -43,8 +43,6 @@ export class RoomGateway {
 
     this.pub = client.duplicate();
     this.sub = client.duplicate();
-
-    this.sub.subscribe('auction-events');
 
     this.sub.on('message', (_, e) => {
       const event: AuctionEvent = JSON.parse(e);
@@ -63,6 +61,8 @@ export class RoomGateway {
       return;
     }
 
+    this.sub.subscribe(`auction-events:${payload.roomId}`);
+
     const { sub: id, ...otherProps } = payload;
 
     const member: Member = {
@@ -75,7 +75,7 @@ export class RoomGateway {
 
   publishEvent(roomId: string, ev: string, data: any = {}) {
     this.pub.publish(
-      'auction-events',
+      `auction-events:${roomId}`,
       JSON.stringify({
         roomId,
         ev,

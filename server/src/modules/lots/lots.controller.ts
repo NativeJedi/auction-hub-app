@@ -6,15 +6,13 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { LotsService } from './lots.service';
 import { CreateLotsDto, LotResponseDto, UpdateLotDto } from './dto/lot.dto';
 import { AuthGuard, AuthorizedRequest } from '../auth/auth.guard';
-import { PaginatedResponseDto, PaginationDto } from '../../dto/pagination.dto';
-import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @UseGuards(AuthGuard)
 @Controller('auctions/:auctionId/lots')
@@ -37,22 +35,19 @@ export class LotsController {
     return this.lotsService.createLots(userId, auctionId, lots);
   }
 
-  @ApiOperation({ summary: 'Get paginated lots' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiOperation({ summary: 'Get all lots' })
   @ApiResponse({
     status: 200,
-    type: PaginatedResponseDto<LotResponseDto>,
+    type: [LotResponseDto],
   })
   @Get()
   async findAll(
-    @Query() query: PaginationDto,
     @Param('auctionId') auctionId: string,
     @Req() req: AuthorizedRequest,
-  ): Promise<PaginatedResponseDto<LotResponseDto>> {
+  ): Promise<LotResponseDto[]> {
     const userId = req.user.sub;
 
-    return this.lotsService.findAll(userId, auctionId, query);
+    return this.lotsService.findAll(userId, auctionId);
   }
 
   @ApiOperation({ summary: 'Get lot by id' })

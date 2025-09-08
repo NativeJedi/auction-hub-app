@@ -24,6 +24,7 @@ class LotDto {
   @IsOptional()
   description?: string;
 
+  @ApiProperty({ example: 1000, minimum: 0, required: true })
   @IsNumber()
   @Min(0, { message: 'Start price must be greater than or equal to 0' })
   @ApiProperty({ example: '2000', minimum: 0 })

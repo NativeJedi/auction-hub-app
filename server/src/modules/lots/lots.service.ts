@@ -6,7 +6,6 @@ import { Lot } from './entities/lots.entity';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { AuctionsService } from '../auctions/auctions.service';
-import { PaginationDto } from '../../dto/pagination.dto';
 
 @Injectable()
 export class LotsService {
@@ -16,32 +15,15 @@ export class LotsService {
   ) {}
 
   findAuction(userId: User['id'], auctionId: Auction['id']) {
-    return this.auctionsService.findOne(auctionId, userId);
+    return this.auctionsService.findOne(userId, auctionId);
   }
 
-  async findAll(
-    userId: User['id'],
-    auctionId: Auction['id'],
-    { page, limit }: PaginationDto,
-  ) {
+  async findAll(userId: User['id'], auctionId: Auction['id']) {
     const auction = await this.findAuction(userId, auctionId);
 
-    const [items, total] = await this.lotsRepository.findAndCount({
-      where: { auction },
-      skip: (page - 1) * limit,
-      take: limit,
-      order: {
-        createdAt: 'DESC',
-      },
+    return this.lotsRepository.findBy({
+      auction: { id: auction.id },
     });
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
   }
 
   async createLots(
@@ -49,6 +31,7 @@ export class LotsService {
     auctionId: Auction['id'],
     lots: CreateLotDto[],
   ) {
+    // TODO: limit lots creation count
     const auction = await this.findAuction(userId, auctionId);
 
     const createdLots = lots.map((lot) => ({
@@ -56,7 +39,9 @@ export class LotsService {
       auction,
     }));
 
-    return this.lotsRepository.save(createdLots);
+    const savedLots = await this.lotsRepository.save(createdLots);
+
+    return savedLots.map(({ auction, ...lot }) => lot);
   }
 
   async findLot(
@@ -69,7 +54,7 @@ export class LotsService {
     const lot = await this.lotsRepository.findOne({
       where: {
         id: lotId,
-        auction,
+        auction: { id: auction.id },
       },
     });
 
@@ -101,6 +86,6 @@ export class LotsService {
   ) {
     const auction = await this.findAuction(userId, auctionId);
 
-    return this.lotsRepository.delete({ auction, id: lotId });
+    await this.lotsRepository.delete({ auction, id: lotId });
   }
 }

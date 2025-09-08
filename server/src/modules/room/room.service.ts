@@ -21,6 +21,8 @@ import { Invite } from './entities/invite.entity';
 import { ActiveLot, BidEntity } from './entities/active-lot.entity';
 import { BidDto } from './dto/bid.dto';
 import { RoomRole } from '../../guards/room-roles/room-roles.constants';
+import { RedisService } from '../redis/redis.service';
+import { AppConfigService } from '../../config/app-config.service';
 
 @Injectable()
 export class RoomService {
@@ -35,10 +37,33 @@ export class RoomService {
   private readonly activeLot: RedisSimpleRepository<ActiveLot>;
 
   constructor(
+    private readonly appConfig: AppConfigService,
+    private readonly redisService: RedisService,
     private readonly auctionsService: AuctionsService,
     private readonly tokenService: TokenService,
     private readonly emailService: EmailService,
-  ) {}
+  ) {
+    const ttl = this.appConfig.jwt.JWT_ROOM_TTL;
+
+    this.lotsQueue = this.redisService.createQueueRepository<Lot>('lots', ttl);
+
+    this.rooms = this.redisService.createSimpleRepository<Room>('rooms', ttl);
+
+    this.invites = this.redisService.createHashRepository<Invite>(
+      'invites',
+      ttl,
+    );
+
+    this.members = this.redisService.createHashRepository<Member>(
+      'members',
+      ttl,
+    );
+
+    this.activeLot = this.redisService.createSimpleRepository<ActiveLot>(
+      'activeLot',
+      ttl,
+    );
+  }
 
   private getRoomKey(auctionId: string, roomId: string) {
     return `auction:${auctionId}:room:${roomId}`;
@@ -92,7 +117,7 @@ export class RoomService {
     return members.find((m) => m.email === email);
   }
 
-  async createRoomInvite(
+  async sendRoomInvite(
     auctionId: string,
     roomId: string,
     dto: CreateInviteDto,
@@ -136,10 +161,6 @@ export class RoomService {
       email: dto.email,
       name: dto.name,
     });
-
-    return {
-      message: 'Invite sent to user email',
-    };
   }
 
   async confirmRoomInvite(auctionId: string, roomId: string, token: string) {
@@ -178,9 +199,7 @@ export class RoomService {
     await this.invites.del(roomKey, email);
 
     return {
-      message: 'Invite confirmed',
       token: roomToken,
-      member,
     };
   }
 
