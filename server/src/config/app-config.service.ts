@@ -12,9 +12,6 @@ export class AppConfigService {
     const JWT_REFRESH_TTL = this.config.get<number>('JWT_REFRESH_TTL')!;
     const JWT_ACCESS_SECRET = this.config.get<string>('JWT_ACCESS_SECRET')!;
     const JWT_REFRESH_SECRET = this.config.get<string>('JWT_REFRESH_SECRET')!;
-    const JWT_ROOM_ADMIN_TOKEN_SECRET = this.config.get<string>(
-      'JWT_ROOM_ADMIN_TOKEN_SECRET',
-    )!;
     const JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET = this.config.get<string>(
       'JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET',
     )!;
@@ -35,7 +32,6 @@ export class AppConfigService {
       JWT_ROOM_MEMBER_INVITE_TOKEN_TTL,
       JWT_ROOM_MEMBER_TOKEN_SECRET,
       JWT_ROOM_TTL,
-      JWT_ROOM_ADMIN_TOKEN_SECRET,
     };
   }
 

@@ -13,7 +13,6 @@ interface AppConfigInterface {
   JWT_REFRESH_SECRET: string;
   JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: string;
   JWT_ROOM_MEMBER_TOKEN_SECRET: string;
-  JWT_ROOM_ADMIN_TOKEN_SECRET: string;
 
   // ttls
   JWT_ROOM_MEMBER_INVITE_TOKEN_TTL: number;
@@ -42,7 +41,6 @@ const AppConfig: AppConfigInterface = {
   JWT_ROOM_MEMBER_INVITE_TOKEN_TTL: 60 * 30,
   JWT_ROOM_MEMBER_TOKEN_SECRET:
     process.env.JWT_ROOM_MEMBER_TOKEN_SECRET || 'default',
-  JWT_ROOM_ADMIN_TOKEN_SECRET: process.env.JWT_ADMIN_TOKEN_SECRET || 'default',
   JWT_ROOM_TTL: 60 * 60 * 24 * 1,
   EMAIL_HOST: process.env.EMAIL_HOST!,
   EMAIL_PORT: Number(process.env.EMAIL_PORT),
