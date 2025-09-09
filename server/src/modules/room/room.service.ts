@@ -196,42 +196,75 @@ export class RoomService {
 
     await this.members.set(roomKey, member.id, member);
 
-    await this.invites.del(roomKey, email);
+    await this.invites.delOne(roomKey, email);
 
     return {
       token: roomToken,
     };
   }
 
-  async startNextLot(auctionId: string, roomId: string) {
+  async finishAuction(auctionId: string, roomId: string) {
+    await this.saveActiveLot(auctionId, roomId);
+
+    const roomKey = this.getRoomKey(auctionId, roomId);
+
+    this.activeLot.del(roomKey);
+    this.members.del(roomKey);
+    this.lotsQueue.del(roomKey);
+    this.rooms.del(roomKey);
+    this.invites.del(roomKey);
+  }
+
+  async saveActiveLot(auctionId: string, roomId: string) {
+    const activeLot = await this.activeLot.get(
+      this.getRoomKey(auctionId, roomId),
+    );
+
+    if (!activeLot) {
+      return;
+    }
+
+    // TODO: save sold lot into postgre
+  }
+
+  async placeLot(
+    auctionId: string,
+    roomId: string,
+  ): Promise<{
+    lot: ActiveLot;
+    total: number;
+  }> {
     const room = await this.findRoom(auctionId, roomId);
     const roomKey = this.getRoomKey(auctionId, room.id);
-
-    const activeLot = await this.activeLot.get(roomKey);
-
-    if (activeLot) {
-      // TODO: save sold lot into postgre
-    }
 
     const lot = await this.lotsQueue.pop(roomKey);
 
     if (!lot) {
-      this.activeLot.del(roomKey);
-      return null;
+      throw new NotFoundException('No lots left in queue');
     }
 
-    const newLot = {
-      ...lot,
-      roomId: room.id,
+    await this.saveActiveLot(auctionId, roomId);
+
+    const newLot: ActiveLot = {
       auctionId,
+      roomId,
+      ...lot,
     };
 
     this.activeLot.set(roomKey, newLot);
 
-    return newLot;
+    const total = await this.lotsQueue.length(roomKey);
+
+    return {
+      lot: newLot,
+      total,
+    };
   }
 
-  async placeBid(member: Member, { amount, lotId }: BidDto) {
+  async placeBid(
+    member: Member,
+    { amount, lotId }: BidDto,
+  ): Promise<BidEntity> {
     const roomKey = this.getRoomKey(member.auctionId, member.roomId);
 
     const activeLot = await this.activeLot.get(roomKey);

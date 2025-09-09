@@ -34,4 +34,12 @@ export class RedisQueueRepository<T> extends BaseRepository {
 
     return values;
   }
+
+  length(key: CombinedKey) {
+    return this.client.llen(this.getFullKey(key));
+  }
+
+  del(key: CombinedKey) {
+    return this.client.del(this.getFullKey(key));
+  }
 }

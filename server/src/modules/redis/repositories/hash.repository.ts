@@ -26,8 +26,12 @@ export class RedisHashRepository<T> extends BaseRepository {
     return item ? (JSON.parse(item) as T) : null;
   }
 
-  async del(key: CombinedKey, id: string) {
+  async delOne(key: CombinedKey, id: string) {
     return this.client.hdel(this.getFullKey(key), id);
+  }
+
+  async del(key: CombinedKey) {
+    return this.client.del(this.getFullKey(key));
   }
 
   async getList(key: CombinedKey) {

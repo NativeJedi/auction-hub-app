@@ -19,17 +19,35 @@ import {
   RoomRoles,
   RoomUser,
 } from '../../guards/room-roles/room-roles.decorator';
+import { BidEntity } from './entities/active-lot.entity';
+import { PlaceLotDto } from './dto/lot.dto';
 
-type AuctionEvent = {
+type BaseEvent<E, T = {}> = {
   roomId: string;
-  ev: string;
-  data: any;
+  ev: E;
+  data: T;
 };
 
-@WebSocketGateway({ path: '/ws/room', cors: true })
+type JoinedRoomEvent = BaseEvent<'joinedRoom', Member>;
+
+type NewLotEvent = BaseEvent<'newLot', PlaceLotDto>;
+
+type NewBidEvent = BaseEvent<'newBid', BidEntity>;
+
+type AuctionFinishedEvent = BaseEvent<'auctionFinished'>;
+
+type PublishEvent =
+  | JoinedRoomEvent
+  | NewLotEvent
+  | NewBidEvent
+  | AuctionFinishedEvent;
+
+@WebSocketGateway({ cors: true, namespace: '/ws/room' })
 export class RoomGateway {
   private readonly pub: Redis;
   private readonly sub: Redis;
+
+  private subscribedRooms = new Set<string>();
 
   @WebSocketServer()
   server: Server;
@@ -45,7 +63,7 @@ export class RoomGateway {
     this.sub = client.duplicate();
 
     this.sub.on('message', (_, e) => {
-      const event: AuctionEvent = JSON.parse(e);
+      const event: PublishEvent = JSON.parse(e);
 
       this.server.to(event.roomId).emit(event.ev, event.data);
     });
@@ -61,7 +79,10 @@ export class RoomGateway {
       return;
     }
 
-    this.sub.subscribe(`auction-events:${payload.roomId}`);
+    if (!this.subscribedRooms.has(payload.roomId)) {
+      await this.sub.subscribe(`auction-events:${payload.roomId}`);
+      this.subscribedRooms.add(payload.roomId);
+    }
 
     const { sub: id, ...otherProps } = payload;
 
@@ -73,31 +94,8 @@ export class RoomGateway {
     client.data.user = member;
   }
 
-  publishEvent(roomId: string, ev: string, data: any = {}) {
-    this.pub.publish(
-      `auction-events:${roomId}`,
-      JSON.stringify({
-        roomId,
-        ev,
-        data,
-      }),
-    );
-  }
-
-  @UseGuards(RoomRoleGuard)
-  @RoomRoles(RoomRole.ADMIN)
-  @SubscribeMessage('start')
-  async handleStart(@RoomUser() user: Member) {
-    const lot = await this.roomService.startNextLot(
-      user.auctionId,
-      user.roomId,
-    );
-
-    if (!lot) {
-      this.publishEvent(user.roomId, 'finishAuction');
-    } else {
-      this.publishEvent(user.roomId, 'newLot', lot);
-    }
+  publishEvent(event: PublishEvent) {
+    this.pub.publish(`auction-events:${event.roomId}`, JSON.stringify(event));
   }
 
   @SubscribeMessage('join')
@@ -105,24 +103,41 @@ export class RoomGateway {
     @ConnectedSocket() client: Socket,
     @RoomUser() user: Member,
   ) {
-    const room = await this.roomService.findRoom(
-      user.auctionId,
-      user.auctionId,
-    );
-
-    if (!room) {
-      client.emit('error', { message: 'Room not found' });
-      return;
-    }
-
     await client.join(user.roomId);
 
-    this.publishEvent(user.roomId, 'joinedRoom', user);
+    this.publishEvent({
+      roomId: user.roomId,
+      ev: 'joinedRoom',
+      data: user,
+    });
+  }
+
+  @UseGuards(RoomRoleGuard)
+  @RoomRoles(RoomRole.ADMIN)
+  @SubscribeMessage('placeLot')
+  async handlePlaceLot(
+    @ConnectedSocket() client: Socket,
+    @RoomUser() user: Member,
+  ) {
+    try {
+      const { lot, total } = await this.roomService.placeLot(
+        user.auctionId,
+        user.roomId,
+      );
+
+      this.publishEvent({
+        roomId: user.roomId,
+        ev: 'newLot',
+        data: { lot, total },
+      });
+    } catch (e) {
+      client.emit('error', { message: e.message });
+    }
   }
 
   @UseGuards(RoomRoleGuard)
   @RoomRoles(RoomRole.MEMBER)
-  @SubscribeMessage('bid')
+  @SubscribeMessage('placeBid')
   async handleBid(
     @MessageBody() bid: BidDto,
     @ConnectedSocket() client: Socket,
@@ -131,7 +146,31 @@ export class RoomGateway {
     try {
       const newBid = await this.roomService.placeBid(user, bid);
 
-      this.publishEvent(user.roomId, 'newBid', newBid);
+      this.publishEvent({
+        roomId: user.roomId,
+        ev: 'newBid',
+        data: newBid,
+      });
+    } catch (e) {
+      client.emit('error', { message: e.message });
+    }
+  }
+
+  @UseGuards(RoomRoleGuard)
+  @RoomRoles(RoomRole.ADMIN)
+  @SubscribeMessage('finishAuction')
+  async handleFinishAuction(
+    @ConnectedSocket() client: Socket,
+    @RoomUser() user: Member,
+  ) {
+    try {
+      await this.roomService.finishAuction(user.auctionId, user.roomId);
+
+      this.publishEvent({
+        roomId: user.roomId,
+        ev: 'auctionFinished',
+        data: {},
+      });
     } catch (e) {
       client.emit('error', { message: e.message });
     }
