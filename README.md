@@ -27,6 +27,7 @@ npm run dev
 ### Production
 ```bash
 npm run prod
+```
 
 ### E2E Tests
 ```bash
