@@ -68,7 +68,7 @@ export class AuthService {
     const user = await this.validateUser({ email, password });
 
     if (!user) {
-      throw new BadRequestException('Invalid credentials');
+      throw new UnauthorizedException();
     }
 
     const { accessToken, refreshToken } =

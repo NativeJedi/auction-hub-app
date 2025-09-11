@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "docker compose --profile dev up --build",
-    "prod": "docker compose --profile prod up --build"
+    "prod": "docker compose --profile prod up --build",
+    "test:e2e": "cd server && npm install && npm run test:e2e"
   }
 }

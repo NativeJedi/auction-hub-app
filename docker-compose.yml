@@ -44,6 +44,9 @@ services:
     volumes:
       - ./server/:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      - db
+      - redis
 
   api-prod:
     build:
@@ -58,6 +61,9 @@ services:
       DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
     ports:
       - "3000:3000"
+    depends_on:
+      - db
+      - redis
 
   client-dev:
     build:

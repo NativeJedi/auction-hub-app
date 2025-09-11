@@ -52,7 +52,7 @@ export class AuctionsService {
 
   async findAll(
     ownerId: User['id'],
-    { page, limit }: QueryPaginationDto,
+    { page = 1, limit = 10 }: QueryPaginationDto,
   ): Promise<PaginatedResponseDto<AuctionDto>> {
     const owner = await this.findOwner(ownerId);
 
@@ -90,9 +90,9 @@ export class AuctionsService {
   }
 
   async updateOne(
+    ownerId: User['id'],
     id: Auction['id'],
     updateAuctionDto: UpdateAuctionDto,
-    ownerId: User['id'],
   ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
 

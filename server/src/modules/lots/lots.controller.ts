@@ -6,13 +6,14 @@ import {
   Param,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { LotsService } from './lots.service';
 import { CreateLotsDto, LotResponseDto, UpdateLotDto } from './dto/lot.dto';
-import { AuthGuard, AuthorizedRequest } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthUser } from '../auth/decorators/auth-user.decorator';
+import { TokenPayload } from '../auth/token.service';
 
 @UseGuards(AuthGuard)
 @Controller('auctions/:auctionId/lots')
@@ -27,12 +28,10 @@ export class LotsController {
   @Post()
   async create(
     @Param('auctionId') auctionId: string,
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
     @Body() { lots }: CreateLotsDto,
   ): Promise<LotResponseDto[]> {
-    const userId = req.user.sub;
-
-    return this.lotsService.createLots(userId, auctionId, lots);
+    return this.lotsService.createLots(user.sub, auctionId, lots);
   }
 
   @ApiOperation({ summary: 'Get all lots' })
@@ -43,11 +42,9 @@ export class LotsController {
   @Get()
   async findAll(
     @Param('auctionId') auctionId: string,
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ): Promise<LotResponseDto[]> {
-    const userId = req.user.sub;
-
-    return this.lotsService.findAll(userId, auctionId);
+    return this.lotsService.findAll(user.sub, auctionId);
   }
 
   @ApiOperation({ summary: 'Get lot by id' })
@@ -59,11 +56,9 @@ export class LotsController {
   async findOne(
     @Param('auctionId') auctionId: string,
     @Param('lotId') lotId: string,
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ): Promise<LotResponseDto> {
-    const userId = req.user.sub;
-
-    return this.lotsService.findLot(userId, auctionId, lotId);
+    return this.lotsService.findLot(user.sub, auctionId, lotId);
   }
 
   @ApiOperation({ summary: 'Update lot by id' })
@@ -75,12 +70,10 @@ export class LotsController {
   async update(
     @Param('auctionId') auctionId: string,
     @Param('lotId') lotId: string,
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
     @Body() lot: UpdateLotDto,
   ): Promise<LotResponseDto> {
-    const userId = req.user.sub;
-
-    return this.lotsService.updateLot(userId, auctionId, lotId, lot);
+    return this.lotsService.updateLot(user.sub, auctionId, lotId, lot);
   }
 
   @ApiOperation({ summary: 'Delete lot by id' })
@@ -89,10 +82,8 @@ export class LotsController {
   async remove(
     @Param('auctionId') auctionId: string,
     @Param('lotId') lotId: string,
-    @Req() req: AuthorizedRequest,
+    @AuthUser() user: TokenPayload,
   ) {
-    const userId = req.user.sub;
-
-    return this.lotsService.removeLot(userId, auctionId, lotId);
+    return this.lotsService.removeLot(user.sub, auctionId, lotId);
   }
 }

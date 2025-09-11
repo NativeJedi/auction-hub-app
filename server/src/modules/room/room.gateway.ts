@@ -14,7 +14,7 @@ import { RoomService } from './room.service';
 import { BidDto } from './dto/bid.dto';
 import { RoomRole } from '../../guards/room-roles/room-roles.constants';
 import { RoomRoleGuard } from '../../guards/room-roles/room-roles.guard';
-import { UseGuards } from '@nestjs/common';
+import { OnModuleDestroy, UseGuards } from '@nestjs/common';
 import {
   RoomRoles,
   RoomUser,
@@ -42,8 +42,11 @@ type PublishEvent =
   | NewBidEvent
   | AuctionFinishedEvent;
 
-@WebSocketGateway({ cors: true, namespace: '/ws/room' })
-export class RoomGateway {
+@WebSocketGateway({
+  cors: true,
+  namespace: '/ws/room',
+})
+export class RoomGateway implements OnModuleDestroy {
   private readonly pub: Redis;
   private readonly sub: Redis;
 
@@ -103,6 +106,10 @@ export class RoomGateway {
     @ConnectedSocket() client: Socket,
     @RoomUser() user: Member,
   ) {
+    if (!user) {
+      client.disconnect(true);
+      return;
+    }
     await client.join(user.roomId);
 
     this.publishEvent({
@@ -174,5 +181,10 @@ export class RoomGateway {
     } catch (e) {
       client.emit('error', { message: e.message });
     }
+  }
+
+  onModuleDestroy() {
+    this.sub?.disconnect?.();
+    this.pub?.disconnect?.();
   }
 }

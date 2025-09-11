@@ -19,7 +19,6 @@ const DevelopmentConfig: DataSourceOptions = {
 };
 
 const envConfigMap: Record<string, DataSourceOptions> = {
-  test: DevelopmentConfig,
   development: DevelopmentConfig,
   production: ProductionConfig,
 };

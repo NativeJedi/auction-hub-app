@@ -62,7 +62,7 @@ export class AuctionsController {
     @Param('id') id: string,
     @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
-    return this.auctionsService.findOne(id, user.sub);
+    return this.auctionsService.findOne(user.sub, id);
   }
 
   @ApiOperation({ summary: 'Update auction' })
@@ -77,7 +77,7 @@ export class AuctionsController {
     @Body() updateAuctionDto: UpdateAuctionDto,
     @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
-    return this.auctionsService.updateOne(id, updateAuctionDto, user.sub);
+    return this.auctionsService.updateOne(user.sub, id, updateAuctionDto);
   }
 
   @ApiOperation({ summary: 'Delete auction' })

@@ -27,6 +27,10 @@ npm run dev
 ### Production
 ```bash
 npm run prod
+
+### E2E Tests
+```bash
+npm run test:e2e
 ```
 
 ### 📦 Environment Variables
@@ -60,8 +64,8 @@ Set these variables in your `docker-compose.yml` or `.env` file:
 ## 📄 API Documentation
 
 You can explore the API endpoints using Swagger:  
-[Open Swagger UI](http://localhost:3000/api/v1)
+http://localhost:3000/api/v1
 
 ## 📌 TODO
-- [ ] Add tests
+- [ ] Refactor rooms module
 - [ ] Add Redis cache

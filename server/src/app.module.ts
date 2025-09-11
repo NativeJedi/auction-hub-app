@@ -9,18 +9,22 @@ import { AuctionsModule } from './modules/auctions/auctions.module';
 import { LotsModule } from './modules/lots/lots.module';
 import { RoomModule } from './modules/room/room.module';
 
+export const APP_MODULES = [
+  RedisModule,
+  AuthModule,
+  AuctionsModule,
+  LotsModule,
+  RoomModule,
+];
+
 @Module({
   imports: [
-    RedisModule,
-    AuthModule,
+    ...APP_MODULES,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [() => AppConfig],
     }),
     TypeOrmModule.forRoot(TypeOrmConfig),
-    AuctionsModule,
-    LotsModule,
-    RoomModule,
   ],
 })
 export class AppModule {}
