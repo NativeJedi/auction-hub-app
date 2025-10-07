@@ -21,39 +21,28 @@ import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
 
 const roomSocket = new BaseSocket('http://localhost:3000/ws/room');
 
-const useConnectRoomSocket = ({
-  auctionId,
-  onInvite,
-  onMember,
-  onLot,
-  onBid,
-  onError,
-}: {
-  auctionId: string;
-  onInvite: (invite: RoomInvite) => void;
-  onMember: (member: RoomMember) => void;
-  onLot: (lot: RoomLot) => void;
-  onBid: (bid: RoomBid) => void;
-  onError: (error: Error) => void;
-}) => {
-  const router = useRouter();
-  const roomId = useRoomId();
-
-  const connect = () => {
-    const token = getRoomToken(roomId);
-
-    if (!token) {
-      router.replace('/crm/auctions');
-      return;
-    }
-
+const connectRoomSocket =
+  ({
+    onFinish,
+    onInvite,
+    onMember,
+    onLot,
+    onBid,
+    onError,
+  }: {
+    onFinish: () => void;
+    onInvite: (invite: RoomInvite) => void;
+    onMember: (member: RoomMember) => void;
+    onLot: (lot: RoomLot) => void;
+    onBid: (bid: RoomBid) => void;
+    onError: (error: Error) => void;
+  }) =>
+  (token: string) => {
     roomSocket.connect(token);
 
     roomSocket.onEvent<RoomLot>('newLot', onLot);
 
-    roomSocket.onEvent<RoomLot>('auctionFinished', () => {
-      router.push(`/crm/auctions/${auctionId}`);
-    });
+    roomSocket.onEvent<RoomLot>('auctionFinished', onFinish);
 
     roomSocket.onEvent<RoomInvite>('newInvite', onInvite);
 
@@ -64,9 +53,6 @@ const useConnectRoomSocket = ({
     roomSocket.onError(onError);
   };
 
-  return connect;
-};
-
 const useRoom = () => {
   const [roomInfo, setRoomInfo] = useState<RoomAdminInfoResponseDto>();
 
@@ -76,7 +62,7 @@ const useRoom = () => {
   const [invites, setInvites] = useState<RoomMember[]>([]);
 
   const roomId = useRoomId();
-
+  const router = useRouter();
   const onError = useErrorNotification();
 
   const onMember = (member: RoomMember) => {
@@ -90,16 +76,14 @@ const useRoom = () => {
     setActiveLotBids([]);
   };
 
-  const connect = useConnectRoomSocket({
-    auctionId: roomInfo?.room?.auction?.id || '',
-    onMember,
-    onInvite,
-    onBid,
-    onLot,
-    onError,
-  });
-
   useEffect(() => {
+    const token = getRoomToken(roomId);
+
+    if (!token) {
+      router.replace('/crm/auctions');
+      return;
+    }
+
     fetchAdminRoomInfo({ roomId })
       .then((response) => {
         setRoomInfo(response);
@@ -108,7 +92,14 @@ const useRoom = () => {
         setActiveLot(response.activeLot);
         setInvites(response.invites);
 
-        connect();
+        connectRoomSocket({
+          onMember,
+          onInvite,
+          onBid,
+          onLot,
+          onError,
+          onFinish: () => router.push(`/crm/auctions/${response.room.auction.id}`),
+        })(token);
       })
       .catch(onError);
 

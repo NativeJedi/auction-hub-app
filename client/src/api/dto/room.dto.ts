@@ -1,7 +1,7 @@
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
 
-type RoomAuction = Pick<Auction, 'id' | 'name' | 'description'>;
+export type RoomAuction = Pick<Auction, 'id' | 'name' | 'description'>;
 
 export type Room = {
   id: string;

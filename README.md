@@ -74,4 +74,5 @@ http://localhost:3000/api/v1
 - [ ] Add finish auction status
 - [ ] Block actions by status
 - [ ] Add lot images upload
+- [ ] Handle events race condition on back
 - [ ] Add normal JWT refresh token rotation
