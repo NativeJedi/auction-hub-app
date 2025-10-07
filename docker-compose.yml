@@ -74,11 +74,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
+      CHOKIDAR_USEPOLLING: true
     ports:
       - "3001:3001"
     volumes:
       - ./client:/usr/src/app
-      - /usr/src/app/node_modules
+      - client_node_modules:/usr/src/app/node_modules
     depends_on:
       - api-dev
 
@@ -99,3 +100,4 @@ services:
 volumes:
   redis-data:
   pgdata:
+  client_node_modules:

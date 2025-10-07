@@ -21,8 +21,9 @@ export class LotsService {
   async findAll(userId: User['id'], auctionId: Auction['id']) {
     const auction = await this.findAuction(userId, auctionId);
 
-    return this.lotsRepository.findBy({
-      auction: { id: auction.id },
+    return this.lotsRepository.find({
+      where: { auction: { id: auction.id } },
+      relations: ['buyer'],
     });
   }
 

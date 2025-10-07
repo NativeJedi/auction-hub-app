@@ -68,5 +68,10 @@ You can explore the API endpoints using Swagger:
 http://localhost:3000/api/v1
 
 ## 📌 TODO
-- [ ] Refactor rooms module
-- [ ] Add Redis cache
+- [ ] Remove hardcoded urls
+- [ ] Add unauth middlewares to client
+- [ ] Add breadcrums to pages
+- [ ] Add finish auction status
+- [ ] Block actions by status
+- [ ] Add lot images upload
+- [ ] Add normal JWT refresh token rotation

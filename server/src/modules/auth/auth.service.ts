@@ -1,13 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { TokenService } from './token.service';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
+import { ApiAuthorizationError } from '../../errors';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +32,27 @@ export class AuthService {
     return user;
   }
 
+  private readonly generateTokens = async (
+    user: Pick<User, 'id' | 'email'>,
+  ) => {
+    const tokens = [
+      this.tokenService.accessToken,
+      this.tokenService.refreshToken,
+    ].map((token) =>
+      token.generate({
+        sub: user.id,
+        email: user.email,
+      }),
+    );
+
+    const [accessToken, refreshToken] = await Promise.all(tokens);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  };
+
   async register(createAuthDto: CreateAuthDto) {
     const { email, password } = createAuthDto;
 
@@ -51,11 +69,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const { accessToken, refreshToken } =
-      await this.tokenService.generateTokens({
-        sub: user.id,
-        email: user.email,
-      });
+    const { accessToken, refreshToken } = await this.generateTokens(user);
 
     return {
       accessToken,
@@ -68,14 +82,10 @@ export class AuthService {
     const user = await this.validateUser({ email, password });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new ApiAuthorizationError();
     }
 
-    const { accessToken, refreshToken } =
-      await this.tokenService.generateTokens({
-        sub: user.id,
-        email: user.email,
-      });
+    const { accessToken, refreshToken } = await this.generateTokens(user);
 
     return {
       accessToken,
@@ -85,19 +95,19 @@ export class AuthService {
   }
 
   async refreshToken(token: string) {
-    const payload = await this.tokenService.validateRefreshToken(token);
+    const result = await this.tokenService.refreshToken.validate(token);
 
-    if (!payload) {
-      throw new UnauthorizedException('Invalid refresh token');
+    if (!result.payload) {
+      throw new ApiAuthorizationError();
     }
 
-    return await this.tokenService.generateTokens({
-      sub: payload.sub,
-      email: payload.email,
+    return await this.generateTokens({
+      id: result.payload.sub,
+      email: result.payload.email,
     });
   }
 
   async logout(userId: User['id']) {
-    await this.tokenService.deleteRefreshToken(userId);
+    await this.tokenService.refreshToken.clear(userId);
   }
 }

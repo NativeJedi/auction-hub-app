@@ -1,6 +1,7 @@
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
 import {
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -11,12 +12,13 @@ import { LotStatus } from '../entities/lots.entity';
 import { Currency } from '../../../types/currency';
 import { Type } from 'class-transformer';
 
-class LotDto {
+export class LotDto {
   @ApiProperty({ example: 'uuid-string' })
   id: string;
 
   @ApiProperty({ example: 'Some lot name' })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({ example: 'Optional description', nullable: true })
@@ -24,13 +26,13 @@ class LotDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 1000, minimum: 0, required: true })
+  @ApiProperty({ example: 1000, minimum: 0 })
   @IsNumber()
-  @Min(0, { message: 'Start price must be greater than or equal to 0' })
-  @ApiProperty({ example: '2000', minimum: 0 })
+  @Min(0)
   startPrice: number;
 
   @IsEnum(Currency)
+  @IsNotEmpty()
   @ApiProperty({ example: 'created', enum: LotStatus })
   currency: Currency;
 
@@ -42,6 +44,11 @@ class LotDto {
 
   @ApiProperty({ example: '2025-09-01T12:00:00Z' })
   updatedAt: Date;
+
+  @ApiProperty({ example: 1000, minimum: 0, nullable: true })
+  @IsNumber()
+  @Min(0)
+  soldPrice?: number;
 }
 
 export class CreateLotDto extends PickType(LotDto, [
@@ -58,16 +65,12 @@ export class CreateLotsDto {
 }
 
 export class UpdateLotDto extends PartialType(
-  PickType(LotDto, ['name', 'description', 'startPrice', 'currency']),
+  PickType(LotDto, [
+    'name',
+    'description',
+    'startPrice',
+    'currency',
+    'status',
+    'soldPrice',
+  ]),
 ) {}
-
-export class LotResponseDto extends PickType(LotDto, [
-  'id',
-  'name',
-  'description',
-  'startPrice',
-  'currency',
-  'status',
-  'createdAt',
-  'updatedAt',
-]) {}

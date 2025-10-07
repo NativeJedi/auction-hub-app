@@ -11,13 +11,10 @@ export class RedisHashRepository<T> extends BaseRepository {
   }
 
   async set(key: CombinedKey, id: string, item: T) {
-    await this.client.hset(
-      this.getFullKey(key),
-      id,
-      JSON.stringify(item),
-      'EX',
-      this.ttlSeconds,
-    );
+    const fullKey = this.getFullKey(key);
+
+    await this.client.hset(fullKey, id, JSON.stringify(item));
+    await this.client.expire(fullKey, this.ttlSeconds);
   }
 
   async get(key: CombinedKey, id: string) {
@@ -30,7 +27,7 @@ export class RedisHashRepository<T> extends BaseRepository {
     return this.client.hdel(this.getFullKey(key), id);
   }
 
-  async del(key: CombinedKey) {
+  async clear(key: CombinedKey) {
     return this.client.del(this.getFullKey(key));
   }
 

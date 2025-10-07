@@ -2,12 +2,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Auction } from '../../auctions/entities/auction.entity';
 import { Currency } from '../../../types/currency';
+import { Buyer } from '../../buyers/entities/buyer.entity';
 
 export enum LotStatus {
   CREATED = 'created',
@@ -27,10 +30,10 @@ export class Lot {
   startPrice: number;
 
   @Column({ nullable: true })
-  description: string;
+  description?: string;
 
   @Column({ type: 'simple-array', nullable: true })
-  images: string[];
+  images?: string[];
 
   @Column({ type: 'enum', enum: LotStatus, default: LotStatus.CREATED })
   status: LotStatus;
@@ -44,6 +47,16 @@ export class Lot {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Auction, (auction) => auction.lots, { nullable: false })
+  @Column({ type: 'int', nullable: true })
+  soldPrice?: number;
+
+  @ManyToOne(() => Auction, (auction) => auction.lots, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   auction: Auction;
+
+  @OneToOne(() => Buyer, (buyer) => buyer.lot, { cascade: true })
+  @JoinColumn()
+  buyer: Buyer;
 }

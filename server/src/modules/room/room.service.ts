@@ -3,286 +3,241 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { Auction } from '../auctions/entities/auction.entity';
+import { Auction, AuctionStatus } from '../auctions/entities/auction.entity';
 import { AuctionsService } from '../auctions/auctions.service';
-import { TokenService } from '../auth/token.service';
-import { v4 as uuidv4 } from 'uuid';
+import { TokenPayload, TokenService } from '../auth/token.service';
 import { EmailService } from '../email/email.service';
 import { CreateInviteDto } from './dto/invite.dto';
-import { Member } from './entities/member.entity';
-import { Room, RoomAdmin } from './entities/room.entity';
-import { RedisQueueRepository } from '../redis/repositories/queue.repository';
-import { Lot } from '../lots/entities/lots.entity';
-import { RedisSimpleRepository } from '../redis/repositories/simple.repository';
-import { RedisHashRepository } from '../redis/repositories/hash.repository';
-import { Invite } from './entities/invite.entity';
-import { ActiveLot, BidEntity } from './entities/active-lot.entity';
-import { BidDto } from './dto/bid.dto';
-import { RoomRole } from '../../guards/room-roles/room-roles.constants';
-import { RedisService } from '../redis/redis.service';
-import { AppConfigService } from '../../config/app-config.service';
+import {
+  Room,
+  RoomAuction,
+  RoomAuthorizedMember,
+  RoomAuthorizedOwner,
+  RoomRole,
+} from './entities/room.entity';
+import { BidDto, CreateBidDto } from './dto/bid.dto';
+import { RoomRepository } from './room.repository';
+import {
+  RoomInfoMemberResponseDto,
+  RoomInfoOwnerResponseDto,
+} from './dto/room.dto';
+import { BuyersService } from '../buyers/buyers.service';
+import { LotsService } from '../lots/lots.service';
+import { LotStatus } from '../lots/entities/lots.entity';
+import { ApiAuthorizationError } from '../../errors';
+import { pickArrayFields, pickFields } from '../../utils/pick';
 
 @Injectable()
 export class RoomService {
-  private readonly lotsQueue: RedisQueueRepository<Lot>;
-
-  private readonly rooms: RedisSimpleRepository<Room>;
-
-  private readonly invites: RedisHashRepository<Invite>;
-
-  private readonly members: RedisHashRepository<Member>;
-
-  private readonly activeLot: RedisSimpleRepository<ActiveLot>;
-
   constructor(
-    private readonly appConfig: AppConfigService,
-    private readonly redisService: RedisService,
     private readonly auctionsService: AuctionsService,
     private readonly tokenService: TokenService,
     private readonly emailService: EmailService,
-  ) {
-    const ttl = this.appConfig.jwt.JWT_ROOM_TTL;
+    private readonly roomRepository: RoomRepository,
+    private readonly buyersService: BuyersService,
+    private readonly lotsService: LotsService,
+  ) {}
 
-    this.lotsQueue = this.redisService.createQueueRepository<Lot>('lots', ttl);
+  async createRoom(user: TokenPayload, auctionId: Auction['id']) {
+    const { sub: id, email } = user;
 
-    this.rooms = this.redisService.createSimpleRepository<Room>('rooms', ttl);
+    const auction = await this.auctionsService.findOne(id, auctionId, true);
 
-    this.invites = this.redisService.createHashRepository<Invite>(
-      'invites',
-      ttl,
-    );
-
-    this.members = this.redisService.createHashRepository<Member>(
-      'members',
-      ttl,
-    );
-
-    this.activeLot = this.redisService.createSimpleRepository<ActiveLot>(
-      'activeLot',
-      ttl,
-    );
-  }
-
-  private getRoomKey(auctionId: string, roomId: string) {
-    return `auction:${auctionId}:room:${roomId}`;
-  }
-
-  async createRoom(owner: RoomAdmin, auctionId: Auction['id']) {
-    const { lots } = await this.auctionsService.findOne(
-      owner.id,
-      auctionId,
-      true,
-    );
-
-    const room: Room = {
-      auctionId,
-      id: uuidv4(),
-      owner,
+    const roomAuction: RoomAuction = {
+      id: auction.id,
+      name: auction.name,
+      description: auction.description,
     };
 
-    const token = this.tokenService.generateRoomToken({
-      sub: owner.id,
-      email: owner.email,
+    if (!auction.lots.length) {
+      throw new BadRequestException('No lots created for this auction');
+    }
+
+    const room = await this.roomRepository.createRoom(
+      id,
+      roomAuction,
+      auction.lots,
+    );
+
+    const token = this.tokenService.roomMemberToken.generate({
+      sub: id,
+      email,
       role: RoomRole.ADMIN,
-      auctionId,
       roomId: room.id,
     });
 
-    const roomKey = this.getRoomKey(auctionId, room.id);
-
-    await this.rooms.set(roomKey, room);
-
-    await this.lotsQueue.push(roomKey, ...lots);
+    await this.auctionsService.updateOne(id, auctionId, {
+      status: AuctionStatus.STARTED,
+    });
 
     return { room, token };
   }
 
-  async findRoom(auctionId: string, roomId: string): Promise<Room> {
-    const room = await this.rooms.get(this.getRoomKey(auctionId, roomId));
+  async getOwnerRoomInfo(
+    roomId: Room['id'],
+  ): Promise<RoomInfoOwnerResponseDto> {
+    const fullInfo = await this.roomRepository.getRoomInfo(roomId);
+
+    if (!fullInfo.room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    return {
+      ...fullInfo,
+      room: fullInfo.room,
+    };
+  }
+
+  async getMemberRoomInfo(
+    roomId: Room['id'],
+  ): Promise<RoomInfoMemberResponseDto> {
+    const fullInfo = await this.roomRepository.getRoomInfo(roomId);
+
+    const { room } = fullInfo;
 
     if (!room) {
-      throw new NotFoundException('Room for this auction not found');
+      throw new NotFoundException('Room not found');
     }
 
-    return room;
+    return {
+      room: {
+        id: roomId,
+        auction: pickFields(room.auction, ['name', 'description']),
+      },
+      activeLot: fullInfo.activeLot,
+      activeLotBids: pickArrayFields(fullInfo.activeLotBids, [
+        'name',
+        'amount',
+      ]),
+    };
   }
 
-  async findMemberByEmail(auctionId: string, roomId: string, email: string) {
-    const members = await this.members.getList(
-      this.getRoomKey(auctionId, roomId),
-    );
+  async sendRoomInvite(roomId: string, { email, name }: CreateInviteDto) {
+    const room = await this.roomRepository.getRoom(roomId);
 
-    return members.find((m) => m.email === email);
-  }
-
-  async sendRoomInvite(
-    auctionId: string,
-    roomId: string,
-    dto: CreateInviteDto,
-  ) {
-    const room = await this.findRoom(auctionId, roomId);
-
-    const roomKey = this.getRoomKey(auctionId, room.id);
-
-    const existingInvite = await this.invites.get(roomKey, dto.email);
-
-    if (existingInvite) {
-      throw new ConflictException('Invite already exists');
+    if (!room) {
+      throw new NotFoundException('Room not found');
     }
 
-    const existingUser = await this.findMemberByEmail(
-      auctionId,
+    const existingUser = await this.roomRepository.getMemberByEmail(
       roomId,
-      dto.email,
+      email,
     );
 
     if (existingUser) {
-      throw new ConflictException('User already in room');
+      throw new ConflictException('User already accepted invite');
     }
 
-    const userId = uuidv4();
+    const invite = await this.roomRepository.createInvite(roomId, {
+      email,
+      name,
+    });
 
-    const token = this.tokenService.generateRoomInviteToken({
-      sub: userId,
-      email: dto.email,
+    const token = this.tokenService.roomMemberInviteToken.generate({
+      sub: invite.id,
+      email,
     });
 
     // TODO: insert real link
+    const inviteLink = `http://localhost:3001/room/${roomId}/invite/confirm?token=${token}`;
+
     await this.emailService.sendEmail(
-      dto.email,
+      email,
       'Room invite',
-      `Hi, you registered as ${dto.name} for auction. Here is your invite: ${token}`,
+      `Hi, you registered as ${name} for auction. Here is your invite link: ${inviteLink}`,
     );
 
-    await this.invites.set(roomKey, dto.email, {
-      userId,
-      email: dto.email,
-      name: dto.name,
-    });
+    return { invite, room };
   }
 
-  async confirmRoomInvite(auctionId: string, roomId: string, token: string) {
-    const payload = this.tokenService.validateRoomInviteToken(token);
+  async confirmRoomInvite(roomId: string, token: string) {
+    const result = this.tokenService.roomMemberInviteToken.validate(token);
 
-    if (!payload) {
-      throw new UnauthorizedException('Invalid or expired invite token');
+    if (!result.payload) {
+      throw new ApiAuthorizationError();
     }
 
-    const roomKey = this.getRoomKey(auctionId, roomId);
-
-    const { email } = payload;
-
-    const invite = await this.invites.get(roomKey, email);
-
-    if (!invite) {
-      throw new NotFoundException('User invite not found');
-    }
-
-    const member: Member = {
-      id: invite.userId,
-      email: invite.email,
-      name: invite.name,
-      auctionId,
+    const { room, member } = await this.roomRepository.createMember(
       roomId,
-      role: RoomRole.MEMBER,
-    };
+      result.payload.email,
+    );
 
-    const roomToken = this.tokenService.generateRoomToken({
-      sub: invite.userId,
-      ...member,
+    const roomToken = this.tokenService.roomMemberToken.generate({
+      sub: member.id,
+      email: member.email,
+      name: member.name,
+      roomId: room.id,
+      role: RoomRole.MEMBER,
     });
 
-    await this.members.set(roomKey, member.id, member);
-
-    await this.invites.delOne(roomKey, email);
-
     return {
+      room,
+      member,
       token: roomToken,
     };
   }
 
-  async finishAuction(auctionId: string, roomId: string) {
-    await this.saveActiveLot(auctionId, roomId);
+  async finishAuction(owner: RoomAuthorizedOwner) {
+    await this.finishActiveLot(owner);
 
-    const roomKey = this.getRoomKey(auctionId, roomId);
-
-    this.activeLot.del(roomKey);
-    this.members.del(roomKey);
-    this.lotsQueue.del(roomKey);
-    this.rooms.del(roomKey);
-    this.invites.del(roomKey);
+    this.roomRepository.clearRoom(owner.roomId);
   }
 
-  async saveActiveLot(auctionId: string, roomId: string) {
-    const activeLot = await this.activeLot.get(
-      this.getRoomKey(auctionId, roomId),
-    );
+  async finishActiveLot(owner: RoomAuthorizedOwner) {
+    const [room, activeLotId, activeBid] = await Promise.all([
+      this.roomRepository.getRoom(owner.roomId),
+      this.roomRepository.getActiveLotId(owner.roomId),
+      this.roomRepository.getActiveLotCurrentBid(owner.roomId),
+    ]);
 
-    if (!activeLot) {
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    if (!activeLotId) {
+      throw new NotFoundException('No active lot');
+    }
+
+    if (!activeBid) {
+      await this.lotsService.updateLot(owner.id, room.auction.id, activeLotId, {
+        status: LotStatus.UNSOLD,
+      });
+
       return;
     }
 
-    // TODO: save sold lot into postgre
+    await Promise.all([
+      this.lotsService.updateLot(owner.id, room.auction.id, activeLotId, {
+        status: LotStatus.SOLD,
+        soldPrice: activeBid.amount,
+      }),
+      this.buyersService.saveBuyer(owner.id, room.auction.id, activeLotId, {
+        name: activeBid.name,
+        email: activeBid.email,
+      }),
+    ]);
   }
 
-  async placeLot(
-    auctionId: string,
-    roomId: string,
-  ): Promise<{
-    lot: ActiveLot;
-    total: number;
-  }> {
-    const room = await this.findRoom(auctionId, roomId);
-    const roomKey = this.getRoomKey(auctionId, room.id);
+  async placeNextLot(owner: RoomAuthorizedOwner) {
+    await this.finishActiveLot(owner);
 
-    const lot = await this.lotsQueue.pop(roomKey);
+    const nextLot = await this.roomRepository.getNextLot(owner.roomId);
 
-    if (!lot) {
-      throw new NotFoundException('No lots left in queue');
+    if (!nextLot) {
+      throw new NotFoundException('No more lots');
     }
 
-    await this.saveActiveLot(auctionId, roomId);
+    await this.roomRepository.setActiveLot(owner.roomId, nextLot.id);
 
-    const newLot: ActiveLot = {
-      auctionId,
-      roomId,
-      ...lot,
-    };
-
-    this.activeLot.set(roomKey, newLot);
-
-    const total = await this.lotsQueue.length(roomKey);
-
-    return {
-      lot: newLot,
-      total,
-    };
+    return nextLot;
   }
 
   async placeBid(
-    member: Member,
-    { amount, lotId }: BidDto,
-  ): Promise<BidEntity> {
-    const roomKey = this.getRoomKey(member.auctionId, member.roomId);
-
-    const activeLot = await this.activeLot.get(roomKey);
-
-    if (!activeLot || activeLot?.id !== lotId) {
-      throw new BadRequestException('Lot is not active');
-    }
-
-    const newBid: BidEntity = {
-      id: member.id,
-      name: member.name,
-      email: member.email,
-      amount: activeLot.bid ? activeLot.bid.amount + amount : amount,
-    };
-
-    activeLot.bid = newBid;
-
-    await this.activeLot.set(roomKey, activeLot);
+    member: RoomAuthorizedMember,
+    bid: CreateBidDto,
+  ): Promise<BidDto> {
+    const newBid = await this.roomRepository.setBid(member.roomId, member, bid);
 
     return newBid;
   }

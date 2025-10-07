@@ -8,6 +8,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { AuctionsModule } from './modules/auctions/auctions.module';
 import { LotsModule } from './modules/lots/lots.module';
 import { RoomModule } from './modules/room/room.module';
+import { BuyersModule } from './modules/buyers/buyers.module';
 
 export const APP_MODULES = [
   RedisModule,
@@ -15,6 +16,7 @@ export const APP_MODULES = [
   AuctionsModule,
   LotsModule,
   RoomModule,
+  BuyersModule,
 ];
 
 @Module({

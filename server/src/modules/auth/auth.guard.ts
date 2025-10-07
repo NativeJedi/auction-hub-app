@@ -1,11 +1,7 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { TokenService, TokenPayload } from './token.service';
+import { ApiAuthorizationError, ApiTokenExpiredError } from '../../errors';
 
 export type AuthorizedRequest = Request & { user: TokenPayload };
 
@@ -19,24 +15,27 @@ class AuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
 
     if (!authHeader) {
-      throw new UnauthorizedException();
+      throw new ApiAuthorizationError();
     }
 
     const [authType, authToken] = authHeader.split(' ');
 
     if (authType !== 'Bearer' || !authToken) {
-      throw new UnauthorizedException();
+      throw new ApiAuthorizationError();
     }
 
-    const user = this.tokenService.validateAccessToken(authToken);
+    const result = this.tokenService.accessToken.validate(authToken);
 
-    if (!user) {
-      throw new UnauthorizedException();
+    if (result.payload) {
+      request.user = result.payload;
+      return true;
     }
 
-    request.user = user;
+    if (result.reason === 'expired') {
+      throw new ApiTokenExpiredError();
+    }
 
-    return true;
+    throw new ApiAuthorizationError();
   }
 }
 

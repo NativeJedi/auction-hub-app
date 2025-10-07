@@ -13,12 +13,8 @@ export class RedisQueueRepository<T> extends BaseRepository {
   async push(key: CombinedKey, ...elements: T[]) {
     const lotStrings = elements.map((lot) => JSON.stringify(lot));
 
-    await this.client.lpush(
-      this.getFullKey(key),
-      ...lotStrings,
-      'EX',
-      this.ttlSeconds,
-    );
+    await this.client.lpush(this.getFullKey(key), ...lotStrings);
+    await this.client.expire(this.getFullKey(key), this.ttlSeconds);
   }
 
   async pop(key: CombinedKey): Promise<T | null> {

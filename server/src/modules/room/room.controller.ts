@@ -9,51 +9,67 @@ import {
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import {
-  CreateRoomDto,
-  InviteConfirmResponseDto,
-  RoomDto,
+  CreateRoomResponseDto,
+  RoomInfoMemberResponseDto,
+  RoomInfoOwnerResponseDto,
 } from './dto/room.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { ConfirmInviteDto, CreateInviteDto } from './dto/invite.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { TokenPayload } from '../auth/token.service';
+import { Room, RoomRole } from './entities/room.entity';
+import { RoomAuthGuard } from './guards/auth.guard';
+import { RoomRoles } from './guards/decorators';
+import { RoomGateway } from './room.gateway';
 
-@Controller('auctions/:auctionId/room')
+@Controller('/room')
 export class RoomController {
-  constructor(private readonly roomService: RoomService) {}
+  constructor(
+    private readonly roomService: RoomService,
+    private readonly roomGateway: RoomGateway,
+  ) {}
 
   @ApiOperation({ summary: 'Create a room for an auction' })
   @ApiResponse({
     status: 201,
-    type: CreateRoomDto,
+    type: Room,
   })
   @UseGuards(AuthGuard)
   @Post()
-  createRoom(
+  async createRoom(
     @AuthUser() user: TokenPayload,
-    @Param('auctionId') auctionId: string,
-  ): Promise<CreateRoomDto> {
-    const owner = {
-      id: user.sub,
-      email: user.email,
-    };
-
-    return this.roomService.createRoom(owner, auctionId);
+    @Body() { auctionId }: { auctionId: string },
+  ): Promise<CreateRoomResponseDto> {
+    return this.roomService.createRoom(user, auctionId);
   }
 
-  @ApiOperation({ summary: 'Get auction room by id' })
+  @ApiOperation({ summary: 'Get auction room admin info by id' })
   @ApiResponse({
     status: 200,
-    type: RoomDto,
+    type: [RoomInfoOwnerResponseDto],
   })
-  @UseGuards(AuthGuard)
-  @Get(':roomId')
-  getAuctionRoom(
-    @Param('auctionId') auctionId: string,
+  @RoomRoles(RoomRole.ADMIN)
+  @UseGuards(RoomAuthGuard)
+  @Get(':roomId/admin')
+  getAdminRoomInfo(
     @Param('roomId') roomId: string,
-  ): Promise<RoomDto> {
-    return this.roomService.findRoom(auctionId, roomId);
+  ): Promise<RoomInfoOwnerResponseDto> {
+    return this.roomService.getOwnerRoomInfo(roomId);
+  }
+
+  @ApiOperation({ summary: 'Get auction room member info by id' })
+  @ApiResponse({
+    status: 200,
+    type: [RoomInfoMemberResponseDto],
+  })
+  @RoomRoles(RoomRole.MEMBER)
+  @UseGuards(RoomAuthGuard)
+  @Get(':roomId/member')
+  getRoomInfo(
+    @Param('roomId') roomId: string,
+  ): Promise<RoomInfoMemberResponseDto> {
+    return this.roomService.getMemberRoomInfo(roomId);
   }
 
   @ApiOperation({ summary: 'Send room invite to user email' })
@@ -62,26 +78,42 @@ export class RoomController {
   })
   @HttpCode(200)
   @Post(':roomId/invite')
-  sendRoomInvite(
-    @Param('auctionId') auctionId: string,
+  async sendRoomInvite(
     @Param('roomId') roomId: string,
     @Body() dto: CreateInviteDto,
   ) {
-    return this.roomService.sendRoomInvite(auctionId, roomId, dto);
+    const { invite, room } = await this.roomService.sendRoomInvite(roomId, dto);
+
+    this.roomGateway.publishRoomUserEvent(
+      roomId,
+      room.ownerId,
+      'newInvite',
+      invite,
+    );
   }
 
   @ApiOperation({ summary: 'Confirm room invite' })
   @ApiResponse({
     status: 200,
-    type: [InviteConfirmResponseDto],
   })
   @HttpCode(200)
   @Post(':roomId/invite/confirm')
-  confirmRoomInvite(
-    @Param('auctionId') auctionId: string,
+  async confirmRoomInvite(
     @Param('roomId') roomId: string,
     @Body() dto: ConfirmInviteDto,
-  ): Promise<InviteConfirmResponseDto> {
-    return this.roomService.confirmRoomInvite(auctionId, roomId, dto.token);
+  ) {
+    const { room, member, token } = await this.roomService.confirmRoomInvite(
+      roomId,
+      dto.token,
+    );
+
+    this.roomGateway.publishRoomUserEvent(
+      roomId,
+      room.ownerId,
+      'newMember',
+      member,
+    );
+
+    return { token };
   }
 }

@@ -9,39 +9,26 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
-import { Member } from './entities/member.entity';
 import { RoomService } from './room.service';
-import { BidDto } from './dto/bid.dto';
-import { RoomRole } from '../../guards/room-roles/room-roles.constants';
-import { RoomRoleGuard } from '../../guards/room-roles/room-roles.guard';
-import { OnModuleDestroy, UseGuards } from '@nestjs/common';
+import { BidDto, CreateBidDto } from './dto/bid.dto';
+import { Injectable, OnModuleDestroy, UseGuards } from '@nestjs/common';
+import { WSRoomRolesGuard } from './guards/ws-roles.guard';
 import {
-  RoomRoles,
-  RoomUser,
-} from '../../guards/room-roles/room-roles.decorator';
-import { BidEntity } from './entities/active-lot.entity';
-import { PlaceLotDto } from './dto/lot.dto';
+  RoomAuthorizedMember,
+  RoomAuthorizedOwner,
+  RoomAuthorizedUser,
+  RoomRole,
+} from './entities/room.entity';
+import { RoomRoles, RoomSockerUser } from './guards/decorators';
+import { RoomLot } from './entities/room-lot.entity';
 
-type BaseEvent<E, T = {}> = {
-  roomId: string;
-  ev: E;
-  data: T;
+type PublishEvent = {
+  room: string;
+  ev: string;
+  data: unknown;
 };
 
-type JoinedRoomEvent = BaseEvent<'joinedRoom', Member>;
-
-type NewLotEvent = BaseEvent<'newLot', PlaceLotDto>;
-
-type NewBidEvent = BaseEvent<'newBid', BidEntity>;
-
-type AuctionFinishedEvent = BaseEvent<'auctionFinished'>;
-
-type PublishEvent =
-  | JoinedRoomEvent
-  | NewLotEvent
-  | NewBidEvent
-  | AuctionFinishedEvent;
-
+@Injectable()
 @WebSocketGateway({
   cors: true,
   namespace: '/ws/room',
@@ -68,116 +55,143 @@ export class RoomGateway implements OnModuleDestroy {
     this.sub.on('message', (_, e) => {
       const event: PublishEvent = JSON.parse(e);
 
-      this.server.to(event.roomId).emit(event.ev, event.data);
+      this.server.to(event.room).emit(event.ev, event.data);
     });
+  }
+
+  private getRoomKey(roomId: string) {
+    return `room:${roomId}`;
+  }
+
+  private getUserRoomKey(roomId: string, userId: string) {
+    return `${this.getRoomKey(roomId)}:${userId}`;
   }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.auth.token as string;
 
-    const payload = this.tokenService.validateRoomToken(token);
-
-    if (!payload) {
+    if (!token) {
       client.disconnect(true);
       return;
     }
 
+    const result = this.tokenService.roomMemberToken.validate(token);
+
+    if (!result.payload) {
+      client.disconnect(true);
+      return;
+    }
+
+    const { payload } = result;
+
     if (!this.subscribedRooms.has(payload.roomId)) {
-      await this.sub.subscribe(`auction-events:${payload.roomId}`);
+      await this.sub.subscribe(this.getRoomKey(payload.roomId));
       this.subscribedRooms.add(payload.roomId);
+    }
+
+    if (!this.subscribedRooms.has(payload.sub)) {
+      await this.sub.subscribe(
+        this.getUserRoomKey(payload.roomId, payload.sub),
+      );
+      this.subscribedRooms.add(payload.sub);
     }
 
     const { sub: id, ...otherProps } = payload;
 
-    const member: Member = {
+    client.data.user = {
       id,
       ...otherProps,
     };
-
-    client.data.user = member;
   }
 
-  publishEvent(event: PublishEvent) {
-    this.pub.publish(`auction-events:${event.roomId}`, JSON.stringify(event));
+  private readonly publishEvent = (event: PublishEvent) => {
+    this.pub.publish(event.room, JSON.stringify(event));
+  };
+
+  publishRoomEvent(roomId: string, ev: string, data: unknown) {
+    const roomEvent: PublishEvent = {
+      room: this.getRoomKey(roomId),
+      ev,
+      data,
+    };
+
+    this.publishEvent(roomEvent);
+  }
+
+  publishRoomUserEvent(
+    roomId: string,
+    userId: string,
+    ev: string,
+    data: unknown,
+  ) {
+    const roomEvent: PublishEvent = {
+      room: this.getUserRoomKey(roomId, userId),
+      ev,
+      data,
+    };
+
+    this.publishEvent(roomEvent);
   }
 
   @SubscribeMessage('join')
   async handleJoin(
     @ConnectedSocket() client: Socket,
-    @RoomUser() user: Member,
+    @RoomSockerUser() user: RoomAuthorizedUser,
   ) {
     if (!user) {
       client.disconnect(true);
       return;
     }
-    await client.join(user.roomId);
 
-    this.publishEvent({
-      roomId: user.roomId,
-      ev: 'joinedRoom',
-      data: user,
-    });
+    await client.join(this.getRoomKey(user.roomId));
+    await client.join(this.getUserRoomKey(user.roomId, user.id));
   }
 
-  @UseGuards(RoomRoleGuard)
+  @UseGuards(WSRoomRolesGuard)
   @RoomRoles(RoomRole.ADMIN)
   @SubscribeMessage('placeLot')
   async handlePlaceLot(
     @ConnectedSocket() client: Socket,
-    @RoomUser() user: Member,
+    @RoomSockerUser() user: RoomAuthorizedOwner,
   ) {
     try {
-      const { lot, total } = await this.roomService.placeLot(
-        user.auctionId,
-        user.roomId,
-      );
+      const data: RoomLot = await this.roomService.placeNextLot(user);
 
-      this.publishEvent({
-        roomId: user.roomId,
-        ev: 'newLot',
-        data: { lot, total },
-      });
+      this.publishRoomEvent(user.roomId, 'newLot', data);
     } catch (e) {
       client.emit('error', { message: e.message });
     }
   }
 
-  @UseGuards(RoomRoleGuard)
+  @UseGuards(WSRoomRolesGuard)
   @RoomRoles(RoomRole.MEMBER)
   @SubscribeMessage('placeBid')
   async handleBid(
-    @MessageBody() bid: BidDto,
+    @MessageBody() bid: CreateBidDto,
     @ConnectedSocket() client: Socket,
-    @RoomUser() user: Member,
+    @RoomSockerUser() user: RoomAuthorizedMember,
   ) {
     try {
-      const newBid = await this.roomService.placeBid(user, bid);
+      const newBid: BidDto = await this.roomService.placeBid(user, bid);
 
-      this.publishEvent({
-        roomId: user.roomId,
-        ev: 'newBid',
-        data: newBid,
-      });
+      // TODO: hide email for members channel
+      this.publishRoomEvent(user.roomId, 'newBid', newBid);
     } catch (e) {
       client.emit('error', { message: e.message });
     }
   }
 
-  @UseGuards(RoomRoleGuard)
+  @UseGuards(WSRoomRolesGuard)
   @RoomRoles(RoomRole.ADMIN)
   @SubscribeMessage('finishAuction')
   async handleFinishAuction(
     @ConnectedSocket() client: Socket,
-    @RoomUser() user: Member,
+    @RoomSockerUser() user: RoomAuthorizedOwner,
   ) {
     try {
-      await this.roomService.finishAuction(user.auctionId, user.roomId);
+      await this.roomService.finishAuction(user);
 
-      this.publishEvent({
-        roomId: user.roomId,
-        ev: 'auctionFinished',
-        data: {},
-      });
+      this.publishRoomEvent(user.roomId, 'auctionFinished', {});
     } catch (e) {
       client.emit('error', { message: e.message });
     }

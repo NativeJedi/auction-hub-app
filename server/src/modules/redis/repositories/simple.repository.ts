@@ -25,7 +25,7 @@ export class RedisSimpleRepository<T> extends BaseRepository {
     );
   }
 
-  del(key: CombinedKey) {
+  clear(key: CombinedKey) {
     return this.client.del(this.getFullKey(key));
   }
 }
