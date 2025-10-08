@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -77,13 +78,14 @@ export class LotsController {
   }
 
   @ApiOperation({ summary: 'Delete lot by id' })
-  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 204 })
   @Delete(':lotId')
+  @HttpCode(204)
   async remove(
     @Param('auctionId') auctionId: string,
     @Param('lotId') lotId: string,
     @AuthUser() user: TokenPayload,
   ) {
-    return this.lotsService.removeLot(user.sub, auctionId, lotId);
+    await this.lotsService.removeLot(user.sub, auctionId, lotId);
   }
 }

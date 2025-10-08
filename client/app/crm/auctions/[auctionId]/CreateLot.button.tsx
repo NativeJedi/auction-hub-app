@@ -31,7 +31,7 @@ const CreateLotButton = ({ auctionId }: Props) => {
   };
 
   return (
-    <button className="btn btn-primary" onClick={handleCreateClick}>
+    <button className="btn btn-primary min-w-35" onClick={handleCreateClick}>
       Create lot
     </button>
   );

@@ -9,6 +9,10 @@ services:
       - "8001:8001"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 2s
+      retries: 10
 
   db:
     image: postgres:16
@@ -23,8 +27,8 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      retries: 5
+      interval: 2s
+      retries: 10
 
   api-dev:
     build:
@@ -32,6 +36,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: auction-api-dev
     profiles: ["dev"]
+    command: sh -c "npm install && npm run start:dev"
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
@@ -39,11 +44,19 @@ services:
       PORT: 3000
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+      CLIENT_URL: http://localhost:3001
+      JWT_ACCESS_SECRET: 'your_jwt_access_secret'
+      JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
+      JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+#      EMAIL_USER: ''
+#      EMAIL_PASSWORD: ''
+#      EMAIL_HOST: ''
+#      EMAIL_PORT: ''
     ports:
       - "3000:3000"
     volumes:
       - ./server/:/usr/src/app
-      - /usr/src/app/node_modules
     depends_on:
       - db
       - redis
@@ -59,11 +72,36 @@ services:
       PORT: 3000
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+      CLIENT_URL: http://localhost:3001
+      JWT_ACCESS_SECRET: 'your_jwt_access_secret'
+      JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
+      JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+      #      EMAIL_USER: ''
+      #      EMAIL_PASSWORD: ''
+      #      EMAIL_HOST: ''
+      #      EMAIL_PORT: ''
     ports:
       - "3000:3000"
     depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  migration:
+    build:
+      context: ./server
+    container_name: auction_migration
+    profiles: [ "migration" ]
+    command: sh -c "npm run migration:generate"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+    depends_on:
       - db
-      - redis
+    volumes:
+      - ./server:/usr/src/app
 
   client-dev:
     build:
@@ -71,15 +109,17 @@ services:
       dockerfile: Dockerfile.dev
     container_name: auction-client-dev
     profiles: [ "dev" ]
+    command: sh -c "npm install && npm run dev"
     environment:
       NODE_ENV: development
       PORT: 3001
       CHOKIDAR_USEPOLLING: true
+      NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
+      API_URL: http://api-dev:3000/api/v1
     ports:
       - "3001:3001"
     volumes:
       - ./client:/usr/src/app
-      - client_node_modules:/usr/src/app/node_modules
     depends_on:
       - api-dev
 
@@ -87,11 +127,15 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        API_URL: http://api-prod:3000/api/v1
     container_name: auction-client-prod
     profiles: [ "prod" ]
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 3001
+      NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
+      API_URL: http://api-prod:3000/api/v1
     ports:
       - "3001:3001"
     depends_on:
@@ -100,4 +144,3 @@ services:
 volumes:
   redis-data:
   pgdata:
-  client_node_modules:

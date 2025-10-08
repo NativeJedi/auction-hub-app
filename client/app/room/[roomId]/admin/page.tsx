@@ -18,8 +18,10 @@ import { useRoomId } from '@/app/room/[roomId]/hooks';
 import RoomBids from '@/app/room/[roomId]/RoomBids';
 import RoomBidInfo from '@/app/room/[roomId]/RoomBidInfo';
 import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
+import { AppClientConfig } from '@/config/client';
+import CopyButton from '@/src/modules/clipboard/CopyButton';
 
-const roomSocket = new BaseSocket('http://localhost:3000/ws/room');
+const roomSocket = new BaseSocket(AppClientConfig.NEXT_PUBLIC_API_WEBSOCKET_URL);
 
 const connectRoomSocket =
   ({
@@ -167,8 +169,15 @@ const RoomAdminPage = () => {
 
   const roomBid = <RoomBidInfo bid={activeLotCurrentBid!} currency={currency} />;
 
+  const INVITE_LINK = `${window.location.origin}/room/${roomInfo.room.id}/invite`;
+
   return (
     <div className="p-6 h-screen flex flex-col">
+      <div className="mb-4 text-sm text-gray-600 flex items-center gap-2" data-testid="invite-link">
+        Send this link to your participants for authorization:
+        <CopyButton text={INVITE_LINK}>Copy invite link</CopyButton>
+      </div>
+
       <RoomHeader auction={roomInfo.room.auction} />
 
       <main className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">

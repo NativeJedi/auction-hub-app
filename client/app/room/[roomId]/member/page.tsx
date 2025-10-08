@@ -11,6 +11,7 @@ import RoomBids from '@/app/room/[roomId]/RoomBids';
 import { fetchMemberRoomInfo } from '@/src/api/requests/browser/room';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { Currency } from '@/src/api/dto/lot.dto';
+import { AppClientConfig } from '@/config/client';
 
 class RoomMemberSocket extends BaseSocket {
   onNewLot(callback: (lot: RoomLot) => void) {
@@ -22,7 +23,7 @@ class RoomMemberSocket extends BaseSocket {
   }
 }
 
-const memberSocket = new RoomMemberSocket('http://localhost:3000/ws/room');
+const memberSocket = new RoomMemberSocket(AppClientConfig.NEXT_PUBLIC_API_WEBSOCKET_URL);
 
 const useMemberRoom = () => {
   const roomId = useRoomId();
@@ -93,7 +94,6 @@ const useMemberRoom = () => {
 
     const amount = activeBid ? activeLotBidAmount - activeBid.amount : activeLotBidAmount;
 
-    console.log('sendBid', amount, activeLot.id);
     memberSocket.emitEvent('placeBid', { amount, lotId: activeLot.id });
   };
 

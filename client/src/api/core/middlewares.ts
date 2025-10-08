@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-function withNextErrorResponse(handler: (req: Request, options?: any) => Promise<unknown>) {
+function withNextErrorResponse(handler: (req: Request, options?: any) => Promise<Response>) {
   return async (req: Request, options?: any) => {
     try {
       return await handler(req, options);

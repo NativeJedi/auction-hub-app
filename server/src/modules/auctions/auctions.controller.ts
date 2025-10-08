@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  HttpCode,
 } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
 import {
@@ -81,9 +82,10 @@ export class AuctionsController {
   }
 
   @ApiOperation({ summary: 'Delete auction' })
-  @ApiResponse({ status: 200, description: 'Auction deleted' })
+  @ApiResponse({ status: 204, description: 'Auction deleted' })
   @Delete(':id')
-  remove(@Param('id') id: string, @AuthUser() user: TokenPayload) {
-    return this.auctionsService.removeOne(id, user.sub);
+  @HttpCode(204)
+  async remove(@Param('id') id: string, @AuthUser() user: TokenPayload) {
+    await this.auctionsService.removeOne(id, user.sub);
   }
 }

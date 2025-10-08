@@ -24,14 +24,9 @@ export class BuyersService {
   ): Promise<Buyer> {
     const lot = await this.lotsService.findLot(userId, auctionId, lotId);
 
-    return this.buyersRepository
-      .save({
-        ...buyer,
-        lot,
-      })
-      .catch((e) => {
-        console.log('BUYERS ERROR', e);
-        throw e;
-      });
+    return this.buyersRepository.save({
+      ...buyer,
+      lot,
+    });
   }
 }

@@ -27,10 +27,12 @@ import { LotsService } from '../lots/lots.service';
 import { LotStatus } from '../lots/entities/lots.entity';
 import { ApiAuthorizationError } from '../../errors';
 import { pickArrayFields, pickFields } from '../../utils/pick';
+import { AppConfigService } from '../../config/app-config.service';
 
 @Injectable()
 export class RoomService {
   constructor(
+    private readonly appConfig: AppConfigService,
     private readonly auctionsService: AuctionsService,
     private readonly tokenService: TokenService,
     private readonly emailService: EmailService,
@@ -139,8 +141,7 @@ export class RoomService {
       email,
     });
 
-    // TODO: insert real link
-    const inviteLink = `http://localhost:3001/room/${roomId}/invite/confirm?token=${token}`;
+    const inviteLink = `${this.appConfig.urls.CLIENT_URL}/room/${roomId}/invite/confirm?token=${token}`;
 
     await this.emailService.sendEmail(
       email,

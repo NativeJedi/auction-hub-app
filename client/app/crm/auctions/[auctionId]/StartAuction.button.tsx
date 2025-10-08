@@ -24,7 +24,10 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <button className="btn btn-success flex items-center gap-2" onClick={handleStartAuction}>
+    <button
+      className="btn btn-success flex items-center gap-2 min-w-35"
+      onClick={handleStartAuction}
+    >
       Start auction
     </button>
   );

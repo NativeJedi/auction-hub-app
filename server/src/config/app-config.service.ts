@@ -38,10 +38,12 @@ export class AppConfigService {
   get urls() {
     const DATABASE_URL = this.config.get<string>('DATABASE_URL')!;
     const REDIS_URL = this.config.get<string>('REDIS_URL')!;
+    const CLIENT_URL = this.config.get<string>('CLIENT_URL')!;
 
     return {
       DATABASE_URL,
       REDIS_URL,
+      CLIENT_URL,
     };
   }
 

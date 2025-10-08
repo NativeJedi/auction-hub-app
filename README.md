@@ -19,10 +19,16 @@
 
 ## ⚙️ Running
 
+### Requirements
+- Node.js 18+
+- Docker
+
 ### Development
 ```bash
 npm run dev
 ```
+
+Go to http://localhost:3001/crm/auth to access the app
 
 ### Production
 ```bash
@@ -37,6 +43,8 @@ npm run test:e2e
 ### 📦 Environment Variables
 
 Set these variables in your `docker-compose.yml` or `.env` file:
+
+API variables:
 
 | Variable                              | Description                                              |
 | ------------------------------------- | -------------------------------------------------------- |
@@ -53,6 +61,13 @@ Set these variables in your `docker-compose.yml` or `.env` file:
 | `EMAIL_USER`                          | Email server user                                        |
 | `EMAIL_PASSWORD`                      | Email server password                                    |
 
+Client variables:
+
+| Variable                               | Description          |
+|----------------------------------------|----------------------|
+| `NEXT_PUBLIC_API_WEBSOCKET_URL`        | Websocket url of API |
+| `API_URL`                              | URL of API           |
+
 
 ## 📚 Tech Stack
 - NestJS — server framework
@@ -68,11 +83,12 @@ You can explore the API endpoints using Swagger:
 http://localhost:3000/api/v1
 
 ## 📌 TODO
-- [ ] Remove hardcoded urls
 - [ ] Add unauth middlewares to client
-- [ ] Add breadcrums to pages
+- [ ] Add loading states / validation to client
+- [ ] Add breadcrums navigation to client
+- [ ] Add pagination to lots list
 - [ ] Add finish auction status
-- [ ] Block actions by status
+- [ ] Block action edit by status
 - [ ] Add lot images upload
-- [ ] Handle events race condition on back
+- [ ] Add events throttling to avoid race condition
 - [ ] Add normal JWT refresh token rotation

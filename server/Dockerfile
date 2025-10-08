@@ -19,12 +19,11 @@ RUN npm prune --omit=dev
 
 
 FROM node:20-alpine AS prod
+
 WORKDIR /usr/src/app
-ENV NODE_ENV=production
 
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY package*.json ./
 
-EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["npm", "run", "start:prod"]

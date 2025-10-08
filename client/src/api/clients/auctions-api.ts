@@ -3,11 +3,10 @@ import { cookies } from 'next/headers';
 import { TypedAxiosInstance } from '@/src/api/core/types';
 import { responseDataInterceptor } from '@/src/api/core/interceptors';
 import { isApiExpiredTokenError, TokenExpiredError } from '@/src/utils/errors';
-
-const BASE_URL = 'http://api-dev:3000/api/v1';
+import { AppServerConfig } from '@/config/server';
 
 const auctionsAPI: TypedAxiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: AppServerConfig.API_URL,
 });
 
 const requestCookieAuthInterceptor = async (config: InternalAxiosRequestConfig) => {

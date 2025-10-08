@@ -11,7 +11,6 @@ export class EmailService {
     const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD } =
       this.appConfig.emailSettings;
 
-    console.log({ EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD });
     this.transporter = nodemailer.createTransport({
       host: EMAIL_HOST,
       port: EMAIL_PORT,

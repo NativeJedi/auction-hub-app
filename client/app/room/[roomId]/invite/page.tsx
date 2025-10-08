@@ -8,12 +8,15 @@ import { useErrorNotification } from '@/src/modules/notifications/NotifcationCon
 const InvitePage = () => {
   const [invited, setInvited] = useState(false);
   const [form, setForm] = useState({ name: '', email: '' });
+  const [isLoading, setIsLoading] = useState(false);
   const showError = useErrorNotification();
 
   const roomId = useRoomId();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setIsLoading(true);
 
     try {
       await sendRoomInvite(roomId, form);
@@ -22,6 +25,8 @@ const InvitePage = () => {
     } catch (error) {
       console.error(error);
       showError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +53,7 @@ const InvitePage = () => {
                 className="input input-bordered w-full"
                 required
               />
-              <button type="submit" className="btn btn-primary w-full">
+              <button disabled={isLoading} type="submit" className="btn btn-primary w-full">
                 Send invite
               </button>
             </form>
