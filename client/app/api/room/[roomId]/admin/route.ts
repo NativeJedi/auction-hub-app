@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { fetchRoomAdminServer } from '@/src/api/requests/server/room';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
 import { cookies } from 'next/headers';
+import { fetchRoomAdminServer } from '@/src/api/auctions-api/requests/room';
 
 type Options = { params: Promise<{ roomId: string }> };
 

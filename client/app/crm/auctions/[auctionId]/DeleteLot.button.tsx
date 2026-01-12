@@ -8,7 +8,7 @@ import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { deleteLot } from '@/src/api/requests/browser/lot';
+import { deleteLot } from '@/src/api/auctions-api-client/requests/lot';
 
 type Props = {
   lot: Lot;

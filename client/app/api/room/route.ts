@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createRoomServer } from '@/src/api/requests/server/room';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import { createRoomServer } from '@/src/api/auctions-api/requests/room';
 
 const createRoom = async (req: Request) => {
   const body = await req.json();

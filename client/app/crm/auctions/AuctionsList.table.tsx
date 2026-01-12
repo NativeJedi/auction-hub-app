@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { formatISODate } from '@/src/utils/date';
-import { fetchAuctionsServer } from '@/src/api/requests/server/auctions';
 import { Auction, AuctionStatus } from '@/src/api/dto/auction.dto';
 import { DeleteAuctionButton } from '@/app/crm/auctions/DeleteAuction.button';
 import TableLayout from '@/src/ui/components/TableLayout';
+import { fetchAuctionsServer } from '@/src/api/auctions-api/requests/auctions';
 
 const statusClassMap: Record<Auction['status'], string> = {
   [AuctionStatus.STARTED]: 'badge badge-success',

@@ -1,6 +1,6 @@
 import { PaginatedResponseDto } from '@/src/api/dto/pagination.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { auctionsAPI } from '@/src/api/clients/auctions-api';
+import { auctionsAPI } from '@/src/api/auctions-api/api';
 
 type AuctionsResponse = PaginatedResponseDto<Auction>;
 
@@ -10,7 +10,7 @@ export const fetchAuctionsServer = ({
 }: {
   page?: number | string;
   limit?: number | string;
-} = {}): Promise<AuctionsResponse> =>
+} = {}) =>
   auctionsAPI.get<AuctionsResponse>('/auctions', {
     params: { page, limit },
   });

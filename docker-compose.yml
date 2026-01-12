@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: auction-hub-db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -49,6 +49,8 @@ services:
       JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
       JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+      JWT_ACCESS_TTL: 900
+      JWT_REFRESH_TTL: 172800
 #      EMAIL_USER: ''
 #      EMAIL_PASSWORD: ''
 #      EMAIL_HOST: ''
@@ -77,6 +79,8 @@ services:
       JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
       JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+      JWT_ACCESS_TTL: 900
+      JWT_REFRESH_TTL: 172800
       #      EMAIL_USER: ''
       #      EMAIL_PASSWORD: ''
       #      EMAIL_HOST: ''
@@ -116,6 +120,9 @@ services:
       CHOKIDAR_USEPOLLING: true
       NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
       API_URL: http://api-dev:3000/api/v1
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_TTL: 900
+      JWT_REFRESH_TTL: 172800
     ports:
       - "3001:3001"
     volumes:
@@ -136,6 +143,9 @@ services:
       PORT: 3001
       NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
       API_URL: http://api-prod:3000/api/v1
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_TTL: 900
+      JWT_REFRESH_TTL: 172800
     ports:
       - "3001:3001"
     depends_on:

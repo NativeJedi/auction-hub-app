@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { registerServer } from '@/src/api/requests/server/auth';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
-import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from '@/src/api/constants';
+import { sessionStorage } from '@/src/services/session';
+import { SESSION_COOKIE_NAME, SESSION_COOKIE_SETTINGS } from '@/src/services/session/constants';
+import { registerServer } from '@/src/api/auctions-api/requests/auth';
 
 const register = async (req: Request) => {
   const body = await req.json();
@@ -10,9 +11,12 @@ const register = async (req: Request) => {
 
   const response = NextResponse.json({ user });
 
-  response.cookies.set('accessToken', accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+  const { id } = await sessionStorage.create({
+    accessToken,
+    refreshToken,
+  });
 
-  response.cookies.set('refreshToken', refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+  response.cookies.set(SESSION_COOKIE_NAME, id, SESSION_COOKIE_SETTINGS);
 
   return response;
 };

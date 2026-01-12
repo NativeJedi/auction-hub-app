@@ -101,10 +101,12 @@ export class AuthService {
       throw new ApiAuthorizationError();
     }
 
-    return await this.generateTokens({
+    const newTokens = await this.generateTokens({
       id: result.payload.sub,
       email: result.payload.email,
     });
+
+    return newTokens;
   }
 
   async logout(userId: User['id']) {

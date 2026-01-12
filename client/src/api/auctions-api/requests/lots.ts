@@ -1,6 +1,6 @@
 import { Auction } from '@/src/api/dto/auction.dto';
 import { CreateLotDto, Lot } from '@/src/api/dto/lot.dto';
-import { auctionsAPI } from '@/src/api/clients/auctions-api';
+import { auctionsAPI } from '@/src/api/auctions-api/api';
 
 export const fetchLotsServer = (auctionId: Auction['id']) =>
   auctionsAPI.get<Lot[]>(`/auctions/${auctionId}/lots`);

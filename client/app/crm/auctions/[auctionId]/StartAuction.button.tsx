@@ -1,9 +1,9 @@
 'use client';
 
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
-import { createRoom } from '@/src/api/requests/browser/room';
 import { useRouter } from 'next/navigation';
 import { setRoomToken } from '@/src/utils/local-storage';
+import { createRoom } from '@/src/api/auctions-api-client/requests/room';
 
 const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   const router = useRouter();

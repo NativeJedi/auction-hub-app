@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { deleteLotServer } from '@/src/api/requests/server/lots';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import { deleteLotServer } from '@/src/api/auctions-api/requests/lots';
 
 type Options = { params: Promise<{ auctionId: string; lotId: string }> };
 

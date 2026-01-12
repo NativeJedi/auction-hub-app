@@ -4,7 +4,7 @@ import { createLotModal } from '@/app/crm/auctions/[auctionId]/CreateLot.modal';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { createLot } from '@/src/api/requests/browser/lot';
+import { createLot } from '@/src/api/auctions-api-client/requests/lot';
 
 type Props = {
   auctionId: Auction['id'];

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { deleteAuctionServer, fetchAuctionByIdServer } from '@/src/api/requests/server/auctions';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import {
+  deleteAuctionServer,
+  fetchAuctionByIdServer,
+} from '@/src/api/auctions-api/requests/auctions';
 
 type Options = { params: Promise<{ auctionId: string }> };
 

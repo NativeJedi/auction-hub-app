@@ -1,8 +1,8 @@
 import { DeleteLotButton } from '@/app/crm/auctions/[auctionId]/DeleteLot.button';
 import TableLayout from '@/src/ui/components/TableLayout';
-import { fetchLotsServer } from '@/src/api/requests/server/lots';
 import { Lot, LotStatus } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
+import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 
 const headers = [
   {

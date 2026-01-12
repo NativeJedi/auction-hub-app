@@ -1,6 +1,6 @@
-import { sendRoomInviteServer } from '@/src/api/requests/server/room';
 import { NextResponse } from 'next/server';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import { sendRoomInviteServer } from '@/src/api/auctions-api/requests/room';
 
 type Options = { params: Promise<{ roomId: string }> };
 

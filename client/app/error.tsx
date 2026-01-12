@@ -1,38 +1,21 @@
 'use client';
 
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { isUnauthorizedError } from '@/src/utils/errors';
 import { useEffect } from 'react';
-import { isTokenExpiredError } from '@/src/utils/errors';
-import { refreshToken } from '@/src/api/requests/browser/auth';
 
 interface ErrorProps {
-  error: Error;
-  reset: () => void;
+  error: any;
+  reset: () => void; // reset працює лише при client component
 }
 
-const RefreshTokenComponent = () => {
-  useEffect(() => {
-    if (window.refreshingPromise) return;
-
-    window.refreshingPromise = refreshToken()
-      .then(() => {
-        window.location.reload();
-      })
-      .catch(() => {
-        window.location.href = '/crm/auth';
-      })
-      .finally(() => {
-        delete window.refreshingPromise;
-      });
-  }, []);
-
-  return null;
-};
-
 export default function GlobalError({ error, reset }: ErrorProps) {
-  if (isTokenExpiredError(error)) {
-    return <RefreshTokenComponent />;
-  }
+  useEffect(() => {
+    if (isUnauthorizedError(error)) {
+      redirect('/crm/auth');
+    }
+  }, [error]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-base-100 text-base-content px-4">

@@ -1,6 +1,5 @@
 'use client';
 
-import { deleteAuction } from '@/src/api/requests/browser/auctions';
 import {
   useErrorNotification,
   useNotification,
@@ -8,6 +7,7 @@ import {
 import { Auction } from '@/src/api/dto/auction.dto';
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
+import { deleteAuction } from '@/src/api/auctions-api-client/requests/auctions';
 
 type DeleteAuctionButtonProps = {
   auction: Auction;

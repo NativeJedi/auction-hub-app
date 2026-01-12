@@ -3,7 +3,7 @@
 import { createAuctionModal } from '@/app/crm/auctions/CreateAuction.modal';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { createAuction } from '@/src/api/requests/browser/auctions';
+import { createAuction } from '@/src/api/auctions-api-client/requests/auctions';
 
 export const CreateAuctionButton = () => {
   const router = useRouter();

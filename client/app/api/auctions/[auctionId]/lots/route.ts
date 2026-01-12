@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createLotServer, fetchLotsServer } from '@/src/api/requests/server/lots';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import { createLotServer, fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 
 type Options = { params: Promise<{ auctionId: string }> };
 

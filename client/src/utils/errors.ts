@@ -1,20 +1,15 @@
-import { AxiosError } from 'axios';
 import { isObjectWithProperty } from '@/src/utils/checkers';
 
-export class TokenExpiredError extends AxiosError {
-  constructor(error: AxiosError) {
-    super(error.message, '401', error.config, error.request, error.response);
+export class UnauthorizedError extends Error {
+  code: string;
 
-    this.name = 'TokenExpiredError';
+  constructor() {
+    super('User is not authorized');
+    this.code = 'UNAUTHORIZED';
+    this.name = 'UnauthorizedError';
   }
 }
 
-export const isTokenExpiredError = (error: unknown): error is TokenExpiredError => {
-  return isObjectWithProperty(error, 'name') && error.name === 'TokenExpiredError';
-};
-
-export const isApiExpiredTokenError = (error: AxiosError) => {
-  return (
-    error.response?.status === 401 && (error.response?.data as any)?.reason === 'EXPIRED_TOKEN'
-  );
+export const isUnauthorizedError = (error: unknown): error is UnauthorizedError => {
+  return isObjectWithProperty(error, 'name') && error.name === 'UnauthorizedError';
 };

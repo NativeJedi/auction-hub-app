@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createAuctionServer } from '@/src/api/requests/server/auctions';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
+import { createAuctionServer } from '@/src/api/auctions-api/requests/auctions';
 
 const createAuction = async (req: Request) => {
   const body = await req.json();

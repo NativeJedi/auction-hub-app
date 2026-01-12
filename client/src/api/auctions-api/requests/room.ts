@@ -7,7 +7,7 @@ import {
   RoomMemberInfoResponseDto,
   SendInviteDto,
 } from '@/src/api/dto/room.dto';
-import { auctionsAPI } from '@/src/api/clients/auctions-api';
+import { auctionsAPI } from '@/src/api/auctions-api/api';
 
 export const createRoomServer = ({ auctionId }: { auctionId: string }) =>
   auctionsAPI.post<CreateRoomResponseDto>('/room', { auctionId });

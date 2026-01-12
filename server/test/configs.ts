@@ -25,6 +25,7 @@ const loadTestConfig = ({
     EMAIL_PORT: 0,
     EMAIL_USER: '',
     EMAIL_PASSWORD: '',
+    CLIENT_URL: 'http://localhost:3001',
   };
 
   return TestAppConfig;

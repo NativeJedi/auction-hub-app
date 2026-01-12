@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 import { setRoomToken } from '@/src/utils/local-storage';
-import { confirmRoomInvite } from '@/src/api/requests/browser/room';
 import { useQueryParam, useRoomId } from '@/app/room/[roomId]/hooks';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
+import { confirmRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 
 const ConfirmInvite = () => {
   const roomId = useRoomId();

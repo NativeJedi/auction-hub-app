@@ -13,13 +13,13 @@ import { getRoomToken } from '@/src/utils/local-storage';
 import { useRouter } from 'next/navigation';
 import BaseSocket from '@/src/sockets/base-socket';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { fetchAdminRoomInfo } from '@/src/api/requests/browser/room';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import RoomBids from '@/app/room/[roomId]/RoomBids';
 import RoomBidInfo from '@/app/room/[roomId]/RoomBidInfo';
 import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
 import { AppClientConfig } from '@/config/client';
 import CopyButton from '@/src/modules/clipboard/CopyButton';
+import { fetchAdminRoomInfo } from '@/src/api/auctions-api-client/requests/room';
 
 const roomSocket = new BaseSocket(AppClientConfig.NEXT_PUBLIC_API_WEBSOCKET_URL);
 

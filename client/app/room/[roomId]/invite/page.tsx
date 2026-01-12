@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { sendRoomInvite } from '@/src/api/requests/browser/room';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
+import { sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 
 const InvitePage = () => {
   const [invited, setInvited] = useState(false);

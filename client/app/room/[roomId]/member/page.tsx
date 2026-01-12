@@ -8,10 +8,10 @@ import { getRoomToken } from '@/src/utils/local-storage';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
 import RoomBids from '@/app/room/[roomId]/RoomBids';
-import { fetchMemberRoomInfo } from '@/src/api/requests/browser/room';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { Currency } from '@/src/api/dto/lot.dto';
 import { AppClientConfig } from '@/config/client';
+import { fetchMemberRoomInfo } from '@/src/api/auctions-api-client/requests/room';
 
 class RoomMemberSocket extends BaseSocket {
   onNewLot(callback: (lot: RoomLot) => void) {
