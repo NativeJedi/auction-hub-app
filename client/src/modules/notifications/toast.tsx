@@ -1,3 +1,4 @@
+import { Button } from '@/ui-kit/ui/button';
 type ToastType = 'success' | 'error' | 'info';
 
 export type ToastProps = {
@@ -20,23 +21,28 @@ export class Toast {
   }
 }
 
+import { X, CheckCircle, XCircle, Info } from 'lucide-react';
+
 export const ToastItem = ({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) => {
   const icon = {
-    success: '✅',
-    error: '❌',
-    info: 'ℹ️',
+    success: <CheckCircle className="h-5 w-5 text-success" />,
+    error: <XCircle className="h-5 w-5 text-destructive" />,
+    info: <Info className="h-5 w-5 text-info" />,
   };
 
   return (
-    <div className="alert shadow-lg flex items-start gap-3 p-4 min-w-[280px] bg-base-100 border rounded-lg animate-fadeIn">
-      <div className="flex-shrink-0 text-xl">{icon[toast.type]}</div>
+    <div className="flex items-start gap-3 p-4 min-w-[280px] max-w-[340px] bg-card border rounded-lg shadow-md animate-in fade-in">
+      <div>{icon[toast.type]}</div>
+
       <div className="flex-1">
-        {toast.title && <div className="font-bold">{toast.title}</div>}
-        <div>{toast.message}</div>
+        {toast.title && <div className="font-semibold text-sm">{toast.title}</div>}
+
+        <div className="text-sm text-muted-foreground">{toast.message}</div>
       </div>
-      <button onClick={onDismiss} className="btn btn-ghost btn-sm btn-circle ml-2 self-start">
-        ✖️
-      </button>
+
+      <Button variant="ghost" size="icon" onClick={onDismiss} className="h-6 w-6">
+        <X />
+      </Button>
     </div>
   );
 };

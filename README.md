@@ -83,12 +83,13 @@ You can explore the API endpoints using Swagger:
 http://localhost:3000/api/v1
 
 ## 📌 TODO
-- [ ] Add unauth middlewares to client
+- [ ] Add lot images upload
+- [ ] Add email confirmation for new users
 - [ ] Add loading states / validation to client
 - [ ] Add breadcrums navigation to client
-- [ ] Add pagination to lots list
+- [ ] Add pagination to auctions and lots list
 - [ ] Add finish auction status
 - [ ] Block action edit by status
-- [ ] Add lot images upload
-- [ ] Add events throttling to avoid race condition
-- [ ] Add normal JWT refresh token rotation
+- [ ] Add separate API for room
+- [ ] Add CI/CD
+- [ ] Test socket connection

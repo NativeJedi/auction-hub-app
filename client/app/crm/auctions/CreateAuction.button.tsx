@@ -4,6 +4,8 @@ import { createAuctionModal } from '@/app/crm/auctions/CreateAuction.modal';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { createAuction } from '@/src/api/auctions-api-client/requests/auctions';
+import { Button } from '@/ui-kit/ui/button';
+import { Plus } from 'lucide-react';
 
 export const CreateAuctionButton = () => {
   const router = useRouter();
@@ -28,8 +30,8 @@ export const CreateAuctionButton = () => {
   };
 
   return (
-    <button className="btn btn-primary cursor-pointer" onClick={handleCreateClick}>
-      Create Auction
-    </button>
+    <Button onClick={handleCreateClick}>
+      <Plus /> Create
+    </Button>
   );
 };

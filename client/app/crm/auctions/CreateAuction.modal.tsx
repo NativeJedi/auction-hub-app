@@ -1,8 +1,8 @@
 import { createModalRenderer, ModalControllerProps } from '@/src/modules/modals/modalRenderer';
 import { useState } from 'react';
 import { ModalLayout } from '@/src/modules/modals/ModalLayout';
-import TextField from '@/src/ui/components/TextField';
 import { Auction } from '@/src/api/dto/auction.dto';
+import TextField from '@/src/components/form/fields/TextField';
 
 type CreatedAuction = Pick<Auction, 'name' | 'description'>;
 
@@ -15,27 +15,21 @@ const CreateAuctionModal = ({ onClose, onSubmit }: ModalControllerProps<CreatedA
     onClose();
   };
 
+  const submit = {
+    label: 'Create',
+    onClick: handleSubmit,
+  };
+
   return (
-    <ModalLayout title="Create Auction" onClose={onClose}>
-      <div className="flex flex-col gap-4">
-        <TextField label="Name" placeholder="Auction name" id="name" onChange={setName} />
+    <ModalLayout title="Create Auction" onClose={onClose} submit={submit}>
+      <TextField label="Name" placeholder="Auction name" id="name" onChange={setName} />
 
-        <TextField
-          label="Description"
-          placeholder="Auction description"
-          id="description"
-          onChange={setDescription}
-        />
-
-        <div className="modal-action justify-end gap-2">
-          <button className="btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            Create
-          </button>
-        </div>
-      </div>
+      <TextField
+        label="Description"
+        placeholder="Auction description"
+        id="description"
+        onChange={setDescription}
+      />
     </ModalLayout>
   );
 };

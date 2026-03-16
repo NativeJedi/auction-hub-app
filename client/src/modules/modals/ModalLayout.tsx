@@ -1,38 +1,45 @@
 'use client';
 
 import { ReactNode } from 'react';
+import {
+  DialogHeader,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/ui-kit/ui/dialog';
+import { Button } from '@/ui-kit/ui/button';
+
+type SubmitAction = {
+  label: string;
+  onClick: () => void;
+};
 
 type Props = {
   title?: string;
   children: ReactNode;
   onClose: () => void;
+  submit: SubmitAction;
 };
 
-export function ModalLayout({ title, children, onClose }: Props) {
+export function ModalLayout({ title, children, onClose, submit }: Props) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div
-        className="fixed inset-0 bg-black/10 transition-opacity duration-200 opacity-0 animate-fadeIn"
-        onClick={onClose}
-      />
-
-      <div className="modal modal-open z-50">
-        <div className="modal-box relative p-6 transition-transform duration-200 transform scale-90 opacity-0 animate-scaleFadeIn">
-          {title && (
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">{title}</h3>
-              <button
-                className="text-gray-500 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition cursor-pointer"
-                onClick={onClose}
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {children}
-        </div>
-      </div>
-    </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {children}
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={submit.onClick} type="submit">
+            {submit.label}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -130,7 +130,6 @@ export class RoomGateway implements OnModuleDestroy {
       data,
     };
 
-    console.log('publishRoomUserEvent', roomEvent);
     this.publishEvent(roomEvent);
   }
 

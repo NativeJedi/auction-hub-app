@@ -12,22 +12,15 @@ const ConfirmModal = ({
   title,
   description,
 }: ModalControllerProps<void> & ConfirmModalProps) => {
-  const handleConfirm = () => {
-    onSubmit();
+  const submit = {
+    label: 'Confirm',
+    onClick: () => onSubmit(),
   };
 
   return (
-    <ModalLayout title={title || 'Confirm'} onClose={onClose}>
+    <ModalLayout title={title || 'Confirm'} onClose={onClose} submit={submit}>
       <div className="flex flex-col gap-4">
         <p>{description || 'Are you sure?'}</p>
-        <div className="modal-action justify-end gap-2">
-          <button className="btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-error" onClick={handleConfirm}>
-            Confirm
-          </button>
-        </div>
       </div>
     </ModalLayout>
   );

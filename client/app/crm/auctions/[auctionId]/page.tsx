@@ -1,8 +1,10 @@
-import { fetchAuctionByIdServer } from '@/src/api/requests/server/auctions';
 import { formatISODate } from '@/src/utils/date';
 import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
 import LotsList from '@/app/crm/auctions/[auctionId]/LotsList.table';
 import StartAuctionButton from '@/app/crm/auctions/[auctionId]/StartAuction.button';
+import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/ui-kit/ui/card';
+import PageHeader from '@/src/layouts/PageHeader';
 
 type LotsPageProps = {
   params: Promise<{
@@ -16,27 +18,33 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
   const auction = await fetchAuctionByIdServer(auctionId);
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="card p-6 shadow-md rounded-md space-y-2">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">{auction.name}</h1>
+    <div className="space-y-8 p-8">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-3xl">{auction.name}</CardTitle>
+
           <StartAuctionButton auctionId={auction.id} />
-        </div>
-        {auction.description && <p>{auction.description}</p>}
-        <div className="text-sm text-gray-500">
-          <p>Created at: {formatISODate(auction.createdAt)}</p>
-          <p>ID: {auction.id}</p>
-        </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {auction.description && (
+            <CardDescription className="text-base text-foreground">
+              {auction.description}
+            </CardDescription>
+          )}
+
+          <div className="text-sm text-muted-foreground">
+            <p>Created at: {formatISODate(auction.createdAt)}</p>
+            <p>ID: {auction.id}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="pl-6 pr-6">
+        <PageHeader title="Lots" action={<CreateLotButton auctionId={auction.id} />} />
       </div>
 
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">Lots</h2>
-          <CreateLotButton auctionId={auction.id} />
-        </div>
-
-        <LotsList auctionId={auction.id} />
-      </div>
+      <LotsList auctionId={auction.id} />
     </div>
   );
 };

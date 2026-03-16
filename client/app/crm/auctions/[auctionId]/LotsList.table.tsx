@@ -1,85 +1,74 @@
 import { DeleteLotButton } from '@/app/crm/auctions/[auctionId]/DeleteLot.button';
-import TableLayout from '@/src/ui/components/TableLayout';
 import { Lot, LotStatus } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
-
-const headers = [
-  {
-    text: 'Name',
-  },
-  {
-    text: 'Description',
-  },
-  {
-    text: 'Status',
-  },
-  {
-    text: 'Currency',
-  },
-  {
-    text: 'Starting Price',
-  },
-  {
-    text: 'Sold Price',
-  },
-  {
-    text: 'Buyer',
-  },
-  {
-    text: 'Actions',
-    centered: true,
-  },
-];
-
-const LotStatusesMap: Record<LotStatus, string> = {
-  sold: 'badge badge-success',
-  created: 'badge badge-neutral',
-  unsold: 'badge badge-error',
-};
-
-const getStatusClass = (status: LotStatus) => {
-  return LotStatusesMap[status] || 'badge badge-neutral';
-};
+import { Badge } from '@/ui-kit/ui/badge';
+import { Columns, DataTable } from '@/src/components/DataTable';
+import { StatusMap } from '@/src/components/StatusBadge';
 
 const LotBuyerValue = ({ lot }: { lot: Lot }) => {
   if (!lot.buyer) return '-';
 
   return (
-    <div>
-      <div>
-        <b>{lot.buyer.name}</b>
-      </div>
-      <div>{lot.buyer.email}</div>
+    <div className="flex flex-col">
+      <span className="font-medium">{lot.buyer.name}</span>
+      <span className="text-muted-foreground text-sm">{lot.buyer.email}</span>
     </div>
   );
 };
 
+const LotStatusBadge = ({ status }: { status: LotStatus }) => {
+  const variantMap: StatusMap<LotStatus> = {
+    [LotStatus.CREATED]: 'default',
+    [LotStatus.SOLD]: 'success',
+    [LotStatus.UNSOLD]: 'error',
+  };
+
+  return <Badge variant={variantMap[status]}>{status}</Badge>;
+};
+
+const getColumns = (auctionId: Auction['id']): Columns<Lot> => [
+  {
+    header: 'Name',
+    render: (lot) => lot.name,
+  },
+  {
+    header: 'Description',
+    render: (lot) => lot.description,
+  },
+  {
+    header: 'Status',
+    render: (lot) => <LotStatusBadge status={lot.status} />,
+  },
+  {
+    header: 'Currency',
+    render: (lot) => lot.currency,
+  },
+  {
+    header: 'Starting Price',
+    render: (lot) => lot.startPrice,
+  },
+  {
+    header: 'Sold Price',
+    render: (lot) => lot.soldPrice ?? '-',
+  },
+  {
+    header: 'Buyer',
+    render: (lot) => <LotBuyerValue lot={lot} />,
+  },
+  {
+    header: 'Actions',
+    align: 'center',
+    render: (lot) => <DeleteLotButton auctionId={auctionId} lot={lot} />,
+  },
+];
+
 const LotsList = async ({ auctionId }: { auctionId: Auction['id'] }) => {
   const lots = await fetchLotsServer(auctionId);
 
-  return (
-    <TableLayout headers={headers}>
-      {lots.map((lot) => (
-        <tr key={lot.id}>
-          <td>{lot.name}</td>
-          <td>{lot.description}</td>
-          <td>
-            <span className={`${getStatusClass(lot.status)} inline-block`}>{lot.status}</span>
-          </td>
-          <td>{lot.currency}</td>
-          <td>{lot.startPrice}</td>
-          <td>{lot.soldPrice ?? '-'}</td>
-          <td>
-            <LotBuyerValue lot={lot} />
-          </td>
-          <td className="text-center">
-            <DeleteLotButton auctionId={auctionId} lot={lot} />
-          </td>
-        </tr>
-      ))}
-    </TableLayout>
-  );
+  const columns = getColumns(auctionId);
+
+  return <DataTable data={lots} columns={columns} />;
 };
 
 export default LotsList;

@@ -5,6 +5,8 @@ import { Auction } from '@/src/api/dto/auction.dto';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { createLot } from '@/src/api/auctions-api-client/requests/lot';
+import { Plus } from 'lucide-react';
+import { Button } from '@/ui-kit/ui/button';
 
 type Props = {
   auctionId: Auction['id'];
@@ -31,9 +33,9 @@ const CreateLotButton = ({ auctionId }: Props) => {
   };
 
   return (
-    <button className="btn btn-primary min-w-35" onClick={handleCreateClick}>
-      Create lot
-    </button>
+    <Button className="min-w-[100px]" onClick={handleCreateClick}>
+      <Plus /> Add
+    </Button>
   );
 };
 

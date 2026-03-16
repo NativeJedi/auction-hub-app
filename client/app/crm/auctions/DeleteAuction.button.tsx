@@ -8,6 +8,8 @@ import { Auction } from '@/src/api/dto/auction.dto';
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
 import { deleteAuction } from '@/src/api/auctions-api-client/requests/auctions';
+import { Button } from '@/ui-kit/ui/button';
+import { Trash2 } from 'lucide-react';
 
 type DeleteAuctionButtonProps = {
   auction: Auction;
@@ -42,12 +44,13 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
   };
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={handleDelete}
-      className="group relative p-1 rounded cursor-pointer hover:bg-gray-100"
-      title="Delete auction"
+      title={`Delete auction ${auction.name}`}
     >
-      🗑️
-    </button>
+      <Trash2 />
+    </Button>
   );
 };

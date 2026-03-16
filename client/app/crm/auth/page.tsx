@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
-import FormLayout from '@/app/crm/auth/FormLayout';
 import FormChangeViewButton from '@/app/crm/auth/FormChangeViewButton';
-import TextField from '@/src/ui/components/TextField';
 import { ApiError } from 'next/dist/server/api-utils';
 import { login, register } from '@/src/api/auctions-api-client/requests/auth';
+import FormLayout from '@/src/components/form/FormLayout';
+import TextField from '@/src/components/form/fields/TextField';
 
 type FormProps = {
   onChangeView: () => void;
@@ -15,6 +15,7 @@ type FormProps = {
   onError: (error: ApiError) => void;
 };
 
+// TODO: try server actions
 function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,7 +38,7 @@ function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
         </FormChangeViewButton>
       }
       submitLabel="Login"
-      onSubmit={handleSubmit as any}
+      onSubmit={handleSubmit}
     >
       <TextField
         value={email}
@@ -72,8 +73,7 @@ function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
 
   const handleSubmit = async () => {
     register({ email, password })
-      .then(({ user }) => {
-        localStorage.setItem('user', JSON.stringify(user));
+      .then(() => {
         onSubmit();
       })
       .catch(onError);
@@ -88,7 +88,7 @@ function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
         </FormChangeViewButton>
       }
       submitLabel="Register"
-      onSubmit={handleSubmit as any}
+      onSubmit={handleSubmit}
     >
       <TextField
         value={email}

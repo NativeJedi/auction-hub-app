@@ -6,7 +6,7 @@ const publicRoutes = ['/crm/auth', '/room'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const isPublicRoute = publicRoutes.includes(path);
+  const isPublicRoute = publicRoutes.some((routeSlice) => path.includes(routeSlice));
 
   if (isPublicRoute) return NextResponse.next();
 

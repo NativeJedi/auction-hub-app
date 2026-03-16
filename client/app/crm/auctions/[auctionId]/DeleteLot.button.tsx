@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { deleteLot } from '@/src/api/auctions-api-client/requests/lot';
+import { Button } from '@/ui-kit/ui/button';
+import { Trash2 } from 'lucide-react';
 
 type Props = {
   lot: Lot;
@@ -44,12 +46,8 @@ export const DeleteLotButton = ({ lot, auctionId }: Props) => {
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      className="group relative p-1 rounded cursor-pointer hover:bg-gray-100"
-      title="Delete auction"
-    >
-      🗑️
-    </button>
+    <Button variant="ghost" size="icon" onClick={handleDelete} title={`Delete lot ${lot.name}`}>
+      <Trash2 />
+    </Button>
   );
 };

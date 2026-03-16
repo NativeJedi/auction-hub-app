@@ -24,10 +24,13 @@ export const fetchRoomMemberServer = ({ roomId, token }: { roomId: string; token
     headers: {
       ['x-room-token']: token,
     },
+    skipAuth: true,
   });
 
 export const sendRoomInviteServer = (id: Room['id'], dto: SendInviteDto) =>
-  auctionsAPI.post(`/room/${id}/invite`, dto);
+  auctionsAPI.post(`/room/${id}/invite`, dto, { skipAuth: true });
 
 export const confirmRoomInviteServer = (id: Room['id'], dto: ConfirmRoomInviteDto) =>
-  auctionsAPI.post<ConfirmRoomInviteResponseDto>(`/room/${id}/invite/confirm`, dto);
+  auctionsAPI.post<ConfirmRoomInviteResponseDto>(`/room/${id}/invite/confirm`, dto, {
+    skipAuth: true,
+  });

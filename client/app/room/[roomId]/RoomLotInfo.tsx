@@ -1,20 +1,21 @@
 import { RoomLot } from '@/src/api/dto/room.dto';
+import RoomCard from '@/app/room/[roomId]/RoomCard';
+import { PropsWithChildren } from 'react';
 
-type Props = {
+type Props = PropsWithChildren<{
   lot: RoomLot;
-  bid?: React.ReactNode;
-};
+}>;
 
-const ActiveLot = ({ lot, bid }: Props) => {
+const RoomLotInfo = ({ lot, children }: Props) => {
   return (
-    <div className="card bg-base-100 shadow-md p-6 rounded-md">
-      <h3 className="text-xl font-bold">{lot.name}</h3>
-      <p className="text-sm opacity-80 mb-2">{lot.description}</p>
+    <RoomCard title={lot.name} description={lot.description}>
       <p className="font-medium">
         Start price: {lot.startPrice} {lot.currency}
       </p>
-      {bid}
-    </div>
+
+      {children}
+    </RoomCard>
   );
 };
-export default ActiveLot;
+
+export default RoomLotInfo;

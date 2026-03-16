@@ -1,15 +1,27 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-kit/ui/card';
+
 type Props = {
-  auction: {
-    name: string;
-    description?: string;
-  };
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
 };
 
-const RoomHeader = ({ auction }: Props) => (
-  <header className="mb-6">
-    <h1 className="text-3xl font-bold">{auction.name}</h1>
-    {auction?.description && <p>{auction.description}</p>}
-  </header>
+const RoomHeader = ({ title, description, action }: Props) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardTitle className="text-3xl">
+        <h1>{title}</h1>
+      </CardTitle>
+
+      {action}
+    </CardHeader>
+
+    {description && (
+      <CardContent>
+        <CardDescription className="text-base text-foreground">{description}</CardDescription>
+      </CardContent>
+    )}
+  </Card>
 );
 
 export default RoomHeader;

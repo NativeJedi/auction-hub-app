@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { isUnauthorizedError } from '@/src/utils/errors';
 import { useEffect } from 'react';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui-kit/ui/card';
+import { Button } from '@/ui-kit/ui/button';
 
 interface ErrorProps {
   error: any;
@@ -18,21 +20,24 @@ export default function GlobalError({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base-100 text-base-content px-4">
-      <div className="bg-white dark:bg-base-200 shadow-lg rounded-xl p-8 max-w-md w-full text-center">
-        <h1 className="text-5xl font-bold text-error mb-4">😵 Oops!</h1>
-        <h2 className="text-2xl font-semibold mb-2">Something went wrong</h2>
-        <p className="text-base-content/70 mb-6">{error.message || 'Unknown error occurred.'}</p>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader>
+          <CardTitle className="text-5xl mb-2">😵</CardTitle>
+          <CardTitle className="text-2xl">Something went wrong</CardTitle>
+          <CardDescription className="text-md">
+            {error?.message || 'Unknown error occurred.'}
+          </CardDescription>
+        </CardHeader>
 
-        <div className="flex justify-center gap-4">
-          <button className="btn btn-primary" onClick={() => reset()}>
-            Retry
-          </button>
-          <Link href="/crm/auth" className="btn btn-outline">
-            Go login
-          </Link>
-        </div>
-      </div>
+        <CardFooter className="flex justify-center gap-3">
+          <Button onClick={reset}>Retry</Button>
+
+          <Button variant="outline" asChild>
+            <Link href="/crm/auth">Go login</Link>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,10 @@
 'use client';
 
+import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/ui-kit/ui/button';
+import { Badge } from '@/ui-kit/ui/badge';
+
 import {
   RoomAdminInfoResponseDto,
   RoomBid,
@@ -8,18 +13,17 @@ import {
   RoomMember,
 } from '@/src/api/dto/room.dto';
 import RoomHeader from '@/app/room/[roomId]/RoomHeader';
-import { useEffect, useMemo, useState } from 'react';
-import { getRoomToken } from '@/src/utils/local-storage';
-import { useRouter } from 'next/navigation';
+import RoomBids from '@/app/room/[roomId]/RoomBids';
 import BaseSocket from '@/src/sockets/base-socket';
+import { getRoomToken } from '@/src/utils/local-storage';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
-import RoomBids from '@/app/room/[roomId]/RoomBids';
-import RoomBidInfo from '@/app/room/[roomId]/RoomBidInfo';
-import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
 import { AppClientConfig } from '@/config/client';
-import CopyButton from '@/src/modules/clipboard/CopyButton';
 import { fetchAdminRoomInfo } from '@/src/api/auctions-api-client/requests/room';
+import RoomSection from '@/app/room/[roomId]/RoomSection';
+import CopyInviteLink from '@/app/room/[roomId]/admin/CopyInviteLink';
+import RoomCard from '@/app/room/[roomId]/RoomCard';
+import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
 
 const roomSocket = new BaseSocket(AppClientConfig.NEXT_PUBLIC_API_WEBSOCKET_URL);
 
@@ -41,23 +45,16 @@ const connectRoomSocket =
   }) =>
   (token: string) => {
     roomSocket.connect(token);
-
     roomSocket.onEvent<RoomLot>('newLot', onLot);
-
     roomSocket.onEvent<RoomLot>('auctionFinished', onFinish);
-
     roomSocket.onEvent<RoomInvite>('newInvite', onInvite);
-
     roomSocket.onEvent<RoomBid>('newBid', onBid);
-
     roomSocket.onEvent<RoomMember>('newMember', onMember);
-
     roomSocket.onError(onError);
   };
 
 const useRoom = () => {
   const [roomInfo, setRoomInfo] = useState<RoomAdminInfoResponseDto>();
-
   const [activeLot, setActiveLot] = useState<RoomLot>();
   const [activeLotBids, setActiveLotBids] = useState<RoomBid[]>([]);
   const [members, setMembers] = useState<RoomMember[]>([]);
@@ -68,11 +65,12 @@ const useRoom = () => {
   const onError = useErrorNotification();
 
   const onMember = (member: RoomMember) => {
-    setMembers((prevMembers) => [...prevMembers, member]);
-    setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== member.id));
+    setMembers((prev) => [...prev, member]);
+    setInvites((prev) => prev.filter((i) => i.id !== member.id));
   };
-  const onInvite = (invite: RoomMember) => setInvites((prevInvites) => [...prevInvites, invite]);
-  const onBid = (bid: RoomBid) => setActiveLotBids((prevBids) => [...prevBids, bid]);
+
+  const onInvite = (invite: RoomMember) => setInvites((prev) => [...prev, invite]);
+  const onBid = (bid: RoomBid) => setActiveLotBids((prev) => [...prev, bid]);
   const onLot = (lot: RoomLot) => {
     setActiveLot(lot);
     setActiveLotBids([]);
@@ -80,19 +78,18 @@ const useRoom = () => {
 
   useEffect(() => {
     const token = getRoomToken(roomId);
-
     if (!token) {
       router.replace('/crm/auctions');
       return;
     }
 
     fetchAdminRoomInfo({ roomId })
-      .then((response) => {
-        setRoomInfo(response);
-        setActiveLotBids(response.activeLotBids);
-        setMembers(response.members);
-        setActiveLot(response.activeLot);
-        setInvites(response.invites);
+      .then((resp) => {
+        setRoomInfo(resp);
+        setActiveLot(resp.activeLot);
+        setActiveLotBids(resp.activeLotBids);
+        setMembers(resp.members);
+        setInvites(resp.invites);
 
         connectRoomSocket({
           onMember,
@@ -100,41 +97,26 @@ const useRoom = () => {
           onBid,
           onLot,
           onError,
-          onFinish: () => router.push(`/crm/auctions/${response.room.auction.id}`),
+          onFinish: () => router.push(`/crm/auctions/${resp.room.auction.id}`),
         })(token);
       })
       .catch(onError);
 
-    return () => {
-      roomSocket.disconnect();
-    };
+    return () => roomSocket.disconnect();
   }, []);
 
   const lots = roomInfo?.lots || [];
-
-  const activeLotCurrentBid = activeLotBids?.length
-    ? activeLotBids[activeLotBids.length - 1]
-    : activeLotBids[0];
+  const activeLotCurrentBid = activeLotBids?.[activeLotBids.length - 1] || activeLotBids[0];
 
   const isLastLot = useMemo(() => {
     if (!activeLot) return true;
-
-    const lotIndex = lots.findIndex((lot) => lot.id === activeLot?.id);
-
-    const lotNumber = lotIndex + 1;
-
-    const totalLots = lots.length;
-
-    return lotNumber === totalLots;
+    const index = lots.findIndex((lot) => lot.id === activeLot.id);
+    return index === lots.length - 1;
   }, [activeLot, lots]);
 
   const switchLot = () => {
-    if (isLastLot) {
-      roomSocket.emitEvent('finishAuction');
-      return;
-    }
-
-    roomSocket.emitEvent('placeLot');
+    if (isLastLot) roomSocket.emitEvent('finishAuction');
+    else roomSocket.emitEvent('placeLot');
   };
 
   return {
@@ -149,6 +131,22 @@ const useRoom = () => {
   };
 };
 
+const ConditionField = ({
+  condition,
+  label,
+  children,
+}: PropsWithChildren<{ condition: boolean; label: string }>) => {
+  if (!condition) {
+    return <p>{label}: -</p>;
+  }
+
+  return (
+    <p>
+      {label}: <span className="text-primary font-bold">{children}</span>
+    </p>
+  );
+};
+
 const RoomAdminPage = () => {
   const {
     roomInfo,
@@ -161,62 +159,66 @@ const RoomAdminPage = () => {
     switchLot,
   } = useRoom();
 
-  if (!roomInfo) {
-    return null;
-  }
+  if (!roomInfo || !activeLot) return null;
 
-  const currency = activeLot!.currency;
-
-  const roomBid = <RoomBidInfo bid={activeLotCurrentBid!} currency={currency} />;
-
-  const INVITE_LINK = `${window.location.origin}/room/${roomInfo.room.id}/invite`;
+  const currency = activeLot.currency;
 
   return (
-    <div className="p-6 h-screen flex flex-col">
-      <div className="mb-4 text-sm text-gray-600 flex items-center gap-2" data-testid="invite-link">
-        Send this link to your participants for authorization:
-        <CopyButton text={INVITE_LINK}>Copy invite link</CopyButton>
-      </div>
-
-      <RoomHeader auction={roomInfo.room.auction} />
+    <div className="p-6 h-screen flex flex-col space-y-6">
+      <RoomHeader
+        title={roomInfo.room.auction.name}
+        description={roomInfo.room.auction.description}
+        action={<CopyInviteLink roomId={roomInfo.room.id} />}
+      />
 
       <main className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
-        <div className="flex flex-col gap-6">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Active lot</h2>
-
-            <RoomLotInfo lot={activeLot!} bid={roomBid} />
-
-            <div className="flex gap-3 mt-4">
-              <button onClick={switchLot} className="btn btn-primary">
+        <div className="flex flex-col gap-6 h-full">
+          <RoomSection
+            title="Active lot"
+            action={
+              <Button variant="default" onClick={switchLot}>
                 {isLastLot ? 'Finish auction' : 'Next lot'}
-              </button>
-            </div>
-          </section>
+              </Button>
+            }
+          >
+            <RoomLotInfo lot={activeLot}>
+              <ConditionField label="Current bid" condition={!!activeLotCurrentBid}>
+                {`${activeLotCurrentBid?.amount} ${currency}`}
+              </ConditionField>
+              <ConditionField label="By" condition={!!activeLotCurrentBid}>
+                {activeLotCurrentBid?.name}
+              </ConditionField>
+            </RoomLotInfo>
+          </RoomSection>
         </div>
 
         <div className="flex flex-col gap-6 h-full">
-          <RoomBids currency={currency} bids={activeLotBids} />
+          <RoomSection title="Bids">
+            <RoomBids currency={currency} bids={activeLotBids} />
+          </RoomSection>
         </div>
 
         <div className="flex flex-col gap-6 h-full">
-          <section className="flex-1 flex flex-col">
-            <h2 className="text-2xl font-semibold mb-4">Participants</h2>
-            <div className="card bg-base-100 shadow-md rounded-md flex-1 overflow-y-auto p-4 space-y-2">
+          <RoomSection title="Participants">
+            <RoomCard>
               {members.map((member) => (
                 <div key={member.id} className="flex items-center justify-between">
                   <span>{member.name}</span>
-                  <span className="badge badge-success">joined</span>
+                  <Badge className="min-w-[82px]" variant="success" outline size="sm">
+                    joined
+                  </Badge>
                 </div>
               ))}
               {invites.map((invite) => (
                 <div key={invite.id} className="flex items-center justify-between">
                   <span>{invite.name}</span>
-                  <span className="badge badge-neutral">invited</span>
+                  <Badge className="min-w-[82px]" variant="draft" outline size="sm">
+                    invited
+                  </Badge>
                 </div>
               ))}
-            </div>
-          </section>
+            </RoomCard>
+          </RoomSection>
         </div>
       </main>
     </div>

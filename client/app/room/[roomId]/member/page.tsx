@@ -12,6 +12,10 @@ import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { Currency } from '@/src/api/dto/lot.dto';
 import { AppClientConfig } from '@/config/client';
 import { fetchMemberRoomInfo } from '@/src/api/auctions-api-client/requests/room';
+import RoomSection from '@/app/room/[roomId]/RoomSection';
+import RoomCard from '@/app/room/[roomId]/RoomCard';
+import NumberField from '@/src/components/form/fields/NumberField';
+import { Button } from '@/ui-kit/ui/button';
 
 class RoomMemberSocket extends BaseSocket {
   onNewLot(callback: (lot: RoomLot) => void) {
@@ -130,58 +134,50 @@ const RoomMemberPage = () => {
   const handleIncreaseBid = (amount: number) => () => increaseBid(amount);
 
   return (
-    <div className="p-6 h-screen flex flex-col">
-      <RoomHeader auction={roomInfo.room.auction} />
+    <div className="p-6 h-screen flex flex-col space-y-6">
+      <RoomHeader
+        title={roomInfo.room.auction.name}
+        description={roomInfo.room.auction.description}
+      />
 
       <main className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
         <div className="flex flex-col gap-6">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Active lot</h2>
-
+          <RoomSection title="Active lot">
             <RoomLotInfo lot={activeLot!} />
-          </section>
+          </RoomSection>
         </div>
 
         <div className="flex flex-col gap-6 h-full">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Place your bid</h2>
-            <div className="card bg-base-100 shadow-md p-6 rounded-md flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={activeLotBidAmount}
-                  type="number"
-                  placeholder="Enter your bid"
-                  className="input input-bordered w-full"
-                />
-                <button
-                  className="btn btn-outline"
+          <RoomSection title="Place your bid">
+            <RoomCard>
+              <div className="flex items-center space-x-4 mb-4">
+                <NumberField id="bid-amount" readOnly value={activeLotBidAmount} />
+                <Button
+                  variant="primaryOutline"
                   disabled={!activeLot}
                   onClick={handleIncreaseBid(500)}
                 >
                   +500
-                </button>
-                <button
-                  className="btn btn-outline"
+                </Button>
+                <Button
+                  variant="primaryOutline"
                   disabled={!activeLot}
                   onClick={handleIncreaseBid(1000)}
                 >
                   +1000
-                </button>
+                </Button>
               </div>
-              <button
-                disabled={isSendBidDisabled}
-                onClick={sendBid}
-                className="btn btn-primary w-full"
-              >
+              <Button disabled={isSendBidDisabled} onClick={sendBid}>
                 Place bid
-              </button>
-            </div>
-          </section>
+              </Button>
+            </RoomCard>
+          </RoomSection>
         </div>
 
         <div className="flex flex-col gap-6 h-full">
-          <RoomBids currency={activeLotCurrency} bids={activeLotBids} />
+          <RoomSection title="Bids">
+            <RoomBids currency={activeLotCurrency} bids={activeLotBids} />
+          </RoomSection>
         </div>
       </main>
     </div>

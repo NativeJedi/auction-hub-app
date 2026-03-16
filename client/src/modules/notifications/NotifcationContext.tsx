@@ -2,7 +2,12 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { Toast, ToastItem, ToastProps } from '@/src/modules/notifications/toast';
-import { isObjectWithProperty, isString } from '@/src/utils/checkers';
+import {
+  isObject,
+  isObjectWithProperties,
+  isObjectWithProperty,
+  isString,
+} from '@/src/utils/checkers';
 
 type ShowToast = (toast: ToastProps) => void;
 type DismissToast = (id: number) => void;
@@ -27,10 +32,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const showToast: ShowToast = useCallback(
     (toast) => {
-      const id = Date.now();
-      setToasts((prev) => [...prev, new Toast(toast)]);
+      const newToast = new Toast(toast);
+      setToasts((prev) => [...prev, newToast]);
 
-      setTimeout(() => dismissToast(id), 5000);
+      setTimeout(() => dismissToast(newToast.id), 5000);
     },
     [toasts]
   );
@@ -59,16 +64,30 @@ export const useErrorNotification = () => {
   const { showToast } = useNotification();
 
   const handleError = (error: unknown) => {
-    if (!isObjectWithProperty(error, 'message')) {
-      throw error;
-    }
-    const { message, name } = error;
+    if (
+      isObjectWithProperty(error, 'data') &&
+      isObjectWithProperties<{
+        error: string;
+        message: string;
+      }>(error.data, ['error', 'message'])
+    ) {
+      showToast({
+        title: error.data.error,
+        message: error.data.message,
+      });
 
-    showToast({
-      title: isString(name) ? name : '',
-      message: isString(message) ? message : 'Unknown error',
-      type: 'error',
-    });
+      return;
+    }
+
+    if (isObjectWithProperty(error, 'message')) {
+      showToast({
+        title: isString(error.name) ? error.name : '',
+        message: isString(error.message) ? error.message : 'Unknown error',
+        type: 'error',
+      });
+    }
+
+    throw error;
   };
 
   return handleError;
