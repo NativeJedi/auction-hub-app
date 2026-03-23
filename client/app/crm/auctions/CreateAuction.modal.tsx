@@ -1,34 +1,39 @@
 import { createModalRenderer, ModalControllerProps } from '@/src/modules/modals/modalRenderer';
-import { useState } from 'react';
 import { ModalLayout } from '@/src/modules/modals/ModalLayout';
 import { Auction } from '@/src/api/dto/auction.dto';
-import TextField from '@/src/components/form/fields/TextField';
+import { FormBuilder, FormField } from '@/src/modules/forms';
+import { z } from 'zod';
 
 type CreatedAuction = Pick<Auction, 'name' | 'description'>;
 
-const CreateAuctionModal = ({ onClose, onSubmit }: ModalControllerProps<CreatedAuction>) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+const validationSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().default(''),
+});
 
-  const handleSubmit = () => {
-    onSubmit({ name, description });
+const fields: FormField[] = [
+  { name: 'name', type: 'text', label: 'Name', placeholder: 'Auction name' },
+  { name: 'description', type: 'text', label: 'Description', placeholder: 'Auction description"' },
+];
+
+type FormFields = {
+  name: string;
+  description: string;
+};
+
+const CreateAuctionModal = ({ onClose, onSubmit }: ModalControllerProps<CreatedAuction>) => {
+  const handleSubmit = (values: FormFields) => {
+    onSubmit(values);
     onClose();
   };
 
-  const submit = {
-    label: 'Create',
-    onClick: handleSubmit,
-  };
-
   return (
-    <ModalLayout title="Create Auction" onClose={onClose} submit={submit}>
-      <TextField label="Name" placeholder="Auction name" id="name" onChange={setName} />
-
-      <TextField
-        label="Description"
-        placeholder="Auction description"
-        id="description"
-        onChange={setDescription}
+    <ModalLayout title="Create Auction" onClose={onClose}>
+      <FormBuilder
+        schema={validationSchema}
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitLabel="Create"
       />
     </ModalLayout>
   );

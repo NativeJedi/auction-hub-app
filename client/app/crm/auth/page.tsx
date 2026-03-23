@@ -7,7 +7,8 @@ import FormChangeViewButton from '@/app/crm/auth/FormChangeViewButton';
 import { ApiError } from 'next/dist/server/api-utils';
 import { login, register } from '@/src/api/auctions-api-client/requests/auth';
 import FormLayout from '@/src/components/form/FormLayout';
-import TextField from '@/src/components/form/fields/TextField';
+import { FormBuilder, FormField } from '@/src/modules/forms';
+import { z } from 'zod';
 
 type FormProps = {
   onChangeView: () => void;
@@ -15,15 +16,45 @@ type FormProps = {
   onError: (error: ApiError) => void;
 };
 
-// TODO: try server actions
-function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+type FormValues = {
+  email: string;
+  password: string;
+};
 
-  const handleSubmit = async () => {
-    login({ email, password })
-      .then(({ user }) => {
-        localStorage.setItem('user', JSON.stringify(user));
+const validationSchema = z.object({
+  email: z.string().email('Incorrect email'),
+  password: z.string().min(8, 'Minimum 8 characters'),
+});
+
+const EmailField: FormField = {
+  name: 'email',
+  type: 'email',
+  label: 'Email',
+  placeholder: 'you@example.com',
+  autoComplete: 'email',
+};
+const PasswordField: FormField = {
+  name: 'password',
+  type: 'password',
+  label: 'Password',
+  placeholder: '••••••••',
+  autoComplete: 'new-password',
+};
+
+const fields: FormField[] = [EmailField, PasswordField];
+
+const loginFields: FormField[] = [
+  EmailField,
+  {
+    ...PasswordField,
+    autoComplete: 'current-password',
+  },
+];
+
+function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
+  const handleSubmit = (values: FormValues) => {
+    return login(values)
+      .then(() => {
         onSubmit();
       })
       .catch(onError);
@@ -37,42 +68,20 @@ function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
           Register
         </FormChangeViewButton>
       }
-      submitLabel="Login"
-      onSubmit={handleSubmit}
     >
-      <TextField
-        value={email}
-        onChange={setEmail}
-        label="Email"
-        placeholder="you@example.com"
-        id="email"
-        type="email"
-      />
-      <TextField
-        value={password}
-        onChange={setPassword}
-        label="Password"
-        placeholder="••••••••"
-        id="password"
-        type="password"
+      <FormBuilder<FormValues>
+        schema={validationSchema}
+        fields={loginFields}
+        onSubmit={handleSubmit}
+        submitLabel="Login"
       />
     </FormLayout>
   );
 }
 
-type RegisterFormFields = { email: string; password: string };
-
 function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
-  const [{ email, password }, setFields] = useState<RegisterFormFields>({
-    email: '',
-    password: '',
-  });
-
-  const handleChangeField = (field: keyof RegisterFormFields) => (value: string) =>
-    setFields((prev) => ({ ...prev, [field]: value }));
-
-  const handleSubmit = async () => {
-    register({ email, password })
+  const handleSubmit = async (values: FormValues) => {
+    register(values)
       .then(() => {
         onSubmit();
       })
@@ -87,24 +96,12 @@ function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
           Login
         </FormChangeViewButton>
       }
-      submitLabel="Register"
-      onSubmit={handleSubmit}
     >
-      <TextField
-        value={email}
-        onChange={handleChangeField('email')}
-        label="Email"
-        placeholder="you@example.com"
-        id="email"
-        type="email"
-      />
-      <TextField
-        value={password}
-        onChange={handleChangeField('password')}
-        label="Password"
-        placeholder="••••••••"
-        id="password"
-        type="password"
+      <FormBuilder<FormValues>
+        schema={validationSchema}
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitLabel="Register"
       />
     </FormLayout>
   );
@@ -125,6 +122,7 @@ export default function AuthPage() {
       message: error.message || 'Authorization failed',
     });
   };
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-base-200 p-4 transition-colors">
       {isLogin ? (

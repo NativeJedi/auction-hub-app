@@ -1,70 +1,49 @@
 'use client';
 
 import { createModalRenderer, ModalControllerProps } from '@/src/modules/modals/modalRenderer';
-import { useState } from 'react';
 import { ModalLayout } from '@/src/modules/modals/ModalLayout';
 import { CreateLotDto, Currency } from '@/src/api/dto/lot.dto';
-import TextField from '@/src/components/form/fields/TextField';
-import { Dropdown } from '@/src/components/form/fields/Dropdown';
-import NumberField from '@/src/components/form/fields/NumberField';
+import { FormBuilder, FormField } from '@/src/modules/forms';
+import { z } from 'zod';
 
 const options = Object.values(Currency).map((currency) => ({
   label: currency,
   value: currency,
 }));
 
+const fields: FormField[] = [
+  { name: 'name', type: 'text', label: 'Name', placeholder: 'Lot name' },
+  { name: 'description', type: 'text', label: 'Description', placeholder: 'Lot description"' },
+  { name: 'startPrice', type: 'number', label: 'Start Price', placeholder: 'Start Price' },
+  { name: 'currency', type: 'select', label: 'Currency', options },
+];
+
+const validationSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().default(''),
+  startPrice: z.number().min(0, 'Start price must be greater than 0'),
+  currency: z.enum(Object.values(Currency)),
+});
+
+type FormFields = {
+  name: string;
+  description: string;
+  startPrice: number;
+  currency: Currency;
+};
 const CreateLotModal = ({ onClose, onSubmit }: ModalControllerProps<CreateLotDto>) => {
-  const [fields, setFields] = useState({
-    name: '',
-    description: '',
-    startPrice: 0,
-    currency: Currency.UAH,
-  });
-
-  const handleChangeField = (field: keyof CreateLotDto) => (value: string | number) =>
-    setFields((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-  const submit = {
-    label: 'Create',
-    onClick: () => {
-      onSubmit(fields);
-      onClose();
-    },
+  const handleSubmit = (fields: FormFields) => {
+    onSubmit(fields);
+    onClose();
   };
 
   return (
-    <ModalLayout title="Create Lot" onClose={onClose} submit={submit}>
-      <TextField
-        label="Name"
-        placeholder="Lot name"
-        id="name"
-        onChange={handleChangeField('name')}
-      />
-
-      <TextField
-        label="Description"
-        placeholder="Lot description"
-        id="description"
-        onChange={handleChangeField('description')}
-      />
-
-      <Dropdown
-        id="currency"
-        label="Currency"
-        options={options}
-        value={fields.currency}
-        onChange={handleChangeField('currency')}
-      />
-
-      <NumberField
-        value={fields.startPrice}
-        label="Start Price"
-        placeholder="Start Price"
-        id="startPrice"
-        onChange={handleChangeField('startPrice')}
+    <ModalLayout title="Create Lot" onClose={onClose}>
+      <FormBuilder
+        schema={validationSchema}
+        fields={fields}
+        submitLabel="Create"
+        onSubmit={handleSubmit}
       />
     </ModalLayout>
   );

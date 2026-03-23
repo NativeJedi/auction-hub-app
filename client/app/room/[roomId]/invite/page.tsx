@@ -5,9 +5,10 @@ import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import FormLayout from '@/src/components/form/FormLayout';
-import TextField from '@/src/components/form/fields/TextField';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { LucideCircleCheck } from 'lucide-react';
+import { FormBuilder, FormField } from '@/src/modules/forms';
+import { z } from 'zod';
 
 const SuccessInviteMessage = () => {
   return (
@@ -27,39 +28,43 @@ const SuccessInviteMessage = () => {
   );
 };
 
+const validationSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+});
+
+type FormFields = {
+  name: string;
+  email: string;
+};
+
+const fields: FormField[] = [
+  { name: 'name', type: 'text', label: 'Name', placeholder: 'Name' },
+  { name: 'email', type: 'email', label: 'Email', placeholder: 'Email' },
+];
+
 const InviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
-  const [form, setForm] = useState({ name: '', email: '' });
   const showError = useErrorNotification();
 
   const roomId = useRoomId();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async (values: FormFields) => {
     try {
-      await sendRoomInvite(roomId, form);
+      await sendRoomInvite(roomId, values);
 
       onSuccess();
     } catch (error) {
-      console.error(error);
       showError(error);
     }
   };
 
   return (
-    <FormLayout title="Registration for auction" submitLabel="Send invite" onSubmit={handleSubmit}>
-      <TextField
-        label="Name"
-        placeholder="Name"
-        id="name"
-        onChange={(name) => setForm({ ...form, name })}
-      />
-
-      <TextField
-        label="Email"
-        placeholder="Email"
-        id="email"
-        onChange={(email) => setForm({ ...form, email })}
+    <FormLayout title="Registration for auction">
+      <FormBuilder<FormFields>
+        schema={validationSchema}
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitLabel="Send invite"
       />
     </FormLayout>
   );

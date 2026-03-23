@@ -1,27 +1,11 @@
-'use client';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui-kit/ui/card';
-import { Button } from '@/ui-kit/ui/button';
 
 type FormLayoutProps = {
   title: string;
   footer?: React.ReactNode;
-  submitLabel: string;
-  onSubmit: (e: React.FormEvent) => void;
 };
 
-const FormLayout = ({
-  title,
-  children,
-  footer,
-  submitLabel,
-  onSubmit,
-}: React.PropsWithChildren<FormLayoutProps>) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(e);
-  };
-
+const FormLayout = ({ title, children, footer }: React.PropsWithChildren<FormLayoutProps>) => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -29,13 +13,7 @@ const FormLayout = ({
       </CardHeader>
 
       <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {children}
-
-          <Button type="submit" className="w-full">
-            {submitLabel}
-          </Button>
-        </form>
+        {children}
 
         {footer && <div className="w-full text-center text-sm text-muted-foreground">{footer}</div>}
       </CardContent>
