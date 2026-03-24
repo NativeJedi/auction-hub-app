@@ -28,12 +28,50 @@ services:
       interval: 2s
       retries: 10
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: auction-minio
+    profiles: [ "dev" ]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: quay.io/minio/mc
+    container_name: auction-minio-init
+    profiles: [ "dev" ]
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
+      MINIO_BUCKET: ${STORAGE_BUCKET}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      mc mb --ignore-existing local/$${MINIO_BUCKET};
+      mc anonymous set download local/$${MINIO_BUCKET};
+      exit 0;
+      "
+
   api-dev:
     build:
       context: ./server
       dockerfile: Dockerfile.dev
     container_name: auction-api-dev
-    profiles: ["dev"]
+    profiles: [ "dev" ]
     command: sh -c "npm install && npm run start:dev"
     environment:
       NODE_ENV: development
@@ -43,16 +81,24 @@ services:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
       CLIENT_URL: http://localhost:3001
-      JWT_ACCESS_SECRET: 'your_jwt_access_secret'
-      JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
-      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
-      JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
+      JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: 900
       JWT_REFRESH_TTL: 172800
-#      EMAIL_USER: ''
-#      EMAIL_PASSWORD: ''
-#      EMAIL_HOST: ''
-#      EMAIL_PORT: ''
+      # Storage (MinIO for dev)
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_REGION: ${STORAGE_REGION}
+      # URL for browser (not for a docker image)
+      STORAGE_PUBLIC_URL: http://localhost:9000
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
     ports:
       - "3000:3000"
     volumes:
@@ -60,6 +106,7 @@ services:
     depends_on:
       - db
       - redis
+      - minio
 
   api-prod:
     build:
@@ -73,16 +120,23 @@ services:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
       CLIENT_URL: http://localhost:3001
-      JWT_ACCESS_SECRET: 'your_jwt_access_secret'
-      JWT_REFRESH_SECRET: 'your_jwt_refresh_secret'
-      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: 'your_jwt_room_member_invite_token_secret'
-      JWT_ROOM_MEMBER_TOKEN_SECRET: 'your_jwt_room_member_token_secret'
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
+      JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: 900
       JWT_REFRESH_TTL: 172800
-      #      EMAIL_USER: ''
-      #      EMAIL_PASSWORD: ''
-      #      EMAIL_HOST: ''
-      #      EMAIL_PORT: ''
+      # Storage (AWS S3 for prod)
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_REGION: ${STORAGE_REGION}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
     ports:
       - "3000:3000"
     depends_on:
@@ -119,6 +173,10 @@ services:
       NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
       API_URL: http://api-dev:3000/api/v1
       REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
+      JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: 900
       JWT_REFRESH_TTL: 172800
     ports:
@@ -142,6 +200,10 @@ services:
       NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
       API_URL: http://api-prod:3000/api/v1
       REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
+      JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: 900
       JWT_REFRESH_TTL: 172800
     ports:
@@ -152,3 +214,4 @@ services:
 volumes:
   redis-data:
   pgdata:
+  minio-data:

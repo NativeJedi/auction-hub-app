@@ -60,4 +60,15 @@ export class AppConfigService {
       EMAIL_PASSWORD,
     };
   }
+
+  get storageSettings() {
+    return {
+      STORAGE_ACCESS_KEY: this.config.get<string>('STORAGE_ACCESS_KEY')!,
+      STORAGE_SECRET_KEY: this.config.get<string>('STORAGE_SECRET_KEY')!,
+      STORAGE_BUCKET: this.config.get<string>('STORAGE_BUCKET')!,
+      STORAGE_ENDPOINT: this.config.get<string>('STORAGE_ENDPOINT')!,
+      STORAGE_REGION: this.config.get<string>('STORAGE_REGION')!,
+      STORAGE_PUBLIC_URL: this.config.get<string>('STORAGE_PUBLIC_URL')!,
+    };
+  }
 }

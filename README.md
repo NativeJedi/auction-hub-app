@@ -85,11 +85,15 @@ http://localhost:3000/api/v1
 ## 📌 TODO
 - [ ] Add lot images upload
 - [ ] Add email confirmation for new users
-- [ ] Add loading states / validation to client
 - [ ] Add breadcrums navigation to client
 - [ ] Add pagination to auctions and lots list
 - [ ] Add finish auction status
 - [ ] Block action edit by status
 - [ ] Add separate API for room
+- [ ] Add user profile
 - [ ] Add CI/CD
 - [ ] Test socket connection
+
+## Prepare PROD:
+- [ ] Deploy
+- [ ] Image bucket

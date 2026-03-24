@@ -5,11 +5,12 @@ import { User } from '../modules/users/entities/user.entity';
 import { Auction } from '../modules/auctions/entities/auction.entity';
 import { Lot } from '../modules/lots/entities/lots.entity';
 import { Buyer } from '../modules/buyers/entities/buyer.entity';
+import { LotImage } from '../modules/lots/entities/lot-image.entity';
 
 const ProductionConfig: DataSourceOptions = {
   type: 'postgres',
   url: AppConfig.DATABASE_URL,
-  entities: [User, Auction, Lot, Buyer],
+  entities: [User, Auction, Lot, LotImage, Buyer],
   synchronize: false,
   migrations: ['dist/migrations/*.js'],
 };

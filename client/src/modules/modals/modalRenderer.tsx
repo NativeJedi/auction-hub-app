@@ -15,7 +15,7 @@ type OnSubmit<T> = (data?: T) => void;
 
 type OnClose = () => void;
 
-export type ModalControllerProps<T = undefined> = {
+export type ModalControllerProps<T = undefined, P = {}> = P & {
   onClose: OnClose;
   onSubmit: OnSubmit<T>;
 };

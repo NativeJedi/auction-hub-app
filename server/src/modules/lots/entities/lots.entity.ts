@@ -4,6 +4,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,6 +12,7 @@ import {
 import { Auction } from '../../auctions/entities/auction.entity';
 import { Currency } from '../../../types/currency';
 import { Buyer } from '../../buyers/entities/buyer.entity';
+import { LotImage } from './lot-image.entity';
 
 export enum LotStatus {
   CREATED = 'created',
@@ -32,8 +34,8 @@ export class Lot {
   @Column({ nullable: true })
   description?: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  images?: string[];
+  @OneToMany(() => LotImage, (image) => image.lot, { cascade: true })
+  images: LotImage[];
 
   @Column({ type: 'enum', enum: LotStatus, default: LotStatus.CREATED })
   status: LotStatus;

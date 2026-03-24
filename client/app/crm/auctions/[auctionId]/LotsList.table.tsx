@@ -5,6 +5,7 @@ import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 import { Badge } from '@/ui-kit/ui/badge';
 import { StatusMap } from '@/src/components/StatusBadge';
 import { Columns, DataTable } from '@/src/modules/tables';
+import ManageLotImagesButton from '@/app/crm/auctions/[auctionId]/ManageLotImages.button';
 
 const LotBuyerValue = ({ lot }: { lot: Lot }) => {
   if (!lot.buyer) return '-';
@@ -59,7 +60,12 @@ const getColumns = (auctionId: Auction['id']): Columns<Lot> => [
   {
     header: 'Actions',
     align: 'center',
-    render: (lot) => <DeleteLotButton auctionId={auctionId} lot={lot} />,
+    render: (lot) => (
+      <>
+        <DeleteLotButton auctionId={auctionId} lot={lot} />
+        <ManageLotImagesButton auctionId={auctionId} lot={lot} />
+      </>
+    ),
   },
 ];
 

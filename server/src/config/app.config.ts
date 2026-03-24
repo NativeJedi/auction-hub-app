@@ -27,6 +27,14 @@ interface AppConfigInterface {
   EMAIL_PORT: number;
   EMAIL_USER: string;
   EMAIL_PASSWORD: string;
+
+  // storage settings
+  STORAGE_ACCESS_KEY: string;
+  STORAGE_SECRET_KEY: string;
+  STORAGE_BUCKET: string;
+  STORAGE_ENDPOINT: string;
+  STORAGE_REGION: string;
+  STORAGE_PUBLIC_URL: string;
 }
 
 const AppConfig: AppConfigInterface = {
@@ -57,6 +65,13 @@ const AppConfig: AppConfigInterface = {
   EMAIL_PORT: Number(process.env.EMAIL_PORT),
   EMAIL_USER: process.env.EMAIL_USER!,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD!,
+
+  STORAGE_ACCESS_KEY: process.env.STORAGE_ACCESS_KEY!,
+  STORAGE_SECRET_KEY: process.env.STORAGE_SECRET_KEY!,
+  STORAGE_BUCKET: process.env.STORAGE_BUCKET!,
+  STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT!,
+  STORAGE_REGION: process.env.STORAGE_REGION!,
+  STORAGE_PUBLIC_URL: process.env.STORAGE_PUBLIC_URL!,
 };
 
 export { AppConfig, AppConfigInterface };

@@ -16,6 +16,11 @@ export type LotBuyer = {
   email: string;
 };
 
+export type LotImage = {
+  id: string;
+  url: string;
+};
+
 export type Lot = {
   id: string;
   name: string;
@@ -27,6 +32,22 @@ export type Lot = {
   createdAt: string;
   updatedAt: string;
   buyer?: LotBuyer;
+  images: LotImage[];
 };
 
 export type CreateLotDto = Pick<Lot, 'name' | 'description' | 'startPrice' | 'currency'>;
+
+type PresignedUrlDto = {
+  presignedUrl: string;
+  s3Key: string;
+};
+
+export type PresignedUrlsResponseDto = PresignedUrlDto[];
+
+export type AddLotImageDto = {
+  s3Key: string;
+};
+
+export type AddLotImagesDto = {
+  images: AddLotImageDto[];
+};

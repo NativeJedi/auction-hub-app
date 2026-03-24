@@ -37,7 +37,6 @@ const columns: Columns<Auction> = [
 const AuctionsList = async () => {
   const { items } = await fetchAuctionsServer();
 
-  console.log({ items });
   return <DataTable data={items} columns={columns} />;
 };
 

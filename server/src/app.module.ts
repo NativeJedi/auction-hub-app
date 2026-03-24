@@ -9,6 +9,7 @@ import { AuctionsModule } from './modules/auctions/auctions.module';
 import { LotsModule } from './modules/lots/lots.module';
 import { RoomModule } from './modules/room/room.module';
 import { BuyersModule } from './modules/buyers/buyers.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 export const APP_MODULES = [
   RedisModule,
@@ -27,6 +28,7 @@ export const APP_MODULES = [
       load: [() => AppConfig],
     }),
     TypeOrmModule.forRoot(TypeOrmConfig),
+    StorageModule,
   ],
 })
 export class AppModule {}

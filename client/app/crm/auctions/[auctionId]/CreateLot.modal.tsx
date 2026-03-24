@@ -31,6 +31,7 @@ type FormFields = {
   startPrice: number;
   currency: Currency;
 };
+
 const CreateLotModal = ({ onClose, onSubmit }: ModalControllerProps<CreateLotDto>) => {
   const handleSubmit = (fields: FormFields) => {
     onSubmit(fields);
