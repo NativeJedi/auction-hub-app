@@ -6,9 +6,9 @@ import { useNotification } from '@/src/modules/notifications/NotifcationContext'
 import FormChangeViewButton from '@/app/crm/auth/FormChangeViewButton';
 import { ApiError } from 'next/dist/server/api-utils';
 import { login, register } from '@/src/api/auctions-api-client/requests/auth';
-import FormLayout from '@/src/components/form/FormLayout';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
+import FormLayout from '@/src/components/FormLayout';
 
 type FormProps = {
   onChangeView: () => void;

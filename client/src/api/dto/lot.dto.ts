@@ -1,7 +1,7 @@
 export enum Currency {
+  UAH = 'UAH',
   USD = 'USD',
   EUR = 'EUR',
-  UAH = 'UAH',
 }
 
 export enum LotStatus {

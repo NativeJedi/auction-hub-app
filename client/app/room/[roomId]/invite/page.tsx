@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
-import FormLayout from '@/src/components/form/FormLayout';
+import FormLayout from '@/src/components/FormLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { LucideCircleCheck } from 'lucide-react';
 import { FormBuilder, FormField } from '@/src/modules/forms';

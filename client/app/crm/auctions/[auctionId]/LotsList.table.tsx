@@ -3,8 +3,8 @@ import { Lot, LotStatus } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 import { Badge } from '@/ui-kit/ui/badge';
-import { Columns, DataTable } from '@/src/components/DataTable';
 import { StatusMap } from '@/src/components/StatusBadge';
+import { Columns, DataTable } from '@/src/modules/tables';
 
 const LotBuyerValue = ({ lot }: { lot: Lot }) => {
   if (!lot.buyer) return '-';

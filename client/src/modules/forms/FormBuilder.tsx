@@ -5,12 +5,19 @@ import { useFormBuilder } from '@/src/modules/forms/useFormBuilder';
 import { Form, FormField } from '@/ui-kit/ui/form';
 import { Button } from '@/ui-kit/ui/button';
 import { FieldValues, Path } from 'react-hook-form';
-import FieldRenderer from './FieldRenderer';
+import { FieldProps } from '@/src/modules/forms/fields/types';
+import { getFormFieldComponent } from '@/src/modules/forms/fields';
 
 type Props<T extends FieldValues> = FormBuilderConfig<T> & {
   hideSubmit?: boolean;
   submitLabel?: string;
   formRef?: React.RefObject<HTMLFormElement | null>;
+};
+
+const FieldRenderer = ({ field, ...rhfFieldProps }: FieldProps) => {
+  const FieldComponent = getFormFieldComponent(field.type);
+
+  return <FieldComponent field={field} {...rhfFieldProps} />;
 };
 
 function FormBuilder<T extends FieldValues>({

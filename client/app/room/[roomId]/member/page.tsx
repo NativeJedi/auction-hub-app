@@ -16,6 +16,7 @@ import RoomSection from '@/app/room/[roomId]/RoomSection';
 import RoomCard from '@/app/room/[roomId]/RoomCard';
 import NumberField from '@/src/components/form/fields/NumberField';
 import { Button } from '@/ui-kit/ui/button';
+import NumberInput from '@/src/modules/forms/fields/Number/NumberInput';
 
 class RoomMemberSocket extends BaseSocket {
   onNewLot(callback: (lot: RoomLot) => void) {
@@ -151,7 +152,7 @@ const RoomMemberPage = () => {
           <RoomSection title="Place your bid">
             <RoomCard>
               <div className="flex items-center space-x-4 mb-4">
-                <NumberField id="bid-amount" readOnly value={activeLotBidAmount} />
+                <NumberInput readOnly value={activeLotBidAmount} />
                 <Button
                   variant="primaryOutline"
                   disabled={!activeLot}

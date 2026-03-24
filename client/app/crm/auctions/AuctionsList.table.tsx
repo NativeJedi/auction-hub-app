@@ -4,7 +4,7 @@ import { Auction } from '@/src/api/dto/auction.dto';
 import { DeleteAuctionButton } from '@/app/crm/auctions/DeleteAuction.button';
 import { fetchAuctionsServer } from '@/src/api/auctions-api/requests/auctions';
 import AuctionStatusBadge from '@/app/crm/auctions/Auction.status';
-import { Columns, DataTable } from '@/src/components/DataTable';
+import { Columns, DataTable } from '@/src/modules/tables';
 
 const columns: Columns<Auction> = [
   {
@@ -37,6 +37,7 @@ const columns: Columns<Auction> = [
 const AuctionsList = async () => {
   const { items } = await fetchAuctionsServer();
 
+  console.log({ items });
   return <DataTable data={items} columns={columns} />;
 };
 

@@ -1,4 +1,4 @@
-import { Alignment } from '@/src/ui/components/DataTable/alignment';
+import { Alignment } from './alignment';
 
 export type Column<T> = {
   header: string;
