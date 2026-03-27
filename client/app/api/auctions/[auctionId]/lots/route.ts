@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
-import { createLotServer, fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
+import { createLotsServer, fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 
 type Options = { params: Promise<{ auctionId: string }> };
 
@@ -16,7 +16,7 @@ const createLot = async (req: Request, { params }: Options) => {
   const body = await req.json();
   const { auctionId } = await params;
 
-  const lot = await createLotServer(auctionId, body);
+  const lot = await createLotsServer(auctionId, body);
 
   return NextResponse.json(lot);
 };

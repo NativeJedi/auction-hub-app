@@ -11,12 +11,12 @@ import { auctionsAPI } from '@/src/api/auctions-api/api';
 export const fetchLotsServer = (auctionId: Auction['id']) =>
   auctionsAPI.get<Lot[]>(`/auctions/${auctionId}/lots`);
 
-export const createLotServer = (
+export const createLotsServer = (
   auctionId: Auction['id'],
   body: {
     lots: CreateLotDto[];
   }
-) => auctionsAPI.post<Lot[]>(`/auctions/${auctionId}/lots`, body).then((data) => data[0]);
+) => auctionsAPI.post<Lot[]>(`/auctions/${auctionId}/lots`, body);
 
 export const deleteLotServer = (auctionId: Auction['id'], lotId: Lot['id']) =>
   auctionsAPI.delete(`/auctions/${auctionId}/lots/${lotId}`);

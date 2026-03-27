@@ -44,7 +44,10 @@ export class RoomService {
   async createRoom(user: TokenPayload, auctionId: Auction['id']) {
     const { sub: id, email } = user;
 
-    const auction = await this.auctionsService.findOne(id, auctionId, true);
+    const [auction, lots] = await Promise.all([
+      this.auctionsService.findOne(id, auctionId),
+      this.lotsService.findAll(id, auctionId),
+    ]);
 
     const roomAuction: RoomAuction = {
       id: auction.id,
@@ -52,14 +55,14 @@ export class RoomService {
       description: auction.description,
     };
 
-    if (!auction.lots.length) {
+    if (!lots.length) {
       throw new BadRequestException('No lots created for this auction');
     }
 
     const room = await this.roomRepository.createRoom(
       id,
       roomAuction,
-      auction.lots,
+      lots,
     );
 
     const token = this.tokenService.roomMemberToken.generate({

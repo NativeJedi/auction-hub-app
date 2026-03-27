@@ -2,9 +2,11 @@
 
 import { createModalRenderer, ModalControllerProps } from '@/src/modules/modals/modalRenderer';
 import { ModalLayout } from '@/src/modules/modals/ModalLayout';
-import { CreateLotDto, Currency } from '@/src/api/dto/lot.dto';
+import { Currency, Lot } from '@/src/api/dto/lot.dto';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
+import { createLots } from '@/src/api/auctions-api-client/requests/lots';
+import { Auction } from '@/src/api/dto/auction.dto';
 
 const options = Object.values(Currency).map((currency) => ({
   label: currency,
@@ -32,10 +34,22 @@ type FormFields = {
   currency: Currency;
 };
 
-const CreateLotModal = ({ onClose, onSubmit }: ModalControllerProps<CreateLotDto>) => {
-  const handleSubmit = (fields: FormFields) => {
-    onSubmit(fields);
-    onClose();
+type CreateLotModalProps = {
+  auctionId: Auction['id'];
+  onError: (error: unknown) => void;
+};
+
+type Props = ModalControllerProps<Lot> & CreateLotModalProps;
+
+const CreateLotModal = ({ auctionId, onClose, onSubmit, onError }: Props) => {
+  const handleSubmit = async (fields: FormFields) => {
+    try {
+      const lots = await createLots(auctionId, fields);
+
+      onSubmit(lots[0]);
+    } catch (error) {
+      onError(error);
+    }
   };
 
   return (
@@ -50,4 +64,4 @@ const CreateLotModal = ({ onClose, onSubmit }: ModalControllerProps<CreateLotDto
   );
 };
 
-export const createLotModal = createModalRenderer<CreateLotDto>(CreateLotModal);
+export const createLotModal = createModalRenderer<Lot, CreateLotModalProps>(CreateLotModal);

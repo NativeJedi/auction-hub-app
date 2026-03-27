@@ -8,7 +8,7 @@ import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { deleteLot } from '@/src/api/auctions-api-client/requests/lot';
+import { deleteLot } from '@/src/api/auctions-api-client/requests/lots';
 import { Button } from '@/ui-kit/ui/button';
 import { Trash2 } from 'lucide-react';
 

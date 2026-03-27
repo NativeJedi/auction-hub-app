@@ -24,7 +24,7 @@ export type RoomBid = RoomMember & {
   amount: number;
 };
 
-export type RoomLot = Pick<Lot, 'id' | 'name' | 'description' | 'startPrice' | 'currency'>;
+export type RoomLot = Pick<Lot, 'id' | 'name' | 'description' | 'startPrice' | 'currency' | 'images'>;
 
 export type RoomInvite = Pick<RoomMember, 'id' | 'name' | 'email'>;
 

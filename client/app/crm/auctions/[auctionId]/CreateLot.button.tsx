@@ -4,9 +4,9 @@ import { createLotModal } from '@/app/crm/auctions/[auctionId]/CreateLot.modal';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { createLot } from '@/src/api/auctions-api-client/requests/lot';
 import { Plus } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
+import { lotImagesModal } from '@/app/crm/auctions/[auctionId]/LotImages.modal';
 
 type Props = {
   auctionId: Auction['id'];
@@ -17,19 +17,25 @@ const CreateLotButton = ({ auctionId }: Props) => {
   const handleError = useErrorNotification();
 
   const handleCreateClick = async () => {
-    const modalResult = await createLotModal.show();
+    const modalResult = await createLotModal.show({ auctionId, onError: handleError });
 
     if (modalResult.result === 'closed') {
       return;
     }
 
-    try {
-      await createLot(auctionId, modalResult.data);
+    router.refresh();
 
-      router.refresh();
-    } catch (error) {
-      handleError(error);
+    const imagesModalResult = await lotImagesModal.show({
+      auctionId,
+      lot: modalResult.data,
+      onError: handleError,
+    });
+
+    if (imagesModalResult.result === 'closed') {
+      return;
     }
+
+    router.refresh();
   };
 
   return (

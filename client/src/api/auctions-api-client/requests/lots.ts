@@ -8,12 +8,10 @@ import {
 import { Auction } from '@/src/api/dto/auction.dto';
 import { auctionsApiClient } from '@/src/api/auctions-api-client/api';
 
-export const createLot = (auctionId: Auction['id'], lot: CreateLotDto) =>
-  auctionsApiClient
-    .post<Lot[]>(`/auctions/${auctionId}/lots`, {
-      lots: [lot],
-    })
-    .then((data) => data[0]);
+export const createLots = (auctionId: Auction['id'], lot: CreateLotDto) =>
+  auctionsApiClient.post<Lot[]>(`/auctions/${auctionId}/lots`, {
+    lots: [lot],
+  });
 
 export const deleteLot = (auctionId: Auction['id'], lotId: Lot['id']) =>
   auctionsApiClient.delete(`/auctions/${auctionId}/lots/${lotId}`);
@@ -48,7 +46,7 @@ export const uploadLotImages = async (
       fetch(presignedUrl, {
         method: 'PUT',
         body: files[i],
-        headers: { 'Content-Type': 'image/webp' },
+        headers: { 'Content-Type': files[i].type || 'image/jpeg' },
       }).then((res) => {
         if (!res.ok) throw new Error(`Upload failed: ${res.status} ${res.statusText}`);
       })

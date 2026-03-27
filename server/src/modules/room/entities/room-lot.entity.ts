@@ -1,10 +1,11 @@
 import { PickType } from '@nestjs/swagger';
-import { Lot } from '../../lots/entities/lots.entity';
+import { LotDto } from '../../lots/dto/lot.dto';
 
-export class RoomLot extends PickType(Lot, [
+export class RoomLot extends PickType(LotDto, [
   'id',
   'name',
   'description',
   'startPrice',
   'currency',
+  'images',
 ]) {}

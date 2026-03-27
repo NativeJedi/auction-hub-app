@@ -105,12 +105,9 @@ export class LotsService {
     lotId: Lot['id'],
     lot: UpdateLotDto,
   ) {
-    const lotToUpdate = await this.findLot(userId, auctionId, lotId);
+    await this.findLot(userId, auctionId, lotId);
 
-    const savedLot = await this.lotsRepository.save({
-      ...lotToUpdate,
-      ...lot,
-    });
+    const savedLot = await this.lotsRepository.save({ id: lotId, ...lot });
 
     return this.mapLotEntityToDto(savedLot);
   }

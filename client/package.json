@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "cookie": "^1.0.2",
     "daisyui": "^5.1.13",
+    "embla-carousel-react": "^8.6.0",
     "ioredis": "^5.8.2",
     "lucide-react": "^0.563.0",
     "next": "^15.5.9",

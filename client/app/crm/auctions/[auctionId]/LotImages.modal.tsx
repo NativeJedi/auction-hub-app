@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Trash2, Upload } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
-import { deleteLotImage, uploadLotImages } from '@/src/api/auctions-api-client/requests/lot';
+import { deleteLotImage, uploadLotImages } from '@/src/api/auctions-api-client/requests/lots';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { Lot, LotImage } from '@/src/api/dto/lot.dto';
 import { ModalLayout } from '@/src/modules/modals/ModalLayout';
@@ -16,15 +16,31 @@ type ModalProps = {
   onError: (error: unknown) => void;
 };
 
-type ModalResult = {
-  uploadedCount: number;
-};
+type Props = ModalControllerProps<void, ModalProps>;
 
-type Props = ModalControllerProps<ModalResult, ModalProps>;
+const addImages = (images: LotImage[]) => (prev: LotImage[]) => [...prev, ...images];
+
+const removeImageById = (id: LotImage['id']) => (images: LotImage[]) =>
+  images.filter(({ id: imageId }) => imageId !== id);
 
 const LotImagesModal = ({ lot, auctionId, onClose, onSubmit, onError }: Props) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setUploading] = useState(false);
+  const [images, setImages] = useState<LotImage[]>([]);
+  const [deletingImages, setDeletingImages] = useState<LotImage['id'][]>([]);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    setImages(lot.images);
+  }, []);
+
+  const handleClose = () => {
+    if (isDirty) {
+      onSubmit();
+    } else {
+      onClose();
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -32,15 +48,17 @@ const LotImagesModal = ({ lot, auctionId, onClose, onSubmit, onError }: Props) =
     if (!files.length) return;
 
     try {
-      setLoading(true);
+      setUploading(true);
 
-      await uploadLotImages(auctionId, lot.id, files);
+      const uploaded = await uploadLotImages(auctionId, lot.id, files);
 
-      onSubmit({ uploadedCount: 0 });
+      setImages(addImages(uploaded));
+
+      setIsDirty(true);
     } catch (error) {
       onError(error);
     } finally {
-      setLoading(false);
+      setUploading(false);
 
       if (inputRef.current) inputRef.current.value = '';
     }
@@ -48,33 +66,38 @@ const LotImagesModal = ({ lot, auctionId, onClose, onSubmit, onError }: Props) =
 
   const handleDelete = async (image: LotImage) => {
     try {
-      setLoading(true);
+      setDeletingImages((prev) => [...prev, image.id]);
+
       await deleteLotImage(auctionId, lot.id, image.id);
+
+      setImages(removeImageById(image.id));
+
+      setIsDirty(true);
     } catch (error) {
       onError(error);
     } finally {
-      setLoading(false);
+      setDeletingImages((prev) => prev.filter((id) => id !== image.id));
     }
   };
 
+  const isImageDeleting = (image: LotImage) => deletingImages.includes(image.id);
+
   return (
-    <ModalLayout onClose={onClose} title={`${lot.name} — Images`}>
+    <ModalLayout onClose={handleClose} title={`${lot.name} — Images`}>
       <div className="flex flex-wrap gap-3 min-h-[100px]">
-        {lot.images.length === 0 && (
+        {images.length === 0 && (
           <p className="text-sm text-muted-foreground w-full text-center py-6">No images yet</p>
         )}
 
-        {lot.images.map((image) => (
+        {images.map((image) => (
           <div key={image.id} className="relative group w-20 h-20">
             <img
               src={image.url}
               alt={lot.name}
               className="object-cover rounded-md border w-full h-full"
             />
-            {/* TODO: fix image loading */}
-            {/*<Image src={image.url} alt={lot.name} fill className="object-cover rounded-md border" />*/}
             <button
-              disabled={loading}
+              disabled={isImageDeleting(image)}
               onClick={() => handleDelete(image)}
               className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md transition-opacity disabled:cursor-not-allowed"
             >
@@ -85,7 +108,7 @@ const LotImagesModal = ({ lot, auctionId, onClose, onSubmit, onError }: Props) =
       </div>
 
       <DialogFooter>
-        <Button className="w-full" loading={loading} onClick={() => inputRef.current?.click()}>
+        <Button className="w-full" loading={isUploading} onClick={() => inputRef.current?.click()}>
           <Upload />
           Upload images
         </Button>
@@ -103,6 +126,6 @@ const LotImagesModal = ({ lot, auctionId, onClose, onSubmit, onError }: Props) =
   );
 };
 
-const lotImagesModal = createModalRenderer<ModalResult, ModalProps>(LotImagesModal);
+const lotImagesModal = createModalRenderer<void, ModalProps>(LotImagesModal);
 
 export { lotImagesModal };
