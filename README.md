@@ -83,7 +83,6 @@ You can explore the API endpoints using Swagger:
 http://localhost:3000/api/v1
 
 ## 📌 TODO
-- [ ] Add lot images upload
 - [ ] Add email confirmation for new users
 - [ ] Add breadcrums navigation to client
 - [ ] Add pagination to auctions and lots list
