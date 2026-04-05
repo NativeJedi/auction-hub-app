@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import { useRoomId } from '@/app/room-legacy/[roomId]/hooks';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import FormLayout from '@/src/components/FormLayout';

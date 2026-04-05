@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { setRoomToken } from '@/src/utils/local-storage';
-import { useQueryParam, useRoomId } from '@/app/room/[roomId]/hooks';
+import { useQueryParam, useRoomId } from '@/app/room-legacy/[roomId]/hooks';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { confirmRoomInvite } from '@/src/api/auctions-api-client/requests/room';

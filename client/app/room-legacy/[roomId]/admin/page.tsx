@@ -12,18 +12,18 @@ import {
   RoomLot,
   RoomMember,
 } from '@/src/api/dto/room.dto';
-import RoomHeader from '@/app/room/[roomId]/RoomHeader';
-import RoomBids from '@/app/room/[roomId]/RoomBids';
+import RoomHeader from '@/app/room-legacy/[roomId]/RoomHeader';
+import RoomBids from '@/app/room-legacy/[roomId]/RoomBids';
 import BaseSocket from '@/src/sockets/base-socket';
 import { getRoomToken } from '@/src/utils/local-storage';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import { useRoomId } from '@/app/room-legacy/[roomId]/hooks';
 import { AppClientConfig } from '@/config/client';
 import { fetchAdminRoomInfo } from '@/src/api/auctions-api-client/requests/room';
-import RoomSection from '@/app/room/[roomId]/RoomSection';
-import CopyInviteLink from '@/app/room/[roomId]/admin/CopyInviteLink';
-import RoomCard from '@/app/room/[roomId]/RoomCard';
-import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
+import RoomSection from '@/app/room-legacy/[roomId]/RoomSection';
+import CopyInviteLink from '@/app/room-legacy/[roomId]/admin/CopyInviteLink';
+import RoomCard from '@/app/room-legacy/[roomId]/RoomCard';
+import RoomLotInfo from '@/app/room-legacy/[roomId]/RoomLotInfo';
 
 const roomSocket = new BaseSocket(AppClientConfig.NEXT_PUBLIC_API_WEBSOCKET_URL);
 

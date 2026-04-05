@@ -1,5 +1,5 @@
 import { Currency } from '@/src/api/dto/lot.dto';
-import RoomCard from '@/app/room/[roomId]/RoomCard';
+import RoomCard from '@/app/room-legacy/[roomId]/RoomCard';
 
 type Bid = {
   amount: number;

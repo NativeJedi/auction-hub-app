@@ -1,19 +1,19 @@
 'use client';
 
-import RoomHeader from '@/app/room/[roomId]/RoomHeader';
+import RoomHeader from '@/app/room-legacy/[roomId]/RoomHeader';
 import { MemberBidInfo, RoomLot, RoomMemberInfoResponseDto } from '@/src/api/dto/room.dto';
 import BaseSocket from '@/src/sockets/base-socket';
 import { useEffect, useState } from 'react';
 import { getRoomToken } from '@/src/utils/local-storage';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import RoomLotInfo from '@/app/room/[roomId]/RoomLotInfo';
-import RoomBids from '@/app/room/[roomId]/RoomBids';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import RoomLotInfo from '@/app/room-legacy/[roomId]/RoomLotInfo';
+import RoomBids from '@/app/room-legacy/[roomId]/RoomBids';
+import { useRoomId } from '@/app/room-legacy/[roomId]/hooks';
 import { Currency } from '@/src/api/dto/lot.dto';
 import { AppClientConfig } from '@/config/client';
 import { fetchMemberRoomInfo } from '@/src/api/auctions-api-client/requests/room';
-import RoomSection from '@/app/room/[roomId]/RoomSection';
-import RoomCard from '@/app/room/[roomId]/RoomCard';
+import RoomSection from '@/app/room-legacy/[roomId]/RoomSection';
+import RoomCard from '@/app/room-legacy/[roomId]/RoomCard';
 import NumberField from '@/src/components/form/fields/NumberField';
 import { Button } from '@/ui-kit/ui/button';
 import NumberInput from '@/src/modules/forms/fields/Number/NumberInput';

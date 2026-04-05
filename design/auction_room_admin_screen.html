@@ -1,0 +1,406 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.room-shell {
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  background: var(--color-background-secondary);
+}
+
+.room-topbar {
+  background: var(--color-background-primary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.room-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+.room-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.btn-outline {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; padding: 5px 10px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary); cursor: pointer;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; padding: 5px 12px;
+  border-radius: var(--border-radius-md); border: none;
+  background: #4f46e5; color: #fff; cursor: pointer;
+}
+.btn-destructive {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; padding: 5px 12px;
+  border-radius: var(--border-radius-md); border: none;
+  background: #dc2626; color: #fff; cursor: pointer;
+}
+
+/* lot strip — scrollable */
+.lot-strip {
+  background: var(--color-background-primary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  padding: 10px 16px;
+  display: flex; align-items: stretch; gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lot-strip::-webkit-scrollbar { display: none; }
+.lot-chip {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 6px 10px; border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  min-width: 110px; max-width: 110px; flex-shrink: 0;
+}
+.lot-chip-num { font-size: 10px; color: var(--color-text-secondary); }
+.lot-chip-name { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lot-chip.done { opacity: 0.5; }
+.lot-chip.done .lot-chip-name { text-decoration: line-through; }
+.lot-chip.active { border: 1.5px solid #4f46e5; background: #eef2ff; }
+.lot-chip.active .lot-chip-num { color: #4f46e5; }
+.lot-chip.active .lot-chip-name { color: #3730a3; }
+.lot-chip-sold { font-size: 10px; font-weight: 500; color: #065f46; margin-top: 1px; }
+
+.room-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  display: flex; flex-direction: column;
+  max-height: 480px;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px; height: 40px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  flex-shrink: 0;
+}
+.panel-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.03em; }
+.panel-body { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.panel-count {
+  font-size: 11px; font-weight: 500;
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 10px; padding: 2px 8px;
+  color: var(--color-text-secondary);
+}
+
+/* scrollable inner */
+.panel-scroll {
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-secondary) transparent;
+}
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--color-border-secondary); border-radius: 4px; }
+
+/* image slider */
+.img-slider { position: relative; width: 100%; height: 140px; flex-shrink: 0; border-radius: var(--border-radius-md); overflow: hidden; background: var(--color-background-secondary); }
+.img-slide {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--color-text-secondary);
+  transition: opacity 0.2s;
+}
+.img-slide.hidden { opacity: 0; pointer-events: none; }
+.slide-bg-1 { background: #e0e7ff; }
+.slide-bg-2 { background: #fce7f3; }
+.slide-bg-3 { background: #dcfce7; }
+.slide-label { font-size: 12px; color: var(--color-text-secondary); }
+
+.slider-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-secondary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 2;
+}
+.slider-btn-prev { left: 6px; }
+.slider-btn-next { right: 6px; }
+.slider-dots {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 4px;
+}
+.slider-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--color-background-primary); opacity: 0.5; cursor: pointer;
+}
+.slider-dot.active { opacity: 1; }
+
+/* description with expand */
+.lot-desc-wrap { position: relative; }
+.lot-desc-text {
+  font-size: 12px; color: var(--color-text-secondary);
+  line-height: 1.6; margin-top: 2px;
+  overflow: hidden;
+}
+.lot-desc-text.collapsed { max-height: 54px; }
+.lot-desc-fade {
+  position: absolute; bottom: 20px; left: 0; right: 0; height: 24px;
+  background: linear-gradient(transparent, var(--color-background-primary));
+  pointer-events: none;
+}
+.lot-desc-toggle {
+  font-size: 11px; color: #4f46e5; cursor: pointer; background: none; border: none;
+  padding: 0; margin-top: 2px; display: inline-block;
+}
+
+.lot-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.lot-meta-chip {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 7px 10px;
+  display: flex; flex-direction: column; gap: 2px; margin-top: 4px;
+}
+.lot-meta-chip-label { font-size: 10px; color: var(--color-text-secondary); }
+.lot-meta-chip-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+
+/* leading bid */
+.leading-bid-block {
+  border-radius: var(--border-radius-md);
+  padding: 10px 12px;
+  background: #eef2ff; border: 1px solid #c7d2fe;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.leading-bid-label { font-size: 10px; font-weight: 500; color: #6366f1; text-transform: uppercase; letter-spacing: 0.05em; }
+.leading-bid-name { font-size: 13px; font-weight: 500; color: #3730a3; margin-top: 2px; }
+.leading-bid-amount { font-size: 20px; font-weight: 500; color: #4f46e5; }
+
+.bid-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  font-size: 12px; flex-shrink: 0;
+}
+.bid-row:last-child { border-bottom: none; }
+.bid-name { font-weight: 500; color: var(--color-text-primary); }
+.bid-time { font-size: 11px; color: var(--color-text-secondary); margin-top: 1px; }
+.bid-amount { font-weight: 500; font-size: 12px; color: var(--color-text-secondary); }
+
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 500;
+  padding: 2px 6px; border-radius: 4px;
+}
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef9c3; color: #92400e; }
+
+.member-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  font-size: 12px; flex-shrink: 0;
+}
+.member-row:last-child { border-bottom: none; }
+.member-left { display: flex; align-items: center; gap: 7px; }
+.member-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #dbeafe; color: #1e40af;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 500; flex-shrink: 0;
+}
+.member-avatar.pending { background: #fef9c3; color: #92400e; }
+
+/* scroll hint shadow */
+.scroll-hint {
+  position: relative;
+}
+.scroll-hint::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 20px;
+  background: linear-gradient(transparent, var(--color-background-primary));
+  pointer-events: none;
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+</style>
+
+<div style="padding: 4px 0;">
+  <div style="font-size: 11px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; padding: 0 4px;">Admin room — v5 · edge cases</div>
+
+  <div class="room-shell">
+    <div class="room-topbar">
+      <div>
+        <div class="room-title">Modern Art Collection</div>
+        <div class="room-desc">Spring 2025</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-outline">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1v-3M10 2h4m0 0v4m0-4L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Open display
+        </button>
+        <button class="btn-destructive">Finish auction</button>
+      </div>
+    </div>
+
+    <!-- lot strip: many lots, scrollable -->
+    <div class="lot-strip" id="lotStrip">
+      <div class="lot-chip done"><span class="lot-chip-num">Lot 1</span><span class="lot-chip-name">Ceramic Bowl I</span><span class="lot-chip-sold">9 200 ₴</span></div>
+      <div class="lot-chip active"><span class="lot-chip-num">Lot 2 · active</span><span class="lot-chip-name">Vase No. 12, 1987</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 3</span><span class="lot-chip-name">Tapestry Blue</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 4</span><span class="lot-chip-name">Bronze Figure</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 5</span><span class="lot-chip-name">Print Series III</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 6</span><span class="lot-chip-name">Watercolor No. 7</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 7</span><span class="lot-chip-name">Marble Bust</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 8</span><span class="lot-chip-name">Sketch Series IV</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 9</span><span class="lot-chip-name">Abstract No. 3</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 10</span><span class="lot-chip-name">Portrait 1965</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 11</span><span class="lot-chip-name">Etching I</span></div>
+      <div class="lot-chip"><span class="lot-chip-num">Lot 12</span><span class="lot-chip-name">Mosaic Fragment</span></div>
+    </div>
+
+    <div class="room-grid">
+
+      <!-- col 1: active lot -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Active lot</span>
+          <button class="btn-primary">Next lot →</button>
+        </div>
+        <div class="panel-body">
+
+          <!-- image slider -->
+          <div class="img-slider" id="slider">
+            <div class="img-slide slide-bg-1" id="slide-0">
+              <span class="slide-label">Image 1 of 3</span>
+            </div>
+            <div class="img-slide slide-bg-2 hidden" id="slide-1">
+              <span class="slide-label">Image 2 of 3</span>
+            </div>
+            <div class="img-slide slide-bg-3 hidden" id="slide-2">
+              <span class="slide-label">Image 3 of 3</span>
+            </div>
+            <button class="slider-btn slider-btn-prev" id="slidePrev">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M6 2L3 5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="slider-btn slider-btn-next" id="slideNext">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M4 2l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="slider-dots">
+              <div class="slider-dot active" data-idx="0"></div>
+              <div class="slider-dot" data-idx="1"></div>
+              <div class="slider-dot" data-idx="2"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="lot-name">Vase No. 12, 1987</div>
+            <!-- long description with expand/collapse -->
+            <div class="lot-desc-wrap" id="descWrap">
+              <div class="lot-desc-text collapsed" id="descText">
+                A rare late-period piece by the renowned ceramicist Borys Mykhailenko. Wheel-thrown stoneware with hand-applied cobalt glaze. The form references traditional Hutsul pottery while the glaze treatment is distinctly modernist. Exhibited at the Kyiv State Museum of Decorative Arts in 1989 and 1993. Minor restoration to the foot ring, otherwise in excellent condition. Certificate of authenticity included.
+              </div>
+              <div class="lot-desc-fade" id="descFade"></div>
+              <button class="lot-desc-toggle" id="descToggle">Show more</button>
+            </div>
+          </div>
+
+          <div class="lot-meta-chip">
+            <span class="lot-meta-chip-label">Start price</span>
+            <span class="lot-meta-chip-value">8 000 ₴</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- col 2: bids — scrollable -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Bids</span>
+          <span class="panel-count" id="bidCount">24</span>
+        </div>
+        <div class="panel-body">
+          <div class="leading-bid-block">
+            <div>
+              <div class="leading-bid-label">Leading bid</div>
+              <div class="leading-bid-name">Olena K.</div>
+            </div>
+            <span class="leading-bid-amount">12 500 ₴</span>
+          </div>
+          <div class="panel-scroll scroll-hint">
+            <div class="bid-row"><div><div class="bid-name">Dmytro P.</div><div class="bid-time">1 min ago</div></div><div class="bid-amount">11 000 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Olena K.</div><div class="bid-time">2 min ago</div></div><div class="bid-amount">9 500 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Dmytro P.</div><div class="bid-time">3 min ago</div></div><div class="bid-amount">8 500 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Ivan V.</div><div class="bid-time">4 min ago</div></div><div class="bid-amount">8 000 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Maria H.</div><div class="bid-time">5 min ago</div></div><div class="bid-amount">8 000 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Serhiy K.</div><div class="bid-time">6 min ago</div></div><div class="bid-amount">7 500 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Olena K.</div><div class="bid-time">7 min ago</div></div><div class="bid-amount">7 000 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Ivan V.</div><div class="bid-time">8 min ago</div></div><div class="bid-amount">6 500 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Dmytro P.</div><div class="bid-time">9 min ago</div></div><div class="bid-amount">6 000 ₴</div></div>
+            <div class="bid-row"><div><div class="bid-name">Maria H.</div><div class="bid-time">10 min ago</div></div><div class="bid-amount">5 500 ₴</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- col 3: participants — scrollable -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Participants</span>
+          <span class="panel-count">8 joined · 4 pending</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-scroll scroll-hint">
+            <div class="member-row"><div class="member-left"><div class="member-avatar">OK</div>Olena K.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">DP</div>Dmytro P.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">IV</div>Ivan V.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">MH</div>Maria H.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">YP</div>Yulia P.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">AB</div>Andriy B.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">LV</div>Larysa V.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar">RM</div>Roman M.</div><span class="badge badge-success">joined</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar pending">SK</div><span style="color:var(--color-text-secondary);">Serhiy K.</span></div><span class="badge badge-warning">pending</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar pending">NB</div><span style="color:var(--color-text-secondary);">Natalia B.</span></div><span class="badge badge-warning">pending</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar pending">HF</div><span style="color:var(--color-text-secondary);">Halyna F.</span></div><span class="badge badge-warning">pending</span></div>
+            <div class="member-row"><div class="member-left"><div class="member-avatar pending">OD</div><span style="color:var(--color-text-secondary);">Oleh D.</span></div><span class="badge badge-warning">pending</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// slider
+let current = 0;
+const slides = [document.getElementById('slide-0'), document.getElementById('slide-1'), document.getElementById('slide-2')];
+const dots = document.querySelectorAll('.slider-dot');
+
+function goTo(idx) {
+  slides[current].classList.add('hidden');
+  dots[current].classList.remove('active');
+  current = (idx + slides.length) % slides.length;
+  slides[current].classList.remove('hidden');
+  dots[current].classList.add('active');
+}
+
+document.getElementById('slidePrev').addEventListener('click', () => goTo(current - 1));
+document.getElementById('slideNext').addEventListener('click', () => goTo(current + 1));
+dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.idx)));
+
+// description expand/collapse
+let expanded = false;
+const descText = document.getElementById('descText');
+const descFade = document.getElementById('descFade');
+const descToggle = document.getElementById('descToggle');
+
+descToggle.addEventListener('click', () => {
+  expanded = !expanded;
+  descText.classList.toggle('collapsed', !expanded);
+  descFade.style.display = expanded ? 'none' : '';
+  descToggle.textContent = expanded ? 'Show less' : 'Show more';
+});
+</script>
