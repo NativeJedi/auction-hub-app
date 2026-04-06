@@ -4,7 +4,7 @@ import LotsList from '@/app/crm/auctions/[auctionId]/LotsList.table';
 import StartAuctionButton from '@/app/crm/auctions/[auctionId]/StartAuction.button';
 import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/ui-kit/ui/card';
-import PageHeader from '@/src/layouts/PageHeader';
+import CrmHeader from '@/src/layouts/CrmHeader';
 
 type LotsPageProps = {
   params: Promise<{
@@ -41,7 +41,7 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
       </Card>
 
       <div className="pl-6 pr-6">
-        <PageHeader title="Lots" action={<CreateLotButton auctionId={auction.id} />} />
+        <CrmHeader title="Lots" action={<CreateLotButton auctionId={auction.id} />} />
       </div>
 
       <LotsList auctionId={auction.id} />
