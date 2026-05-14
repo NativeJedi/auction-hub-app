@@ -16,6 +16,7 @@ import { CreateBidDto } from './dto/bid.dto';
 import { RedisListRepository } from '../redis/repositories/list.repository';
 import { RoomLot } from './entities/room-lot.entity';
 import { Bid } from './entities/bid.entity';
+import { Lot } from '../lots/entities/lots.entity';
 
 @Injectable()
 export class RoomRepository {
@@ -106,6 +107,16 @@ export class RoomRepository {
     const members = await this.members.getList(roomKey);
 
     return members;
+  }
+
+  async getActiveLot(roomId: Room['id']): Promise<RoomLot | undefined> {
+    const roomKey = this.getRoomKey(roomId);
+
+    const activeLotId = await this.getActiveLotId(roomId);
+
+    const lots = await this.lotsList.getAll(roomKey);
+
+    return lots.find(({ id }) => activeLotId === id);
   }
 
   async getActiveLotBids(roomId: Room['id']): Promise<Bid[]> {
@@ -293,30 +304,33 @@ export class RoomRepository {
       return undefined;
     }
 
-    return bids[bids.length - 1];
+    return bids[0];
   }
 
   async setBid(roomId: string, member: RoomMember, bid: CreateBidDto) {
-    const activeLotId = await this.getActiveLotId(roomId);
+    const activeLot = await this.getActiveLot(roomId);
 
-    if (!activeLotId) {
+    if (!activeLot) {
       throw new NotFoundException('No active lot');
     }
 
-    if (bid.lotId !== activeLotId) {
+    if (bid.lotId !== activeLot.id) {
       throw new ConflictException('Active lot is changed');
     }
 
-    const currentBid = await this.getLotCurrentBid(roomId, activeLotId);
+    const currentBid = await this.getLotCurrentBid(roomId, activeLot.id);
 
     const newBid: Bid = {
-      id: member.id,
+      id: uuidv4(),
+      userId: member.id,
       name: member.name,
       email: member.email,
-      amount: currentBid ? currentBid.amount + bid.amount : bid.amount,
+      amount: currentBid
+        ? currentBid.amount + bid.amount
+        : bid.amount + activeLot.startPrice,
     };
 
-    await this.bids.push(this.getBidsKey(roomId, activeLotId), newBid);
+    await this.bids.push(this.getBidsKey(roomId, activeLot.id), newBid);
 
     return newBid;
   }

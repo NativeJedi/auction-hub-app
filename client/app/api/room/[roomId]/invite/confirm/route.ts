@@ -17,7 +17,7 @@ const confirmRoomInvite = async (req: Request, { params }: Options) => {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    path: `/api/room/${roomId}/member`,
+    path: `/api/room/${roomId}`,
   });
 
   return response;

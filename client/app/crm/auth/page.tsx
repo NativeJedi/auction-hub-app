@@ -8,7 +8,7 @@ import { ApiError } from 'next/dist/server/api-utils';
 import { login, register } from '@/src/api/auctions-api-client/requests/auth';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
-import FormLayout from '@/src/components/FormLayout';
+import FormLayout from '@/src/layouts/FormLayout';
 
 type FormProps = {
   onChangeView: () => void;

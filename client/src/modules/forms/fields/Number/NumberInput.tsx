@@ -1,5 +1,5 @@
-import { ChangeEvent, useEffect, useState } from 'react';
 import { Input } from '@/ui-kit/ui/input';
+import { useNumberInput } from './useNumberInput';
 
 type Props = {
   min?: number;
@@ -10,37 +10,21 @@ type Props = {
   placeholder?: string;
   step?: number;
   readOnly?: boolean;
+  className?: string;
 };
 
 const NumberInput = ({
-  min = 0,
-  max = Number.MAX_SAFE_INTEGER,
+  min,
+  max,
   disabled,
   onChange,
   value,
   placeholder,
   step,
   readOnly = false,
+  className,
 }: Props) => {
-  const [internalValue, setInternalValue] = useState('');
-
-  useEffect(() => {
-    setInternalValue(value.toString());
-  }, [value]);
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-
-    setInternalValue(val);
-
-    const num = Number(val);
-
-    if (isNaN(num) || !onChange) return;
-
-    if (num < min) onChange(min);
-    else if (num > max) onChange(max);
-    else onChange(num);
-  };
+  const { inputValue, handleChange, handleBlur } = useNumberInput({ value, min, max, onChange });
 
   return (
     <Input
@@ -51,8 +35,10 @@ const NumberInput = ({
       min={min}
       max={max}
       step={step}
-      value={internalValue}
+      value={inputValue}
       onChange={handleChange}
+      onBlur={handleBlur}
+      className={className}
     />
   );
 };

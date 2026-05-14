@@ -10,7 +10,7 @@ import {
 import { RoomService } from './room.service';
 import {
   CreateRoomResponseDto,
-  RoomInfoMemberResponseDto,
+  RoomInfoResponseDto,
   RoomInfoOwnerResponseDto,
 } from './dto/room.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -18,9 +18,9 @@ import { ConfirmInviteDto, CreateInviteDto } from './dto/invite.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { TokenPayload } from '../auth/token.service';
-import { Room, RoomRole } from './entities/room.entity';
-import { RoomAuthGuard } from './guards/auth.guard';
-import { RoomRoles } from './guards/decorators';
+import { Room, RoomAuthorizedUser, RoomRole } from './entities/room.entity';
+import { RoomAuthGuard, RoomAuthOptionalGuard } from './guards/auth.guard';
+import { RoomRoles, RoomUser } from './guards/decorators';
 import { RoomGateway } from './room.gateway';
 
 @Controller('/room')
@@ -58,18 +58,18 @@ export class RoomController {
     return this.roomService.getOwnerRoomInfo(roomId);
   }
 
-  @ApiOperation({ summary: 'Get auction room member info by id' })
+  @ApiOperation({ summary: 'Get auction room info by id' })
   @ApiResponse({
     status: 200,
-    type: [RoomInfoMemberResponseDto],
+    type: RoomInfoResponseDto,
   })
-  @RoomRoles(RoomRole.MEMBER)
-  @UseGuards(RoomAuthGuard)
-  @Get(':roomId/member')
+  @UseGuards(RoomAuthOptionalGuard)
+  @Get(':roomId')
   getRoomInfo(
     @Param('roomId') roomId: string,
-  ): Promise<RoomInfoMemberResponseDto> {
-    return this.roomService.getMemberRoomInfo(roomId);
+    @RoomUser() roomUser: RoomAuthorizedUser | null,
+  ): Promise<RoomInfoResponseDto> {
+    return this.roomService.getRoomInfo(roomId, roomUser);
   }
 
   @ApiOperation({ summary: 'Send room invite to user email' })

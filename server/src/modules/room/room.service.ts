@@ -14,14 +14,12 @@ import {
   RoomAuction,
   RoomAuthorizedMember,
   RoomAuthorizedOwner,
+  RoomAuthorizedUser,
   RoomRole,
 } from './entities/room.entity';
 import { BidDto, CreateBidDto } from './dto/bid.dto';
 import { RoomRepository } from './room.repository';
-import {
-  RoomInfoMemberResponseDto,
-  RoomInfoOwnerResponseDto,
-} from './dto/room.dto';
+import { RoomInfoResponseDto, RoomInfoOwnerResponseDto } from './dto/room.dto';
 import { BuyersService } from '../buyers/buyers.service';
 import { LotsService } from '../lots/lots.service';
 import { LotStatus } from '../lots/entities/lots.entity';
@@ -59,11 +57,7 @@ export class RoomService {
       throw new BadRequestException('No lots created for this auction');
     }
 
-    const room = await this.roomRepository.createRoom(
-      id,
-      roomAuction,
-      lots,
-    );
+    const room = await this.roomRepository.createRoom(id, roomAuction, lots);
 
     const token = this.tokenService.roomMemberToken.generate({
       sub: id,
@@ -94,9 +88,10 @@ export class RoomService {
     };
   }
 
-  async getMemberRoomInfo(
+  async getRoomInfo(
     roomId: Room['id'],
-  ): Promise<RoomInfoMemberResponseDto> {
+    currentUser?: RoomAuthorizedUser | null,
+  ): Promise<RoomInfoResponseDto> {
     const fullInfo = await this.roomRepository.getRoomInfo(roomId);
 
     const { room } = fullInfo;
@@ -105,6 +100,14 @@ export class RoomService {
       throw new NotFoundException('Room not found');
     }
 
+    const user = currentUser
+      ? {
+          id: currentUser.id,
+          name: 'name' in currentUser ? currentUser.name : undefined,
+          email: currentUser.email,
+        }
+      : undefined;
+
     return {
       room: {
         id: roomId,
@@ -112,9 +115,12 @@ export class RoomService {
       },
       activeLot: fullInfo.activeLot,
       activeLotBids: pickArrayFields(fullInfo.activeLotBids, [
+        'id',
+        'userId',
         'name',
         'amount',
       ]),
+      user,
     };
   }
 

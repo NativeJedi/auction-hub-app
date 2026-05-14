@@ -2,10 +2,16 @@ import { ApiProperty, PickType } from '@nestjs/swagger';
 
 export class BidDto {
   @ApiProperty({
+    description: 'Unique identifier of the bid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
     description: 'Unique identifier of the member who placed the bid',
     example: 'member_123e4567-e89b-12d3-a456-426614174000',
   })
-  id: string;
+  userId: string;
 
   @ApiProperty({
     description: 'Name of the member',

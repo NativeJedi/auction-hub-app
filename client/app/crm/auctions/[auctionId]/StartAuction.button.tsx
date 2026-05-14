@@ -2,10 +2,9 @@
 
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
-import { setRoomToken } from '@/src/utils/local-storage';
-import { createRoom } from '@/src/api/auctions-api-client/requests/room';
 import { Button } from '@/ui-kit/ui/button';
 import { Play } from 'lucide-react';
+import { AdminRoomEngine } from '@/src/modules/room-engine/admin/AdminRoomEngine';
 
 const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   const router = useRouter();
@@ -18,9 +17,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
     if (result === 'closed') return;
 
-    const { room, token } = await createRoom({ auctionId });
-
-    setRoomToken(room.id, token);
+    const room = await AdminRoomEngine.createRoom(auctionId);
 
     router.push(`/room/${room.id}/admin`);
   };

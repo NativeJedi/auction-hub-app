@@ -4,7 +4,7 @@ import {
   CreateRoomResponseDto,
   Room,
   RoomAdminInfoResponseDto,
-  RoomMemberInfoResponseDto,
+  RoomInfoResponseDto,
   SendInviteDto,
 } from '@/src/api/dto/room.dto';
 import { auctionsAPI } from '@/src/api/auctions-api/api';
@@ -19,11 +19,9 @@ export const fetchRoomAdminServer = ({ roomId, token }: { roomId: string; token:
     },
   });
 
-export const fetchRoomMemberServer = ({ roomId, token }: { roomId: string; token: string }) =>
-  auctionsAPI.get<RoomMemberInfoResponseDto>(`/room/${roomId}/member`, {
-    headers: {
-      ['x-room-token']: token,
-    },
+export const fetchRoomServer = ({ roomId, token }: { roomId: string; token?: string }) =>
+  auctionsAPI.get<RoomInfoResponseDto>(`/room/${roomId}`, {
+    headers: token ? { ['x-room-token']: token } : {},
     skipAuth: true,
   });
 

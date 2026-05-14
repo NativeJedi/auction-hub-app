@@ -16,3 +16,10 @@ export const RoomSockerUser = createParamDecorator(
     return client.data?.user ?? null;
   },
 );
+
+export const RoomUser = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext): RoomAuthorizedUser | null => {
+    const request = ctx.switchToHttp().getRequest();
+    return request['roomUser'] ?? null;
+  },
+);

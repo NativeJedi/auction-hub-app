@@ -4,7 +4,7 @@ import {
   CreateRoomResponseDto,
   Room,
   RoomAdminInfoResponseDto,
-  RoomMemberInfoResponseDto,
+  RoomInfoResponseDto,
   SendInviteDto,
 } from '@/src/api/dto/room.dto';
 import { auctionsApiClient } from '@/src/api/auctions-api-client/api';
@@ -15,8 +15,8 @@ export const createRoom = ({ auctionId }: { auctionId: string }) =>
 export const fetchAdminRoomInfo = ({ roomId }: { roomId: string }) =>
   auctionsApiClient.get<RoomAdminInfoResponseDto>(`/room/${roomId}/admin`);
 
-export const fetchMemberRoomInfo = ({ roomId }: { roomId: string }) =>
-  auctionsApiClient.get<RoomMemberInfoResponseDto>(`/room/${roomId}/member`);
+export const fetchRoomInfo = ({ roomId }: { roomId: string }) =>
+  auctionsApiClient.get<RoomInfoResponseDto>(`/room/${roomId}`);
 
 export const sendRoomInvite = (roomId: Room['id'], dto: SendInviteDto) =>
   auctionsApiClient.post(`/room/${roomId}/invite`, dto);

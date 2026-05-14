@@ -1,31 +1,13 @@
 'use client';
-import RoomHeader from '@/app/room/[roomId]/RoomHeader';
-import CurrentLot from '@/app/room/[roomId]/CurrentLot';
-import RoomCard from '@/app/room/[roomId]/RoomCard';
-import Bids from '@/app/room/[roomId]/Bids';
 
-const MOCK_AUCTION = {
-  name: 'Modern Art Collection',
-  description: 'Spring 2025',
-  lotIndex: 2,
-  totalLots: 10,
-};
-
-const MOCK_ACTIVE_LOT = {
-  name: 'Vase No. 12, 1987',
-  description:
-    'A rare late-period piece by the renowned ceramicist Borys Mykhailenko. Wheel-thrown stoneware with hand-applied cobalt glaze.',
-  startPrice: '8 000 ₴',
-  images: [],
-};
-
-const MOCK_BIDS = [
-  { id: '1', name: 'Dmytro P.', amount: '11 000 ₴' },
-  { id: '2', name: 'Olena K.', amount: '9 500 ₴' },
-  { id: '3', name: 'Dmytro P.', amount: '8 500 ₴' },
-  { id: '4', name: 'Ivan V.', amount: '8 000 ₴' },
-  { id: '5', name: 'Maria H.', amount: '7 500 ₴' },
-];
+import RoomHeader from './components/RoomHeader';
+import CurrentLot from './components/CurrentLot';
+import RoomCard from './components/RoomCard';
+import Bids from './components/Bids';
+import { useRoomId } from '@/app/room/[roomId]/hooks';
+import { RoomErrorBoundary } from './components/RoomErrorBoundary';
+import { PublicRoomProvider } from '@/src/modules/room-engine/public/PublicRoomContext';
+import { usePublicRoom } from '@/src/modules/room-engine/public/hooks/usePublicRoom';
 
 // ─── QR placeholder SVG ───────────────────────────────────────────────────────
 
@@ -94,34 +76,44 @@ const QrPlaceholder = () => (
   </svg>
 );
 
-const RoomDisplayPage = () => (
-  <div className="h-screen flex flex-col bg-muted/30 overflow-y-auto md:overflow-hidden">
-    <RoomHeader title={MOCK_AUCTION.name} description={MOCK_AUCTION.description} />
+const RoomDisplayPage = () => {
+  const { isLoading, auction, activeLot, bids } = usePublicRoom();
 
-    {/* Mobile: flex-col scroll; md+: 2-column grid fixed height */}
-    <div className="flex-1 flex flex-col gap-3 p-3 md:grid md:grid-cols-[4fr_3fr] md:min-h-0">
-      <CurrentLot
-        tool={
-          <span className="text-xs font-medium bg-muted border rounded-full px-2 py-0.5 text-muted-foreground">
-            {MOCK_AUCTION.lotIndex} / {MOCK_AUCTION.totalLots}
-          </span>
-        }
-        lot={MOCK_ACTIVE_LOT}
+  return (
+    <div className="h-screen flex flex-col bg-muted/30 overflow-y-auto md:overflow-hidden">
+      <RoomHeader
+        isLoading={isLoading}
+        title={auction?.name}
+        description={auction?.description}
       />
 
-      {/* Mobile: stack QR + Bids; md+: 2-row grid */}
-      <div className="flex flex-col gap-3 md:grid md:grid-rows-2 md:min-h-0">
-        <RoomCard title="Join auction">
-          <div className="h-40 md:h-auto md:flex-1 md:min-h-0 w-full bg-muted rounded-md flex items-center justify-center">
-            <QrPlaceholder />
-          </div>
-          <p className="text-sm font-medium text-center">Scan to join</p>
-        </RoomCard>
+      <div className="flex-1 flex flex-col gap-3 p-3 md:grid md:grid-cols-[4fr_3fr] md:min-h-0">
+        <CurrentLot isLoading={isLoading} lot={activeLot} />
 
-        <Bids bids={MOCK_BIDS} />
+        <div className="flex flex-col gap-3 md:grid md:grid-rows-2 md:min-h-0">
+          <RoomCard title="Join auction">
+            <div className="h-40 md:h-auto md:flex-1 md:min-h-0 w-full bg-muted rounded-md flex items-center justify-center">
+              <QrPlaceholder />
+            </div>
+            <p className="text-sm font-medium text-center">Scan to join</p>
+          </RoomCard>
+
+          <Bids isLoading={isLoading} bids={bids} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-export default RoomDisplayPage;
+const RoomPage = () => {
+  const roomId = useRoomId();
+  return (
+    <RoomErrorBoundary>
+      <PublicRoomProvider roomId={roomId}>
+        <RoomDisplayPage />
+      </PublicRoomProvider>
+    </RoomErrorBoundary>
+  );
+};
+
+export default RoomPage;

@@ -3,7 +3,7 @@ import { RoomMember } from '../entities/room-member.entity';
 import { RoomLot } from '../entities/room-lot.entity';
 import { RoomInvite } from '../entities/room-invite.entity';
 import { Bid } from '../entities/bid.entity';
-import { Room, RoomAuction } from '../entities/room.entity';
+import { Room, RoomAuction, RoomAuthorizedUser } from '../entities/room.entity';
 
 export class CreateRoomResponseDto {
   room: Room;
@@ -46,22 +46,26 @@ export class RoomInfoOwnerResponseDto {
   invites: RoomInvite[];
 }
 
-class MemberRoomInfo {
+class RoomInfo {
   id: Room['id'];
 
   auction: Pick<RoomAuction, 'name' | 'description'>;
 }
 
 class MemberBidInfo {
+  id: Bid['id'];
+
   name: Bid['name'];
 
   amount: Bid['amount'];
 }
 
-export class RoomInfoMemberResponseDto {
-  room: MemberRoomInfo;
+export class RoomInfoResponseDto {
+  room: RoomInfo;
 
   activeLot?: RoomLot;
 
   activeLotBids: MemberBidInfo[];
+
+  user?: { name?: string } & Pick<RoomAuthorizedUser, 'id' | 'email'>;
 }

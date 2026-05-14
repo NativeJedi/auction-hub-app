@@ -53,3 +53,28 @@ export class RoomAuthGuard implements CanActivate {
     return true;
   }
 }
+
+@Injectable()
+export class RoomAuthOptionalGuard implements CanActivate {
+  constructor(private readonly tokenService: TokenService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<AuthorizedRequest>();
+    const { roomId } = request.params;
+
+    const authHeader = request.headers['x-room-token'];
+
+    if (!authHeader) return true;
+
+    const authToken = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+    const result = this.tokenService.roomMemberToken.validate(authToken);
+
+    if (!result.payload || roomId !== result.payload.roomId) return true;
+
+    const { sub: id, ...roomUser } = result.payload;
+
+    request['roomUser'] = { id, ...roomUser };
+
+    return true;
+  }
+}

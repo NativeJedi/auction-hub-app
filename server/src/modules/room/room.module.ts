@@ -6,10 +6,11 @@ import { AuctionsModule } from '../auctions/auctions.module';
 import { RoomGateway } from './room.gateway';
 import { RoomRepository } from './room.repository';
 import { BuyersModule } from '../buyers/buyers.module';
+import { RoomAuthOptionalGuard } from './guards/auth.guard';
 
 @Module({
   imports: [EmailModule, AuctionsModule, BuyersModule],
   controllers: [RoomController],
-  providers: [RoomService, RoomGateway, RoomRepository],
+  providers: [RoomService, RoomGateway, RoomRepository, RoomAuthOptionalGuard],
 })
 export class RoomModule {}

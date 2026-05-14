@@ -20,12 +20,6 @@ interface ApiError<T = unknown> extends Error {
 }
 
 export const errorResponseInterceptor: ErrorResponseInterceptor = (error) => {
-  if (error.status === 401) {
-    window.location.href = '/crm/auth';
-
-    return Promise.reject(error);
-  }
-
   const apiError: ApiError = new Error(error.message);
   apiError._originalError = error;
 

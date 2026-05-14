@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { setRoomToken } from '@/src/utils/local-storage';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { confirmRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import { useQueryParam } from '@/src/utils/url';
+import { useMemberEngine } from '@/src/modules/room-engine/member/hooks/useMemberEngine';
 
 const ConfirmInvite = () => {
   const roomId = useRoomId();
@@ -14,16 +13,17 @@ const ConfirmInvite = () => {
   const router = useRouter();
   const handleError = useErrorNotification();
 
+  const engine = useMemberEngine(roomId);
+
   useEffect(() => {
     if (!inviteToken) return;
 
-    confirmRoomInvite(roomId, { token: inviteToken })
-      .then(({ token }) => {
-        setRoomToken(roomId, token);
-
-        return router.push(`/room/${roomId}/member`);
+    engine
+      .confirmInvite(inviteToken)
+      .then(() => {
+        router.push(`/room/${roomId}/member`);
       })
-      .catch((e) => {
+      .catch((e: unknown) => {
         console.error(e);
         handleError(e);
       });

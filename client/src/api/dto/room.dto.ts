@@ -20,11 +20,18 @@ export type RoomMember = {
   email: string;
 };
 
-export type RoomBid = RoomMember & {
+export type RoomBid = {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
   amount: number;
 };
 
-export type RoomLot = Pick<Lot, 'id' | 'name' | 'description' | 'startPrice' | 'currency' | 'images'>;
+export type RoomLot = Pick<
+  Lot,
+  'id' | 'name' | 'description' | 'startPrice' | 'currency' | 'images' | 'status' | 'soldPrice'
+>;
 
 export type RoomInvite = Pick<RoomMember, 'id' | 'name' | 'email'>;
 
@@ -42,18 +49,26 @@ export type RoomAdminInfoResponseDto = {
   invites: RoomInvite[];
 };
 
-export type MemberBidInfo = Pick<RoomBid, 'name' | 'amount'>;
+export type PublicBidInfo = Pick<RoomBid, 'id' | 'userId' | 'name' | 'amount'>;
 
-export type RoomMemberInfoResponseDto = {
+export type RoomUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type RoomInfoResponseDto = {
   room: {
     id: Room['id'];
 
-    auction: Pick<RoomAuction, 'name' | 'description'>;
+    auction: RoomAuction;
   };
 
   activeLot?: RoomLot;
 
-  activeLotBids: MemberBidInfo[];
+  activeLotBids: PublicBidInfo[];
+
+  user?: RoomUser;
 };
 
 export type SendInviteDto = {

@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { LucideCircleCheck } from 'lucide-react';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
 import { useRoomId } from '@/app/room/[roomId]/hooks';
 import FormLayout from '@/src/layouts/FormLayout';
+import { usePublicEngine } from '@/src/modules/room-engine/public/hooks/usePublicEngine';
 
 const SuccessInviteMessage = () => {
   return (
@@ -48,9 +48,11 @@ const InviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const roomId = useRoomId();
 
+  const engine = usePublicEngine(roomId);
+
   const handleSubmit = async (values: FormFields) => {
     try {
-      await sendRoomInvite(roomId, values);
+      await engine.sendInvite(values);
 
       onSuccess();
     } catch (error) {

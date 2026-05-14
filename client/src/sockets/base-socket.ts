@@ -5,20 +5,28 @@ class BaseSocket {
 
   constructor(private readonly SOCKET_URL: string) {}
 
-  connect(token: string) {
-    this.socket = io(this.SOCKET_URL, {
-      transports: ['websocket'],
-      auth: { token },
-    });
+  connect(token: string): Promise<void> {
+    console.log('Connecting to', this.SOCKET_URL);
+    return new Promise((resolve, reject) => {
+      this.socket = io(this.SOCKET_URL, {
+        transports: ['websocket'],
+        auth: { token },
+      });
 
-    this.socket.on('connect', () => {
-      console.log('Socket connected');
-      this.emitEvent('join');
-    });
+      this.socket.once('connect', () => {
+        console.log('Socket connected');
+        this.emitEvent('join');
+        resolve();
+      });
 
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
-      this.socket = null;
+      this.socket.once('connect_error', (error) => {
+        reject(error);
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+        this.socket = null;
+      });
     });
   }
 
@@ -31,7 +39,7 @@ class BaseSocket {
       throw new Error('Socket is not connected');
     }
 
-    this.socket?.on(event, callback);
+    this.socket.on(event, callback);
   }
 
   onError(callback: (error: Error) => void) {

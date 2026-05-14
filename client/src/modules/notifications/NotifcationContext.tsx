@@ -27,7 +27,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     (id) => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     },
-    [toasts]
+    []
   );
 
   const showToast: ShowToast = useCallback(
@@ -37,7 +37,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       setTimeout(() => dismissToast(newToast.id), 5000);
     },
-    [toasts]
+    [dismissToast]
   );
 
   return (
@@ -63,7 +63,7 @@ export const useNotification = () => {
 export const useErrorNotification = () => {
   const { showToast } = useNotification();
 
-  const handleError = (error: unknown) => {
+  return useCallback((error: unknown) => {
     if (
       isObjectWithProperty(error, 'data') &&
       isObjectWithProperties<{
@@ -88,7 +88,5 @@ export const useErrorNotification = () => {
     }
 
     throw error;
-  };
-
-  return handleError;
+  }, [showToast]);
 };

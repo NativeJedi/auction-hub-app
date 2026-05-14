@@ -12,7 +12,7 @@ export class RedisListRepository<T> extends BaseRepository {
 
   async push(key: CombinedKey, item: T) {
     const fullKey = this.getFullKey(key);
-    await this.client.rpush(fullKey, JSON.stringify(item));
+    await this.client.lpush(fullKey, JSON.stringify(item));
     await this.client.expire(fullKey, this.ttlSeconds);
   }
 
