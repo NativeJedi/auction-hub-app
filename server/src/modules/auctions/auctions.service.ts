@@ -4,10 +4,12 @@ import {
   CreateAuctionDto,
   AuctionDto,
 } from './dto/auction.dto';
+import { AuctionResultsDto, LotResultDto } from './dto/auction-results.dto';
 import { User } from '../../modules/users/entities/user.entity';
 import { UsersService } from '../../modules/users/users.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Auction } from './entities/auction.entity';
+import { Auction, AuctionStatus } from './entities/auction.entity';
+import { LotStatus } from '../lots/entities/lots.entity';
 import { Repository } from 'typeorm';
 import {
   PaginatedResponseDto,
@@ -116,5 +118,51 @@ export class AuctionsService {
     const owner = await this.findOwner(ownerId);
 
     await this.auctionsRepository.delete({ owner, id });
+  }
+
+  async markAsFinished(id: string): Promise<void> {
+    await this.auctionsRepository.update(
+      { id },
+      { status: AuctionStatus.FINISHED, finishedAt: new Date() },
+    );
+  }
+
+  async getAuctionResults(auctionId: string): Promise<AuctionResultsDto> {
+    const auction = await this.auctionsRepository.findOne({
+      where: { id: auctionId },
+      relations: ['lots', 'lots.buyer'],
+    });
+
+    if (!auction) {
+      throw new NotFoundException(`Auction with id ${auctionId} not found`);
+    }
+
+    const lots: LotResultDto[] = auction.lots.map((lot) => ({
+      id: lot.id,
+      name: lot.name,
+      status: lot.status,
+      soldPrice: lot.soldPrice ?? null,
+      buyerName: lot.buyer?.name ?? null,
+    }));
+
+    const soldRawLots = auction.lots.filter((l) => l.status === LotStatus.SOLD);
+
+    const valuesByCurrency = soldRawLots.reduce<Record<string, number>>((acc, lot) => {
+      if (lot.soldPrice == null) return acc;
+      acc[lot.currency] = (acc[lot.currency] ?? 0) + lot.soldPrice;
+      return acc;
+    }, {});
+
+    return {
+      id: auction.id,
+      name: auction.name,
+      description: auction.description ?? null,
+      finishedAt: auction.finishedAt,
+      totalLots: lots.length,
+      soldCount: soldRawLots.length,
+      unsoldCount: lots.length - soldRawLots.length,
+      valuesByCurrency,
+      lots,
+    };
   }
 }

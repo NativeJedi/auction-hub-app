@@ -29,4 +29,4 @@ export class CreateAuctionDto extends PickType(AuctionDto, [
 
 export class UpdateAuctionDto extends PartialType(
   PickType(AuctionDto, ['name', 'description', 'status']),
-)  {}
+) {}

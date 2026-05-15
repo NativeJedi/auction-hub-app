@@ -16,8 +16,14 @@ import {
   UpdateAuctionDto,
   CreateAuctionDto,
 } from './dto/auction.dto';
+import { AuctionResultsDto } from './dto/auction-results.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { TokenPayload } from '../auth/token.service';
 import {
@@ -26,12 +32,12 @@ import {
 } from '../pagination/pagination.dto';
 import { ApiPaginatedResponse } from '../pagination/pagination.decorator';
 
-@ApiBearerAuth('access-token')
-@UseGuards(AuthGuard)
 @Controller('auctions')
 export class AuctionsController {
   constructor(private readonly auctionsService: AuctionsService) {}
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Create an auction for a user' })
   @ApiResponse({
     status: 201,
@@ -46,6 +52,8 @@ export class AuctionsController {
     return this.auctionsService.create(createAuctionDto, user.sub);
   }
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get paginated user auctions' })
   @ApiPaginatedResponse(AuctionDto)
   @Get()
@@ -56,6 +64,15 @@ export class AuctionsController {
     return this.auctionsService.findAll(user.sub, query);
   }
 
+  @ApiOperation({ summary: 'Get auction results' })
+  @ApiOkResponse({ type: AuctionResultsDto })
+  @Get(':id/results')
+  getResults(@Param('id') id: string): Promise<AuctionResultsDto> {
+    return this.auctionsService.getAuctionResults(id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get auction by id' })
   @ApiResponse({ status: 200, description: 'Auction found', type: AuctionDto })
   @Get(':id')
@@ -66,6 +83,8 @@ export class AuctionsController {
     return this.auctionsService.findOne(user.sub, id);
   }
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Update auction' })
   @ApiResponse({
     status: 200,
@@ -81,6 +100,8 @@ export class AuctionsController {
     return this.auctionsService.updateOne(user.sub, id, updateAuctionDto);
   }
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Delete auction' })
   @ApiResponse({ status: 204, description: 'Auction deleted' })
   @Delete(':id')

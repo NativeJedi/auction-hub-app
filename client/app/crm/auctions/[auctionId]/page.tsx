@@ -3,7 +3,11 @@ import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
 import LotsList from '@/app/crm/auctions/[auctionId]/LotsList.table';
 import StartAuctionButton from '@/app/crm/auctions/[auctionId]/StartAuction.button';
 import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
+import { AuctionStatus } from '@/src/api/dto/auction.dto';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/ui-kit/ui/card';
+import { Button } from '@/ui-kit/ui/button';
+import { BarChart2Icon } from 'lucide-react';
+import Link from 'next/link';
 import CrmHeader from '@/src/layouts/CrmHeader';
 
 type LotsPageProps = {
@@ -23,7 +27,18 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-3xl">{auction.name}</CardTitle>
 
-          <StartAuctionButton auctionId={auction.id} />
+          <div className="flex items-center gap-2">
+            {auction.status === AuctionStatus.FINISHED && (
+              <Button variant="outline" asChild>
+                <Link href={`/results/${auction.id}?role=admin`}>
+                  <BarChart2Icon className="size-4" />
+                  View results
+                </Link>
+              </Button>
+            )}
+
+            <StartAuctionButton auctionId={auction.id} />
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-4">

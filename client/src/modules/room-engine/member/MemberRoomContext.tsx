@@ -13,6 +13,7 @@ import { MemberRoomState } from './types';
 import { MemberRoomEngine } from './MemberRoomEngine';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useMemberEngine } from '@/src/modules/room-engine/member/hooks/useMemberEngine';
+import { useRouter } from 'next/navigation';
 
 type MemberRoomContextValue = {
   state: MemberRoomState;
@@ -29,12 +30,16 @@ type MemberRoomProviderProps = {
 
 export function MemberRoomProvider({ roomId, children }: MemberRoomProviderProps) {
   const engine = useMemberEngine(roomId);
-
   const onError = useErrorNotification();
+  const router = useRouter();
 
   useEffect(() => {
+    engine.onAuctionFinished(() => {
+      const auctionId = engine.getState().auction?.id;
+      if (auctionId) router.push(`/results/${auctionId}`);
+    });
     engine.setOnError(onError);
-  }, [engine, onError]);
+  }, [engine, router, onError]);
 
   useEffect(() => {
     engine.connect();

@@ -32,6 +32,9 @@ export class Auction {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  finishedAt: Date | null;
+
   @ManyToOne(() => User, (user) => user.auctions, { nullable: false })
   owner: User;
 

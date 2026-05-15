@@ -13,6 +13,7 @@ import { PublicRoomState } from './types';
 import { PublicRoomEngine } from './PublicRoomEngine';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { usePublicEngine } from '@/src/modules/room-engine/public/hooks/usePublicEngine';
+import { useRouter } from 'next/navigation';
 
 type PublicRoomContextValue = {
   state: PublicRoomState;
@@ -29,10 +30,15 @@ type PublicRoomProviderProps = {
 export function PublicRoomProvider({ roomId, children }: PublicRoomProviderProps) {
   const engine = usePublicEngine(roomId);
   const onError = useErrorNotification();
+  const router = useRouter();
 
   useEffect(() => {
+    engine.onAuctionFinished(() => {
+      const auctionId = engine.getState().auction?.id;
+      if (auctionId) router.push(`/results/${auctionId}`);
+    });
     engine.setOnError(onError);
-  }, [engine, onError]);
+  }, [engine, router, onError]);
 
   useEffect(() => {
     engine.connect();

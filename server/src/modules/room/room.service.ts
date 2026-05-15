@@ -191,6 +191,12 @@ export class RoomService {
   async finishAuction(owner: RoomAuthorizedOwner) {
     await this.finishActiveLot(owner);
 
+    const room = await this.roomRepository.getRoom(owner.roomId);
+
+    if (room) {
+      await this.auctionsService.markAsFinished(room.auction.id);
+    }
+
     this.roomRepository.clearRoom(owner.roomId);
   }
 

@@ -65,6 +65,6 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Post('logout')
   logout(@Req() { user }: AuthorizedRequest) {
-    return this.authService.logout(user!.sub);
+    return this.authService.logout(user.sub);
   }
 }

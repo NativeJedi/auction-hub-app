@@ -43,8 +43,18 @@ export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
     await this.api.sendRoomInvite(this.roomId, dto);
   }
 
+  private onFinishedCallback?: () => void;
+
+  onAuctionFinished(callback: () => void): void {
+    this.onFinishedCallback = callback;
+  }
+
   protected registerSocketEvents(): void {
     super.registerSocketEvents();
+
+    this.socket.onEvent('auctionFinished', () => {
+      this.onFinishedCallback?.();
+    });
 
     this.socket.onEvent<PublicBidInfo>('newBid', (bid) => {
       this.setState({ bids: [bid, ...this.data.bids] });

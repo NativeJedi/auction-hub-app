@@ -33,7 +33,10 @@ export function AdminRoomProvider({ roomId, children }: AdminRoomProviderProps) 
   const router = useRouter();
 
   useEffect(() => {
-    engine.onAuctionFinished(() => router.push('/crm/auctions'));
+    engine.onAuctionFinished(() => {
+      const auctionId = engine.getState().auction?.id;
+      if (auctionId) router.push(`/results/${auctionId}?role=admin`);
+    });
     engine.setOnError(onError);
   }, [engine, router, onError]);
 

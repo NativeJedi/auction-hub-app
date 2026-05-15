@@ -1,5 +1,6 @@
 import { PaginatedResponseDto } from '@/src/api/dto/pagination.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
+import { AuctionResults } from '@/src/api/dto/auction-results.dto';
 import { auctionsAPI } from '@/src/api/auctions-api/api';
 
 type AuctionsResponse = PaginatedResponseDto<Auction>;
@@ -22,3 +23,6 @@ export const deleteAuctionServer = (id: Auction['id']) => auctionsAPI.delete(`/a
 
 export const fetchAuctionByIdServer = (id: Auction['id']) =>
   auctionsAPI.get<Auction>(`/auctions/${id}`);
+
+export const fetchAuctionResultsServer = (id: string) =>
+  auctionsAPI.get<AuctionResults>(`/auctions/${id}/results`, { skipAuth: true });

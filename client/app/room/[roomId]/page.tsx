@@ -81,11 +81,7 @@ const RoomDisplayPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-muted/30 overflow-y-auto md:overflow-hidden">
-      <RoomHeader
-        isLoading={isLoading}
-        title={auction?.name}
-        description={auction?.description}
-      />
+      <RoomHeader isLoading={isLoading} title={auction?.name} description={auction?.description} />
 
       <div className="flex-1 flex flex-col gap-3 p-3 md:grid md:grid-cols-[4fr_3fr] md:min-h-0">
         <CurrentLot isLoading={isLoading} lot={activeLot} />

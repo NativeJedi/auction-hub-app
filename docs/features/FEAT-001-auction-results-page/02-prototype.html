@@ -1,0 +1,340 @@
+<!--
+  FEAT-001-auction-results-page — 02-prototype.html
+  Detected framework: shadcn/ui (New York style) — components.json confirmed, Radix UI in package.json
+  Token sources: client/app/globals.css (OKLCH CSS variables, approximated as hex for prototype)
+  Baseline: CRM page patterns from client/app/crm/auctions/[auctionId]/page.tsx
+  Component references:
+    - Card/CardHeader/CardContent/CardDescription: client/src/ui-kit/ui/card.tsx
+    - Badge (rounded-md, success/error variants): client/src/ui-kit/ui/badge.tsx
+    - Table/TableHead/TableCell/TableRow/TableFooter: client/src/ui-kit/ui/table.tsx
+    - CrmHeader (text-3xl font-bold tracking-tight): client/src/layouts/CrmHeader.tsx
+    - LotBuyerValue (name + email stacked): client/app/crm/auctions/[auctionId]/LotsList.table.tsx
+
+  Design decisions:
+  - Single public results page at /auctions/[auctionId]/results
+  - All users (admin, member, display screen) are redirected here on auctionFinished event
+  - No authentication required (OQ-2 resolved: public route)
+  - Display page performs a redirect on auctionFinished (OQ-3 resolved)
+
+  Open questions:
+  - OQ-1: Buyer email shown (matches LotBuyerValue pattern from LotsList.table.tsx).
+           If email must be hidden for public viewers, add conditional rendering by role.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auction Results — FEAT-001 Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background:        '#ffffff',
+            foreground:        '#1a1a1a',
+            card:              '#ffffff',
+            'card-foreground': '#1a1a1a',
+            primary:     { DEFAULT: '#4a7fc1', foreground: '#f4f8fd' },
+            muted:       { DEFAULT: '#f6f6f6', foreground: '#808080' },
+            success:     { DEFAULT: '#1e8c52', foreground: '#edfaf3' },
+            destructive: { DEFAULT: '#d65a28', foreground: '#fff1eb' },
+            border:  '#e8e8e8',
+            input:   '#e8e8e8',
+            ring:    '#b0b0b0',
+          },
+          borderRadius: {
+            sm:  '0.25rem',
+            DEFAULT: '0.375rem',
+            md:  '0.5rem',
+            lg:  '0.625rem',
+            xl:  '0.875rem',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            /* matches shadcn "shadow" utility used on Card */
+            DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07)',
+          },
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    /* Badge — rounded-md (matches badge.tsx, NOT rounded-full) */
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 0.375rem; /* rounded-md */
+      padding: 0.125rem 0.625rem; /* py-0.5 px-2.5 */
+      font-size: 0.75rem; font-weight: 600;
+      transition: color 0.15s, background-color 0.15s;
+      white-space: nowrap;
+    }
+    .badge-success  { color: #1e8c52; background: #edfaf3; } /* text-success bg-success-foreground */
+    .badge-error    { color: #d65a28; background: #fff1eb; } /* text-destructive bg-destructive-foreground */
+    /* TableRow hover */
+    .tr-hover { transition: background-color 0.1s; }
+    .tr-hover:hover { background-color: rgba(0,0,0,0.025); } /* hover:bg-muted/50 */
+  </style>
+</head>
+<body class="bg-muted text-foreground min-h-screen">
+
+<!--
+  /auctions/[auctionId]/results  —  public, no auth required
+  All users redirected here on auctionFinished event
+  US-1 (admin), US-2 (member), US-3 (display), US-5, US-6
+  FR-5, FR-6, FR-7, FR-8
+-->
+
+<!-- ── Page wrapper: mirrors space-y-8 p-8 from auction detail page ──────── -->
+<div class="max-w-5xl mx-auto space-y-8 p-6 sm:p-8">
+
+  <!-- ── Auction info card  (mirrors Card + CardHeader + CardContent pattern) -->
+  <!--    rounded-xl border bg-card text-card-foreground shadow               -->
+  <div class="rounded-xl border bg-white text-card-foreground shadow">
+
+    <!-- CardHeader: flex flex-row items-center justify-between space-y-0 p-6 -->
+    <!-- FR-6: auction name + FINISHED badge -->
+    <div class="flex flex-row items-center justify-between space-y-0 p-6 pb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- CardTitle text-3xl (mirrors auction detail page title size) -->
+        <h1 class="font-semibold leading-none tracking-tight text-3xl truncate">
+          Modern Art Spring Auction 2026
+        </h1>
+        <span class="badge badge-success flex-shrink-0">FINISHED</span>
+      </div>
+    </div>
+
+    <!-- CardContent: p-6 pt-0 -->
+    <!-- FR-6: auction metadata (date, owner) -->
+    <div class="p-6 pt-0">
+      <!-- CardDescription: text-sm text-muted-foreground -->
+      <div class="text-sm text-muted-foreground space-y-0.5">
+        <p>Date: 15 March 2026</p>
+        <p>Auctioneer: James Harrington</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary statistics  (FR-7) ──────────────────────────────────────── -->
+  <!-- 4 stat cards — same rounded-xl border bg-card shadow as Card component -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+    <div class="rounded-xl border bg-white text-card-foreground shadow p-6">
+      <p class="text-sm text-muted-foreground font-medium mb-2">Total Lots</p>
+      <p class="text-3xl font-bold tracking-tight">10</p>
+    </div>
+
+    <div class="rounded-xl border bg-white text-card-foreground shadow p-6">
+      <p class="text-sm text-muted-foreground font-medium mb-2">Sold</p>
+      <p class="text-3xl font-bold tracking-tight" style="color:#1e8c52">7</p>
+    </div>
+
+    <div class="rounded-xl border bg-white text-card-foreground shadow p-6">
+      <p class="text-sm text-muted-foreground font-medium mb-2">Unsold</p>
+      <p class="text-3xl font-bold tracking-tight text-muted-foreground">3</p>
+    </div>
+
+    <div class="rounded-xl border bg-white text-card-foreground shadow p-6">
+      <p class="text-sm text-muted-foreground font-medium mb-2">Value Raised</p>
+      <p class="text-3xl font-bold tracking-tight">£105,650</p>
+    </div>
+  </div>
+
+  <!-- ── Lots section: CrmHeader + DataTable pattern ───────────────────────
+       Mirrors: <div class="pl-6 pr-6"><CrmHeader title="Lots" ... /></div>
+                followed by <LotsList />
+  -->
+
+  <!-- CrmHeader: flex flex-row items-center justify-between -->
+  <header class="flex flex-row items-center justify-between px-0">
+    <h2 class="text-3xl font-bold tracking-tight">Lots</h2>
+    <!-- No action button — results are read-only -->
+  </header>
+
+  <!-- DataTable wrapper: border rounded-lg overflow-hidden (from DataTable.tsx) -->
+  <!-- Wrapped in Card for the shadow/background -->
+  <div class="rounded-xl border bg-white text-card-foreground shadow overflow-hidden -mt-4">
+    <div class="relative w-full overflow-auto">
+      <!-- Table: w-full caption-bottom text-sm -->
+      <table class="w-full caption-bottom text-sm">
+
+        <!-- TableHeader: [&_tr]:border-b -->
+        <thead class="[&_tr]:border-b" style="border-bottom: 1px solid #e8e8e8">
+          <tr style="border-bottom: 1px solid #e8e8e8">
+            <!-- TableHead: h-10 px-2 text-left align-middle font-medium text-muted-foreground -->
+            <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground w-10"
+                style="height:2.5rem;padding:0 0.5rem;color:#808080">#</th>
+            <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground"
+                style="height:2.5rem;padding:0 0.5rem;color:#808080">Name</th>
+            <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground"
+                style="height:2.5rem;padding:0 0.5rem;color:#808080">Status</th>
+            <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground"
+                style="height:2.5rem;padding:0 0.5rem;color:#808080">Sold Price</th>
+            <!-- OPEN OQ-1: Buyer email shown here to match LotBuyerValue pattern
+                 (name + email stacked, same as LotsList.table.tsx).
+                 If email must be hidden from public viewers, conditional rendering by role is needed. -->
+            <th class="h-10 px-2 text-left align-middle font-medium text-muted-foreground"
+                style="height:2.5rem;padding:0 0.5rem;color:#808080">Buyer</th>
+          </tr>
+        </thead>
+
+        <!-- TableBody: [&_tr:last-child]:border-0 -->
+        <tbody>
+          <!-- TableRow: border-b transition-colors hover:bg-muted/50 -->
+          <!-- LotBuyerValue: flex flex-col / font-medium name + text-muted-foreground text-sm email -->
+
+          <!-- 1 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">1</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Sunrise Over Manhattan</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£12,500</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Emily Chen</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">e.chen@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 2 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">2</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Blue Period Sketch</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£8,200</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Marcus Webb</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">m.webb@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 3 — UNSOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">3</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Abstract No. 7</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-error">UNSOLD</span></td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+          </tr>
+
+          <!-- 4 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">4</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">The Empty Garden</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£31,000</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Sofia Marchetti</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">s.marchetti@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 5 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">5</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Portrait in Red</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£6,800</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Dani Kowalski</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">d.kowalski@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 6 — UNSOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">6</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Modernist Chair Study</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-error">UNSOLD</span></td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+          </tr>
+
+          <!-- 7 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">7</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Pacific Horizon</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£15,750</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Oliver Tan</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">o.tan@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 8 — UNSOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">8</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Ceramic Forms II</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-error">UNSOLD</span></td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">—</td>
+          </tr>
+
+          <!-- 9 — SOLD -->
+          <tr class="tr-hover border-b" style="border-bottom:1px solid #e8e8e8">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">9</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Still Life with Pears</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£9,300</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Helena Russo</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">h.russo@example.com</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 10 — SOLD — last row: [&_tr:last-child]:border-0 -->
+          <tr class="tr-hover">
+            <td class="p-2 align-middle text-muted-foreground" style="padding:0.5rem;color:#808080">10</td>
+            <td class="p-2 align-middle font-medium" style="padding:0.5rem">Evening Light</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"><span class="badge badge-success">SOLD</span></td>
+            <td class="p-2 align-middle tabular-nums" style="padding:0.5rem">£22,100</td>
+            <td class="p-2 align-middle" style="padding:0.5rem">
+              <div class="flex flex-col">
+                <span class="font-medium">Nathan Osei</span>
+                <span class="text-muted-foreground text-sm" style="color:#808080">n.osei@example.com</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- TableFooter: border-t bg-muted/50 font-medium -->
+        <tfoot style="border-top:1px solid #e8e8e8;background:rgba(246,246,246,0.5);font-weight:500">
+          <tr>
+            <td class="p-2 align-middle" style="padding:0.5rem"></td>
+            <td class="p-2 align-middle text-muted-foreground text-sm" style="padding:0.5rem;color:#808080">
+              7 sold · 3 unsold
+            </td>
+            <td class="p-2 align-middle" style="padding:0.5rem"></td>
+            <td class="p-2 align-middle font-semibold tabular-nums" style="padding:0.5rem">£105,650</td>
+            <td class="p-2 align-middle" style="padding:0.5rem"></td>
+          </tr>
+        </tfoot>
+
+      </table>
+    </div>
+  </div>
+
+  <!-- Bottom spacer -->
+  <div class="h-4"></div>
+</div>
+
+</body>
+</html>
