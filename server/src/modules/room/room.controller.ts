@@ -58,16 +58,16 @@ export class RoomController {
     this.roomGateway.publishRoomEvent(owner.auctionId, 'auctionFinished', {});
   }
 
-  @ApiOperation({ summary: 'Restart an auction' })
+  @ApiOperation({ summary: 'Reset an auction' })
   @ApiResponse({ status: HttpStatus.NO_CONTENT })
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard)
-  @Post(':auctionId/restart')
-  async restartAuction(
+  @Post(':auctionId/reset')
+  async resetAuction(
     @AuthUser() user: TokenPayload,
     @Param('auctionId') auctionId: string,
   ): Promise<void> {
-    await this.roomService.restartAuction(user.sub, auctionId);
+    await this.roomService.resetAuction(user.sub, auctionId);
   }
 
   @ApiOperation({ summary: 'Get auction room admin info by id' })

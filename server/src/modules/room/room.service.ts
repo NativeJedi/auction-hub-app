@@ -268,7 +268,7 @@ export class RoomService {
     return { lot: nextLot, autoFinished: false };
   }
 
-  async restartAuction(ownerId: string, auctionId: string): Promise<void> {
+  async resetAuction(ownerId: string, auctionId: string): Promise<void> {
     const auction = await this.auctionsService.findOne(ownerId, auctionId);
 
     if (auction.status === AuctionStatus.CREATED) {
@@ -276,7 +276,7 @@ export class RoomService {
     }
 
     await this.roomRepository.clearRoom(auctionId);
-    await this.auctionsService.restartAuction(ownerId, auctionId);
+    await this.auctionsService.resetAuction(ownerId, auctionId);
   }
 
   async placeBid(

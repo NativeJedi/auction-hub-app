@@ -11,23 +11,23 @@ vi.mock('@/src/api/auctions-api-client/requests/room', () => ({
   startAuction: vi.fn(),
   fetchAdminRoomInfo: vi.fn(),
   finishAuction: vi.fn(),
-  restartAuction: vi.fn(),
+  resetAuction: vi.fn(),
 }));
 
 describe('AdminRoomEngine.resetAuction', () => {
-  it('calls api.restartAuction with the correct auctionId', async () => {
-    // DoD: resetAuction() delegates to api.restartAuction with { auctionId }
+  it('calls api.resetAuction with the correct auctionId', async () => {
+    // DoD: resetAuction() delegates to api.resetAuction with { auctionId }
     const mockSocket = { onEvent: vi.fn(), emitEvent: vi.fn() } as any;
     const mockApi = {
       fetchAdminRoomInfo: vi.fn(),
       finishAuction: vi.fn(),
-      restartAuction: vi.fn().mockResolvedValue(undefined),
+      resetAuction: vi.fn().mockResolvedValue(undefined),
     };
     const engine = new AdminRoomEngine('auction-1', mockSocket, mockApi);
 
     await engine.resetAuction();
 
-    expect(mockApi.restartAuction).toHaveBeenCalledWith({ auctionId: 'auction-1' });
+    expect(mockApi.resetAuction).toHaveBeenCalledWith({ auctionId: 'auction-1' });
   });
 });
 

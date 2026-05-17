@@ -52,7 +52,7 @@ describe('RoomService', () => {
             findOne: jest.fn(),
             startAuction: jest.fn(),
             finishAuction: jest.fn(),
-            restartAuction: jest.fn(),
+            resetAuction: jest.fn(),
           },
         },
         {
@@ -290,41 +290,41 @@ describe('RoomService', () => {
     // NotFoundException). That path is covered by finishAuction #3 above.
   });
 
-  describe('restartAuction', () => {
+  describe('resetAuction', () => {
     beforeEach(() => {
       auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.FINISHED });
       roomRepository.clearRoom.mockResolvedValue(undefined);
-      auctionsService.restartAuction.mockResolvedValue(undefined);
+      auctionsService.resetAuction.mockResolvedValue(undefined);
     });
 
-    it('calls auctionsService.restartAuction with ownerId and auctionId', async () => {
-      await service.restartAuction('user-1', 'auction-1');
+    it('calls auctionsService.resetAuction with ownerId and auctionId', async () => {
+      await service.resetAuction('user-1', 'auction-1');
 
-      expect(auctionsService.restartAuction).toHaveBeenCalledWith('user-1', 'auction-1');
+      expect(auctionsService.resetAuction).toHaveBeenCalledWith('user-1', 'auction-1');
     });
 
-    it('calls roomRepository.clearRoom with auctionId before auctionsService.restartAuction', async () => {
-      await service.restartAuction('user-1', 'auction-1');
+    it('calls roomRepository.clearRoom with auctionId before auctionsService.resetAuction', async () => {
+      await service.resetAuction('user-1', 'auction-1');
 
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
       const clearOrder = roomRepository.clearRoom.mock.invocationCallOrder[0];
-      const restartOrder = auctionsService.restartAuction.mock.invocationCallOrder[0];
+      const restartOrder = auctionsService.resetAuction.mock.invocationCallOrder[0];
       expect(clearOrder).toBeLessThan(restartOrder);
     });
 
     it('throws BadRequestException when auction status is not FINISHED', async () => {
       auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.CREATED });
 
-      await expect(service.restartAuction('user-1', 'auction-1')).rejects.toThrow(
+      await expect(service.resetAuction('user-1', 'auction-1')).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('succeeds (does not throw) when auction is in STARTED state', async () => {
-      // DoD: POST /restart succeeds when auction is in STARTED state
+      // DoD: POST /reset succeeds when auction is in STARTED state
       auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.STARTED });
 
-      await expect(service.restartAuction('user-1', 'auction-1')).resolves.toBeUndefined();
+      await expect(service.resetAuction('user-1', 'auction-1')).resolves.toBeUndefined();
     });
   });
 

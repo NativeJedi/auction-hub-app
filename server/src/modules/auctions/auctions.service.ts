@@ -123,7 +123,7 @@ export class AuctionsService {
     await this.auctionsRepository.delete({ owner, id });
   }
 
-  async restartAuction(
+  async resetAuction(
     ownerId: User['id'],
     auctionId: Auction['id'],
   ): Promise<void> {
