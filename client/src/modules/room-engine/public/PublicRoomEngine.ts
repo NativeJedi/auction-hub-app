@@ -5,7 +5,7 @@ import { RoomEngine } from '../core/RoomEngine';
 import type { PublicRoomData } from './types';
 
 export interface PublicRoomApi {
-  fetchRoomInfo: (params: { roomId: string }) => Promise<RoomInfoResponseDto>;
+  fetchRoomInfo: (params: { auctionId: string }) => Promise<RoomInfoResponseDto>;
   sendRoomInvite: typeof sendRoomInvite;
 }
 
@@ -13,11 +13,11 @@ const defaultApi: PublicRoomApi = { fetchRoomInfo, sendRoomInvite };
 
 export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
   constructor(
-    roomId: string,
+    auctionId: string,
     socket: BaseSocket,
     private readonly api: PublicRoomApi = defaultApi,
   ) {
-    super(roomId, socket);
+    super(auctionId, socket);
   }
 
   protected getInitialData(): PublicRoomData {
@@ -30,7 +30,7 @@ export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
 
   protected async fetchInitialData(): Promise<Partial<PublicRoomData>> {
     const { room, activeLot, activeLotBids } = await this.api.fetchRoomInfo({
-      roomId: this.roomId,
+      auctionId: this.auctionId,
     });
     return {
       auction: room.auction,
@@ -40,7 +40,7 @@ export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
   }
 
   async sendInvite(dto: SendInviteDto): Promise<void> {
-    await this.api.sendRoomInvite(this.roomId, dto);
+    await this.api.sendRoomInvite(this.auctionId, dto);
   }
 
   private onFinishedCallback?: () => void;

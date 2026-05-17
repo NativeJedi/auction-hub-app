@@ -47,7 +47,7 @@ export class RoomInfoOwnerResponseDto {
 }
 
 class RoomInfo {
-  id: Room['id'];
+  auctionId: Room['auctionId'];
 
   auction: Pick<RoomAuction, 'name' | 'description'>;
 }

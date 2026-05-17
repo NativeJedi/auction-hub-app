@@ -13,7 +13,7 @@ export abstract class RoomEngine<TData> {
   private cachedState: (TData & Lifecycle) | null = null;
 
   protected constructor(
-    protected readonly roomId: string,
+    protected readonly auctionId: string,
     protected readonly socket: BaseSocket,
   ) {
     this.data = this.getInitialData();
@@ -68,7 +68,7 @@ export abstract class RoomEngine<TData> {
     try {
       const data = await this.fetchInitialData();
       this.setState(data);
-      const token = getRoomToken(this.roomId);
+      const token = getRoomToken(this.auctionId);
 
       await this.socket.connect(token ?? '');
 

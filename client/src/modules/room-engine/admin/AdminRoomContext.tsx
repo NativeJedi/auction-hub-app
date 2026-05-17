@@ -23,19 +23,18 @@ type AdminRoomContextValue = {
 const AdminRoomContext = createContext<AdminRoomContextValue | null>(null);
 
 type AdminRoomProviderProps = {
-  roomId: string;
+  auctionId: string;
   children: ReactNode;
 };
 
-export function AdminRoomProvider({ roomId, children }: AdminRoomProviderProps) {
-  const engine = useAdminEngine(roomId);
+export function AdminRoomProvider({ auctionId, children }: AdminRoomProviderProps) {
+  const engine = useAdminEngine(auctionId);
   const onError = useErrorNotification();
   const router = useRouter();
 
   useEffect(() => {
     engine.onAuctionFinished(() => {
-      const auctionId = engine.getState().auction?.id;
-      if (auctionId) router.push(`/results/${auctionId}?role=admin`);
+      router.push(`/results/${auctionId}?role=admin`);
     });
     engine.setOnError(onError);
   }, [engine, router, onError]);

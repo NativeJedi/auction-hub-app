@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-
 import { LucideCircleCheck } from 'lucide-react';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import { useAuctionId } from '@/app/room/[auctionId]/hooks';
 import FormLayout from '@/src/layouts/FormLayout';
 import { usePublicEngine } from '@/src/modules/room-engine/public/hooks/usePublicEngine';
 
@@ -46,9 +46,9 @@ const fields: FormField[] = [
 const InviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const showError = useErrorNotification();
 
-  const roomId = useRoomId();
+  const auctionId = useAuctionId();
 
-  const engine = usePublicEngine(roomId);
+  const engine = usePublicEngine(auctionId);
 
   const handleSubmit = async (values: FormFields) => {
     try {

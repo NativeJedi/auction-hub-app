@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AuctionsService } from './auctions.service';
 import { Auction } from './entities/auction.entity';
 import { UsersService } from '../users/users.service';
 import { LotStatus } from '../lots/entities/lots.entity';
 import { Currency } from '../../types/currency';
+import { RoomRepository } from '../room/room.repository';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeAuction = (lots: any[] = []): any => ({
   id: 'auction-1',
   name: 'Spring Auction',
@@ -16,7 +16,6 @@ const makeAuction = (lots: any[] = []): any => ({
   lots,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeSoldLot = (overrides: Record<string, unknown> = {}): any => ({
   id: 'lot-1',
   name: 'Watch',
@@ -27,7 +26,6 @@ const makeSoldLot = (overrides: Record<string, unknown> = {}): any => ({
   ...overrides,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeUnsoldLot = (overrides: Record<string, unknown> = {}): any => ({
   id: 'lot-2',
   name: 'Vase',
@@ -40,7 +38,7 @@ const makeUnsoldLot = (overrides: Record<string, unknown> = {}): any => ({
 
 describe('AuctionsService', () => {
   let service: AuctionsService;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let auctionRepo: any;
 
   beforeEach(async () => {
@@ -62,11 +60,31 @@ describe('AuctionsService', () => {
             preload: jest.fn(),
           },
         },
+        {
+          provide: getDataSourceToken(),
+          useValue: { transaction: jest.fn() },
+        },
+        {
+          provide: RoomRepository,
+          useValue: { clearRoom: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get(AuctionsService);
     auctionRepo = module.get(getRepositoryToken(Auction));
+  });
+
+  describe('resetAuction', () => {
+    it.todo(
+      'calls roomRepository.clearRoom with auctionId before the transaction',
+    );
+    it.todo('calls DataSource.transaction');
+    it.todo(
+      'within the transaction: resets lots, deletes buyers, resets auction status',
+    );
+    it.todo('throws NotFoundException when auction not found for owner');
+    it.todo('skips buyer deletion when no lots have a buyer');
   });
 
   describe('getAuctionResults', () => {
@@ -90,12 +108,16 @@ describe('AuctionsService', () => {
     it('throws NotFoundException when auction id does not exist', async () => {
       auctionRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.getAuctionResults('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.getAuctionResults('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('excludes buyer email from lot results', async () => {
       auctionRepo.findOne.mockResolvedValue(
-        makeAuction([makeSoldLot({ buyer: { name: 'Alice', email: 'alice@example.com' } })]),
+        makeAuction([
+          makeSoldLot({ buyer: { name: 'Alice', email: 'alice@example.com' } }),
+        ]),
       );
 
       const result = await service.getAuctionResults('auction-1');

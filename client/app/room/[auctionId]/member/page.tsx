@@ -1,16 +1,16 @@
 'use client';
 
-import BidController from '@/app/room/[roomId]/member/BidContoller';
-import ControlFooter from '@/app/room/[roomId]/member/ControlFooter';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import BidController from '@/app/room/[auctionId]/member/BidContoller';
+import ControlFooter from '@/app/room/[auctionId]/member/ControlFooter';
+import { useAuctionId } from '@/app/room/[auctionId]/hooks';
 import {
   MemberRoomProvider,
   useMemberRoomContext,
 } from '@/src/modules/room-engine/member/MemberRoomContext';
-import RoomHeader from '@/app/room/[roomId]/components/RoomHeader';
-import CurrentLot from '@/app/room/[roomId]/components/CurrentLot';
-import Bids from '@/app/room/[roomId]/components/Bids';
-import { RoomErrorBoundary } from '@/app/room/[roomId]/components/RoomErrorBoundary';
+import RoomHeader from '@/app/room/[auctionId]/components/RoomHeader';
+import CurrentLot from '@/app/room/[auctionId]/components/CurrentLot';
+import Bids from '@/app/room/[auctionId]/components/Bids';
+import { RoomErrorBoundary } from '@/app/room/[auctionId]/components/RoomErrorBoundary';
 
 const RoomMemberPage = () => {
   const {
@@ -37,10 +37,10 @@ const RoomMemberPage = () => {
 };
 
 const MemberPage = () => {
-  const roomId = useRoomId();
+  const auctionId = useAuctionId();
   return (
     <RoomErrorBoundary>
-      <MemberRoomProvider roomId={roomId}>
+      <MemberRoomProvider auctionId={auctionId}>
         <RoomMemberPage />
       </MemberRoomProvider>
     </RoomErrorBoundary>

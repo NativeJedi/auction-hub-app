@@ -1,5 +1,5 @@
 import { Badge } from '@/ui-kit/ui/badge';
-import RoomCard from '@/app/room/[roomId]/components/RoomCard';
+import RoomCard from '@/app/room/[auctionId]/components/RoomCard';
 import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { Users } from 'lucide-react';
 import { RoomInvite, RoomMember } from '@/src/api/dto/room.dto';

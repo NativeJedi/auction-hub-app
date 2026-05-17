@@ -19,7 +19,7 @@ export type RoomTokenPayload = {
   sub: string;
   email: string;
   name?: string;
-  roomId: string;
+  auctionId: string;
   role: RoomRole;
 };
 

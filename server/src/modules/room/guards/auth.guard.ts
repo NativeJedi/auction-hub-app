@@ -15,7 +15,7 @@ export class RoomAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthorizedRequest>();
-    const { roomId } = request.params;
+    const { auctionId } = request.params;
 
     const authHeader = request.headers['x-room-token'];
 
@@ -40,7 +40,7 @@ export class RoomAuthGuard implements CanActivate {
 
     if (
       (requiredRoles && !requiredRoles.includes(roomUser.role)) ||
-      roomId !== roomUser.roomId
+      auctionId !== roomUser.auctionId
     ) {
       throw new ApiAuthorizationError();
     }
@@ -60,7 +60,7 @@ export class RoomAuthOptionalGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthorizedRequest>();
-    const { roomId } = request.params;
+    const { auctionId } = request.params;
 
     const authHeader = request.headers['x-room-token'];
 
@@ -69,7 +69,7 @@ export class RoomAuthOptionalGuard implements CanActivate {
     const authToken = Array.isArray(authHeader) ? authHeader[0] : authHeader;
     const result = this.tokenService.roomMemberToken.validate(authToken);
 
-    if (!result.payload || roomId !== result.payload.roomId) return true;
+    if (!result.payload || auctionId !== result.payload.auctionId) return true;
 
     const { sub: id, ...roomUser } = result.payload;
 

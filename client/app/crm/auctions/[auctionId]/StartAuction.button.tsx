@@ -19,7 +19,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
     const room = await AdminRoomEngine.createRoom(auctionId);
 
-    router.push(`/room/${room.id}/admin`);
+    router.push(`/room/${room.auctionId}/admin`);
   };
 
   return (

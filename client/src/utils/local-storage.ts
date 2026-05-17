@@ -1,6 +1,6 @@
 import { Room } from '@/src/api/dto/room.dto';
 
-export const setRoomToken = (id: Room['id'], token: string) =>
-  localStorage.setItem(`room:${id}:token`, token);
+export const setRoomToken = (auctionId: Room['auctionId'], token: string) =>
+  localStorage.setItem(`room:${auctionId}:token`, token);
 
-export const getRoomToken = (id: Room['id']) => localStorage.getItem(`room:${id}:token`);
+export const getRoomToken = (auctionId: Room['auctionId']) => localStorage.getItem(`room:${auctionId}:token`);
