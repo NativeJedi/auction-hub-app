@@ -32,12 +32,13 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
               <Button variant="outline" asChild>
                 <Link href={`/results/${auction.id}?role=admin`}>
                   <BarChart2Icon className="size-4" />
-                  View results
+                  Results
                 </Link>
               </Button>
             )}
-
-            <StartAuctionButton auctionId={auction.id} />
+            {auction.status === AuctionStatus.CREATED && (
+              <StartAuctionButton auctionId={auction.id} />
+            )}
           </div>
         </CardHeader>
 

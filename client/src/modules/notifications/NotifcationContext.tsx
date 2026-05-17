@@ -23,12 +23,9 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const dismissToast: DismissToast = useCallback(
-    (id) => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    },
-    []
-  );
+  const dismissToast: DismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const showToast: ShowToast = useCallback(
     (toast) => {
@@ -63,30 +60,34 @@ export const useNotification = () => {
 export const useErrorNotification = () => {
   const { showToast } = useNotification();
 
-  return useCallback((error: unknown) => {
-    if (
-      isObjectWithProperty(error, 'data') &&
-      isObjectWithProperties<{
-        error: string;
-        message: string;
-      }>(error.data, ['error', 'message'])
-    ) {
-      showToast({
-        title: error.data.error,
-        message: error.data.message,
-      });
+  return useCallback(
+    (error: unknown) => {
+      if (
+        isObjectWithProperty(error, 'data') &&
+        isObjectWithProperties<{
+          error: string;
+          message: string;
+        }>(error.data, ['error', 'message'])
+      ) {
+        showToast({
+          title: error.data.error,
+          message: error.data.message,
+          type: 'error',
+        });
 
-      return;
-    }
+        return;
+      }
 
-    if (isObjectWithProperty(error, 'message')) {
-      showToast({
-        title: isString(error.name) ? error.name : '',
-        message: isString(error.message) ? error.message : 'Unknown error',
-        type: 'error',
-      });
-    }
+      if (isObjectWithProperty(error, 'message')) {
+        showToast({
+          title: isString(error.name) ? error.name : '',
+          message: isString(error.message) ? error.message : 'Unknown error',
+          type: 'error',
+        });
+      }
 
-    throw error;
-  }, [showToast]);
+      throw error;
+    },
+    [showToast]
+  );
 };

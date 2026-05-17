@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/ui-kit/ui/button';
 import { Play } from 'lucide-react';
 import { AdminRoomEngine } from '@/src/modules/room-engine/admin/AdminRoomEngine';
+import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 
 const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   const router = useRouter();
+
+  const onError = useErrorNotification();
 
   const handleStartAuction = async () => {
     const { result } = await confirmModal.show({
@@ -17,9 +20,13 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
     if (result === 'closed') return;
 
-    const room = await AdminRoomEngine.startAuction(auctionId);
+    try {
+      const room = await AdminRoomEngine.startAuction(auctionId);
 
-    router.push(`/room/${room.auctionId}/admin`);
+      router.push(`/room/${room.auctionId}/admin`);
+    } catch (error) {
+      onError(error);
+    }
   };
 
   return (
