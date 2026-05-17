@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
   HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
 import {
@@ -99,19 +98,6 @@ export class AuctionsController {
     @AuthUser() user: TokenPayload,
   ): Promise<AuctionDto> {
     return this.auctionsService.updateOne(user.sub, id, updateAuctionDto);
-  }
-
-  @ApiBearerAuth('access-token')
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Reset auction to CREATED state' })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @Post(':id/reset')
-  async reset(
-    @Param('id') id: string,
-    @AuthUser() user: TokenPayload,
-  ): Promise<void> {
-    await this.auctionsService.resetAuction(user.sub, id);
   }
 
   @ApiBearerAuth('access-token')

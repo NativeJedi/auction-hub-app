@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   Post,
   UseGuards,
@@ -18,7 +19,12 @@ import { ConfirmInviteDto, CreateInviteDto } from './dto/invite.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { TokenPayload } from '../auth/token.service';
-import { Room, RoomAuthorizedUser, RoomRole } from './entities/room.entity';
+import {
+  Room,
+  RoomAuthorizedOwner,
+  RoomAuthorizedUser,
+  RoomRole,
+} from './entities/room.entity';
 import { RoomAuthGuard, RoomAuthOptionalGuard } from './guards/auth.guard';
 import { RoomRoles, RoomUser } from './guards/decorators';
 import { RoomGateway } from './room.gateway';
@@ -30,18 +36,38 @@ export class RoomController {
     private readonly roomGateway: RoomGateway,
   ) {}
 
-  @ApiOperation({ summary: 'Create a room for an auction' })
-  @ApiResponse({
-    status: 201,
-    type: Room,
-  })
+  @ApiOperation({ summary: 'Start an auction room' })
+  @ApiResponse({ status: 201, type: Room })
   @UseGuards(AuthGuard)
-  @Post()
-  async createRoom(
+  @Post(':auctionId/start')
+  async startAuction(
     @AuthUser() user: TokenPayload,
-    @Body() { auctionId }: { auctionId: string },
+    @Param('auctionId') auctionId: string,
   ): Promise<CreateRoomResponseDto> {
     return this.roomService.createRoom(user, auctionId);
+  }
+
+  @ApiOperation({ summary: 'Finish an auction' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RoomRoles(RoomRole.ADMIN)
+  @UseGuards(RoomAuthGuard)
+  @Post(':auctionId/finish')
+  async finishAuction(@RoomUser() owner: RoomAuthorizedOwner): Promise<void> {
+    await this.roomService.finishAuction(owner);
+    this.roomGateway.publishRoomEvent(owner.auctionId, 'auctionFinished', {});
+  }
+
+  @ApiOperation({ summary: 'Restart an auction' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
+  @Post(':auctionId/restart')
+  async restartAuction(
+    @AuthUser() user: TokenPayload,
+    @Param('auctionId') auctionId: string,
+  ): Promise<void> {
+    await this.roomService.restartAuction(user.sub, auctionId);
   }
 
   @ApiOperation({ summary: 'Get auction room admin info by id' })

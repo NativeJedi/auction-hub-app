@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Auction } from '../auctions/entities/auction.entity';
+import { Auction, AuctionStatus } from '../auctions/entities/auction.entity';
 import { AuctionsService } from '../auctions/auctions.service';
 import { TokenPayload, TokenService } from '../auth/token.service';
 import { EmailService } from '../email/email.service';
@@ -48,6 +48,10 @@ export class RoomService {
       this.auctionsService.findOne(id, auctionId),
       this.lotsService.findAll(id, auctionId),
     ]);
+
+    if (auction.status !== AuctionStatus.CREATED) {
+      throw new BadRequestException('Auction is not in CREATED state');
+    }
 
     const roomAuction: RoomAuction = {
       name: auction.name,
@@ -194,19 +198,20 @@ export class RoomService {
   }
 
   async finishAuction(owner: RoomAuthorizedOwner): Promise<void> {
+    const auction = await this.auctionsService.findOne(owner.id, owner.auctionId);
+
+    if (auction.status !== AuctionStatus.STARTED) {
+      throw new BadRequestException('Auction is not in STARTED state');
+    }
+
     await this.finishActiveLot(owner);
     await this.completeAuction(owner);
   }
 
   private async completeAuction(owner: RoomAuthorizedOwner): Promise<void> {
-    const room = await this.roomRepository.getRoom(owner.auctionId);
-
-    if (room) {
-      await this.lotsService.bulkMarkUnsold(room.auctionId);
-      await this.auctionsService.finishAuction(room.auctionId);
-    }
-
-    this.roomRepository.clearRoom(owner.auctionId);
+    await this.lotsService.bulkMarkUnsold(owner.auctionId);
+    await this.auctionsService.finishAuction(owner.auctionId);
+    await this.roomRepository.clearRoom(owner.auctionId);
   }
 
   async finishActiveLot(owner: RoomAuthorizedOwner) {
@@ -261,6 +266,17 @@ export class RoomService {
     await this.roomRepository.setActiveLot(owner.auctionId, nextLot.id);
 
     return { lot: nextLot, autoFinished: false };
+  }
+
+  async restartAuction(ownerId: string, auctionId: string): Promise<void> {
+    const auction = await this.auctionsService.findOne(ownerId, auctionId);
+
+    if (auction.status !== AuctionStatus.FINISHED) {
+      throw new BadRequestException('Auction is not in FINISHED state');
+    }
+
+    await this.roomRepository.clearRoom(auctionId);
+    await this.auctionsService.restartAuction(ownerId, auctionId);
   }
 
   async placeBid(

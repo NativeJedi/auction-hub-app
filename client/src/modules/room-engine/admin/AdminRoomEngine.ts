@@ -1,15 +1,20 @@
 import type BaseSocket from '@/src/sockets/base-socket';
 import type { Room, RoomBid, RoomInvite, RoomLot, RoomMember } from '@/src/api/dto/room.dto';
-import { createRoom, fetchAdminRoomInfo } from '@/src/api/auctions-api-client/requests/room';
+import {
+  startAuction,
+  fetchAdminRoomInfo,
+  finishAuction,
+} from '@/src/api/auctions-api-client/requests/room';
 import { setRoomToken } from '@/src/utils/local-storage';
 import { AdminRoomData } from './types';
 import { RoomEngine } from '../core/RoomEngine';
 
 export interface AdminRoomApi {
   fetchAdminRoomInfo: typeof fetchAdminRoomInfo;
+  finishAuction: typeof finishAuction;
 }
 
-const defaultApi: AdminRoomApi = { fetchAdminRoomInfo };
+const defaultApi: AdminRoomApi = { fetchAdminRoomInfo, finishAuction };
 
 export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   constructor(
@@ -89,16 +94,16 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   }
 
   // Static factory — called before a room engine instance exists
-  static async createRoom(auctionId: string): Promise<Room> {
-    const { room, token } = await createRoom({ auctionId });
+  static async startAuction(auctionId: string): Promise<Room> {
+    const { room, token } = await startAuction({ auctionId });
     setRoomToken(room.auctionId, token);
     return room;
   }
 
   // Admin actions
 
-  finishAuction(): void {
-    this.socket.emitEvent('finishAuction');
+  async finishAuction(): Promise<void> {
+    await this.api.finishAuction({ auctionId: this.auctionId });
   }
 
   nextLot(): void {

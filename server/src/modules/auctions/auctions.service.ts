@@ -16,8 +16,6 @@ import {
   PaginatedResponseDto,
   QueryPaginationDto,
 } from '../pagination/pagination.dto';
-import { RoomRepository } from '../room/room.repository';
-
 @Injectable()
 export class AuctionsService {
   constructor(
@@ -26,7 +24,6 @@ export class AuctionsService {
     private readonly auctionsRepository: Repository<Auction>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly roomRepository: RoomRepository,
   ) {}
 
   async findOwner(ownerId: User['id']) {
@@ -125,12 +122,10 @@ export class AuctionsService {
     await this.auctionsRepository.delete({ owner, id });
   }
 
-  async resetAuction(
+  async restartAuction(
     ownerId: User['id'],
     auctionId: Auction['id'],
   ): Promise<void> {
-    await this.roomRepository.clearRoom(auctionId);
-
     await this.dataSource.transaction(async (manager) => {
       const auction = await manager.findOne(Auction, {
         where: { id: auctionId, owner: { id: ownerId } },

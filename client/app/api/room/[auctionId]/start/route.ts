@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
 import { startAuctionServer } from '@/src/api/auctions-api/requests/room';
 
-const createRoom = async (req: Request) => {
-  const body = await req.json();
+type Options = { params: Promise<{ auctionId: string }> };
 
-  const data = await startAuctionServer(body);
+const startAuction = async (_req: Request, { params }: Options) => {
+  const { auctionId } = await params;
+
+  const data = await startAuctionServer({ auctionId });
 
   const response = NextResponse.json(data);
 
@@ -13,10 +15,10 @@ const createRoom = async (req: Request) => {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    path: `/api/room/${data.room.auctionId}/admin`,
+    path: `/api/room/${data.room.auctionId}`,
   });
 
   return response;
 };
 
-export const POST = withNextErrorResponse(createRoom);
+export const POST = withNextErrorResponse(startAuction);

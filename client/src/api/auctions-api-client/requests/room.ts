@@ -9,8 +9,8 @@ import {
 } from '@/src/api/dto/room.dto';
 import { auctionsApiClient } from '@/src/api/auctions-api-client/api';
 
-export const createRoom = ({ auctionId }: { auctionId: string }) =>
-  auctionsApiClient.post<CreateRoomResponseDto>('/room', { auctionId });
+export const startAuction = ({ auctionId }: { auctionId: string }) =>
+  auctionsApiClient.post<CreateRoomResponseDto>(`/room/${auctionId}/start`);
 
 export const fetchAdminRoomInfo = ({ auctionId }: { auctionId: string }) =>
   auctionsApiClient.get<RoomAdminInfoResponseDto>(`/room/${auctionId}/admin`);
@@ -23,3 +23,6 @@ export const sendRoomInvite = (auctionId: Room['auctionId'], dto: SendInviteDto)
 
 export const confirmRoomInvite = (auctionId: Room['auctionId'], dto: ConfirmRoomInviteDto) =>
   auctionsApiClient.post<ConfirmRoomInviteResponseDto>(`/room/${auctionId}/invite/confirm`, dto);
+
+export const finishAuction = ({ auctionId }: { auctionId: string }) =>
+  auctionsApiClient.post(`/room/${auctionId}/finish`);

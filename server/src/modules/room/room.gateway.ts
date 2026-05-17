@@ -184,22 +184,6 @@ export class RoomGateway implements OnModuleDestroy {
     }
   }
 
-  @UseGuards(WSRoomRolesGuard)
-  @RoomRoles(RoomRole.ADMIN)
-  @SubscribeMessage('finishAuction')
-  async handleFinishAuction(
-    @ConnectedSocket() client: Socket,
-    @RoomSockerUser() user: RoomAuthorizedOwner,
-  ) {
-    try {
-      await this.roomService.finishAuction(user);
-
-      this.publishRoomEvent(user.auctionId, 'auctionFinished', {});
-    } catch (e) {
-      client.emit('error', { message: e.message });
-    }
-  }
-
   onModuleDestroy() {
     this.sub?.disconnect?.();
     this.pub?.disconnect?.();

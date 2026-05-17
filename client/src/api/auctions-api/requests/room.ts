@@ -9,8 +9,8 @@ import {
 } from '@/src/api/dto/room.dto';
 import { auctionsAPI } from '@/src/api/auctions-api/api';
 
-export const createRoomServer = ({ auctionId }: { auctionId: string }) =>
-  auctionsAPI.post<CreateRoomResponseDto>('/room', { auctionId });
+export const startAuctionServer = ({ auctionId }: { auctionId: string }) =>
+  auctionsAPI.post<CreateRoomResponseDto>(`/room/${auctionId}/start`);
 
 export const fetchRoomAdminServer = ({ auctionId, token }: { auctionId: string; token: string }) =>
   auctionsAPI.get<RoomAdminInfoResponseDto>(`/room/${auctionId}/admin`, {
@@ -31,4 +31,9 @@ export const sendRoomInviteServer = (auctionId: Room['auctionId'], dto: SendInvi
 export const confirmRoomInviteServer = (auctionId: Room['auctionId'], dto: ConfirmRoomInviteDto) =>
   auctionsAPI.post<ConfirmRoomInviteResponseDto>(`/room/${auctionId}/invite/confirm`, dto, {
     skipAuth: true,
+  });
+
+export const finishAuctionServer = ({ auctionId, token }: { auctionId: string; token: string }) =>
+  auctionsAPI.post(`/room/${auctionId}/finish`, null, {
+    headers: { ['x-room-token']: token },
   });

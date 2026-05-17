@@ -17,7 +17,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
     if (result === 'closed') return;
 
-    const room = await AdminRoomEngine.createRoom(auctionId);
+    const room = await AdminRoomEngine.startAuction(auctionId);
 
     router.push(`/room/${room.auctionId}/admin`);
   };
