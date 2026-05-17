@@ -319,6 +319,13 @@ describe('RoomService', () => {
         BadRequestException,
       );
     });
+
+    it('succeeds (does not throw) when auction is in STARTED state', async () => {
+      // DoD: POST /restart succeeds when auction is in STARTED state
+      auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.STARTED });
+
+      await expect(service.restartAuction('user-1', 'auction-1')).resolves.toBeUndefined();
+    });
   });
 
   describe('RoomRepository.roomExists', () => {

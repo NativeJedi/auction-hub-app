@@ -271,8 +271,8 @@ export class RoomService {
   async restartAuction(ownerId: string, auctionId: string): Promise<void> {
     const auction = await this.auctionsService.findOne(ownerId, auctionId);
 
-    if (auction.status !== AuctionStatus.FINISHED) {
-      throw new BadRequestException('Auction is not in FINISHED state');
+    if (auction.status === AuctionStatus.CREATED) {
+      throw new BadRequestException('Auction has not been started yet');
     }
 
     await this.roomRepository.clearRoom(auctionId);

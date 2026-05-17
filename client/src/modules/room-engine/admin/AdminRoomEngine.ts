@@ -4,6 +4,7 @@ import {
   startAuction,
   fetchAdminRoomInfo,
   finishAuction,
+  restartAuction,
 } from '@/src/api/auctions-api-client/requests/room';
 import { setRoomToken } from '@/src/utils/local-storage';
 import { AdminRoomData } from './types';
@@ -12,9 +13,10 @@ import { RoomEngine } from '../core/RoomEngine';
 export interface AdminRoomApi {
   fetchAdminRoomInfo: typeof fetchAdminRoomInfo;
   finishAuction: typeof finishAuction;
+  restartAuction: typeof restartAuction;
 }
 
-const defaultApi: AdminRoomApi = { fetchAdminRoomInfo, finishAuction };
+const defaultApi: AdminRoomApi = { fetchAdminRoomInfo, finishAuction, restartAuction };
 
 export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   constructor(
@@ -104,6 +106,10 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
 
   async finishAuction(): Promise<void> {
     await this.api.finishAuction({ auctionId: this.auctionId });
+  }
+
+  async resetAuction(): Promise<void> {
+    await this.api.restartAuction({ auctionId: this.auctionId });
   }
 
   nextLot(): void {

@@ -1,7 +1,10 @@
 'use client';
 
 import { Button } from '@/ui-kit/ui/button';
-import { MonitorIcon, PowerIcon } from 'lucide-react';
+import { MonitorIcon, PowerIcon, RotateCcwIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { confirmModal } from '@/src/modules/modals/ConfirmModal';
+import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import LotStrip from './LotStrip';
 import Participants from '@/app/room/[auctionId]/admin/Participants';
 import { useAuctionId } from '@/app/room/[auctionId]/hooks';
@@ -16,6 +19,25 @@ const RoomAdminPage = () => {
   const { engine, isLoading, auction, activeLot, lots, bids, members, invites, isLastLot } =
     useAdminRoom();
   const auctionId = useAuctionId();
+  const router = useRouter();
+  const onError = useErrorNotification();
+
+  const handleReset = async () => {
+    const { result } = await confirmModal.show({
+      title: 'Reset Auction?',
+      description:
+        'This will clear all bids, reset all lots to their initial state, and remove buyer records. The auction will return to CREATED status.',
+    });
+
+    if (result === 'closed') return;
+
+    try {
+      await engine.resetAuction();
+      router.push(`/room/${auctionId}`);
+    } catch (error) {
+      onError(error);
+    }
+  };
 
   const lotButton = isLastLot ? (
     <Button size="sm" variant="destructive" onClick={() => engine.finishAuction()}>
@@ -30,6 +52,10 @@ const RoomAdminPage = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <RoomHeader isLoading={isLoading} title={auction?.name} description={auction?.description}>
+        <Button variant="outline" onClick={handleReset}>
+          <RotateCcwIcon className="size-3.5" />
+          <span className="hidden sm:inline">Reset auction</span>
+        </Button>
         <Button variant="outline" asChild>
           <a href={`/room/${auctionId}`} target="_blank" rel="noreferrer">
             <MonitorIcon className="size-3.5" />
