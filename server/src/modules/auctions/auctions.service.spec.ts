@@ -2,9 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AuctionsService } from './auctions.service';
-import { Auction } from './entities/auction.entity';
+import { Auction, AuctionStatus } from './entities/auction.entity';
 import { UsersService } from '../users/users.service';
-import { LotStatus } from '../lots/entities/lots.entity';
+import { Lot, LotStatus } from '../lots/entities/lots.entity';
+import { Buyer } from '../buyers/entities/buyer.entity';
 import { Currency } from '../../types/currency';
 import { RoomRepository } from '../room/room.repository';
 
@@ -38,8 +39,8 @@ const makeUnsoldLot = (overrides: Record<string, unknown> = {}): any => ({
 
 describe('AuctionsService', () => {
   let service: AuctionsService;
-
   let auctionRepo: any;
+  let dataSource: { transaction: jest.Mock };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,18 +74,71 @@ describe('AuctionsService', () => {
 
     service = module.get(AuctionsService);
     auctionRepo = module.get(getRepositoryToken(Auction));
+    dataSource = module.get(getDataSourceToken()) as any;
   });
 
-  describe('resetAuction', () => {
-    it.todo(
-      'calls roomRepository.clearRoom with auctionId before the transaction',
-    );
-    it.todo('calls DataSource.transaction');
-    it.todo(
-      'within the transaction: resets lots, deletes buyers, resets auction status',
-    );
-    it.todo('throws NotFoundException when auction not found for owner');
-    it.todo('skips buyer deletion when no lots have a buyer');
+  describe('restartAuction', () => {
+    let manager: Record<string, any>;
+
+    beforeEach(() => {
+      manager = {
+        findOne: jest.fn().mockResolvedValue({ id: 'auction-1' }),
+        find: jest.fn().mockResolvedValue([]),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          update: jest.fn().mockReturnThis(),
+          set: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue({}),
+        }),
+        delete: jest.fn().mockResolvedValue({}),
+        update: jest.fn().mockResolvedValue({}),
+      };
+      dataSource.transaction.mockImplementation((cb: any) => cb(manager));
+    });
+
+    it('calls DataSource.transaction', async () => {
+      await service.restartAuction('user-1', 'auction-1');
+
+      expect(dataSource.transaction).toHaveBeenCalled();
+    });
+
+    it('within the transaction: resets lots, deletes buyers, and resets auction status', async () => {
+      const lotsWithBuyer = [
+        { id: 'lot-1', buyer: { id: 'b-1' } },
+        { id: 'lot-2', buyer: { id: 'b-2' } },
+      ];
+      manager.find.mockResolvedValue(lotsWithBuyer);
+
+      await service.restartAuction('user-1', 'auction-1');
+
+      expect(manager.createQueryBuilder).toHaveBeenCalled();
+      expect(manager.delete).toHaveBeenCalledWith(Buyer, ['b-1', 'b-2']);
+      expect(manager.update).toHaveBeenCalledWith(
+        Auction,
+        { id: 'auction-1' },
+        { status: AuctionStatus.CREATED, finishedAt: null },
+      );
+    });
+
+    it('skips buyer deletion when no lots have a buyer', async () => {
+      manager.find.mockResolvedValue([{ id: 'lot-1', buyer: null }]);
+
+      await service.restartAuction('user-1', 'auction-1');
+
+      expect(manager.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when auction not found for owner', async () => {
+      manager.findOne.mockResolvedValue(null);
+
+      await expect(service.restartAuction('user-1', 'auction-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    // "calls roomRepository.clearRoom before transaction" is not applicable here:
+    // AuctionsService does not inject RoomRepository. Clearing the room before restart
+    // is the responsibility of RoomService.restartAuction (tested in room.service.spec.ts).
   });
 
   describe('getAuctionResults', () => {

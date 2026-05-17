@@ -16,6 +16,7 @@ import {
   PaginatedResponseDto,
   QueryPaginationDto,
 } from '../pagination/pagination.dto';
+
 @Injectable()
 export class AuctionsService {
   constructor(
