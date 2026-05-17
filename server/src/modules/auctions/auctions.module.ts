@@ -5,13 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Auction } from './entities/auction.entity';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
+import { RoomRepository } from '../room/room.repository';
 
 const AuctionsRepository = TypeOrmModule.forFeature([Auction]);
 
 @Module({
   imports: [AuctionsRepository, UsersModule, AuthModule],
   controllers: [AuctionsController],
-  providers: [AuctionsService],
+  providers: [AuctionsService, RoomRepository],
   exports: [AuctionsRepository, UsersModule, AuctionsService, AuthModule],
 })
 export class AuctionsModule {}

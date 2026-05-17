@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
 import { sendRoomInviteServer } from '@/src/api/auctions-api/requests/room';
 
-type Options = { params: Promise<{ roomId: string }> };
+type Options = { params: Promise<{ auctionId: string }> };
 
 const sendRoomInvite = async (req: Request, { params }: Options) => {
   const body = await req.json();
-  const { roomId } = await params;
+  const { auctionId } = await params;
 
-  await sendRoomInviteServer(roomId, body);
+  await sendRoomInviteServer(auctionId, body);
 
   return NextResponse.json({ message: 'Invite sent' });
 };

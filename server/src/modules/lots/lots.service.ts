@@ -13,8 +13,8 @@ import {
   UpdateLotDto,
 } from './dto/lot.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Lot } from './entities/lots.entity';
-import { Repository } from 'typeorm';
+import { Lot, LotStatus } from './entities/lots.entity';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { AuctionsService } from '../auctions/auctions.service';
 import { v4 as uuid } from 'uuid';
@@ -120,6 +120,25 @@ export class LotsService {
     const auction = await this.findAuction(userId, auctionId);
 
     await this.lotsRepository.delete({ auction, id: lotId });
+  }
+
+  async bulkMarkUnsold(auctionId: Auction['id']): Promise<void> {
+    await this.lotsRepository.update(
+      { auction: { id: auctionId }, status: LotStatus.CREATED },
+      { status: LotStatus.UNSOLD },
+    );
+  }
+
+  async bulkResetLots(
+    auctionId: Auction['id'],
+    manager: EntityManager,
+  ): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .update(Lot)
+      .set({ status: LotStatus.CREATED, soldPrice: null, buyer: null as any })
+      .where('"auctionId" = :auctionId', { auctionId })
+      .execute();
   }
 
   async createPresignedUrls(

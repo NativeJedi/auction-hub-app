@@ -2,22 +2,22 @@ import { NextResponse } from 'next/server';
 import { withNextErrorResponse } from '@/src/api/core/middlewares';
 import { confirmRoomInviteServer } from '@/src/api/auctions-api/requests/room';
 
-type Options = { params: Promise<{ roomId: string }> };
+type Options = { params: Promise<{ auctionId: string }> };
 
 const confirmRoomInvite = async (req: Request, { params }: Options) => {
   const body = await req.json();
 
-  const { roomId } = await params;
+  const { auctionId } = await params;
 
-  const data = await confirmRoomInviteServer(roomId, body);
+  const data = await confirmRoomInviteServer(auctionId, body);
 
   const response = NextResponse.json(data);
 
-  response.cookies.set(`roomToken:${roomId}`, data.token, {
+  response.cookies.set(`roomToken:${auctionId}`, data.token, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    path: `/api/room/${roomId}`,
+    path: `/api/room/${auctionId}`,
   });
 
   return response;

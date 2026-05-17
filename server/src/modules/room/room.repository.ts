@@ -73,35 +73,40 @@ export class RoomRepository {
 
   async createRoom(
     ownerId: string,
+    auctionId: string,
     auction: RoomAuction,
     lots: Array<RoomLot>,
   ): Promise<Room> {
     const room: Room = {
+      auctionId,
       auction,
-      id: uuidv4(),
       ownerId,
     };
 
-    const roomKey = this.getRoomKey(room.id);
+    const roomKey = this.getRoomKey(room.auctionId);
 
     await this.rooms.set(roomKey, room);
 
-    await this.setActiveLot(room.id, lots[0].id);
+    await this.setActiveLot(room.auctionId, lots[0].id);
 
     await this.lotsList.pushMultiple(roomKey, lots);
 
     return room;
   }
 
-  async getRoom(roomId: Room['id']): Promise<Room | null> {
-    const roomKey = this.getRoomKey(roomId);
+  async getRoom(auctionId: Room['auctionId']): Promise<Room | null> {
+    const roomKey = this.getRoomKey(auctionId);
 
     const room = await this.rooms.get(roomKey);
 
     return room;
   }
 
-  async getMembers(roomId: Room['id']): Promise<RoomMember[]> {
+  async roomExists(auctionId: string): Promise<boolean> {
+    return (await this.getRoom(auctionId)) !== null;
+  }
+
+  async getMembers(roomId: Room['auctionId']): Promise<RoomMember[]> {
     const roomKey = this.getRoomKey(roomId);
 
     const members = await this.members.getList(roomKey);
@@ -109,7 +114,7 @@ export class RoomRepository {
     return members;
   }
 
-  async getActiveLot(roomId: Room['id']): Promise<RoomLot | undefined> {
+  async getActiveLot(roomId: Room['auctionId']): Promise<RoomLot | undefined> {
     const roomKey = this.getRoomKey(roomId);
 
     const activeLotId = await this.getActiveLotId(roomId);
@@ -119,7 +124,7 @@ export class RoomRepository {
     return lots.find(({ id }) => activeLotId === id);
   }
 
-  async getActiveLotBids(roomId: Room['id']): Promise<Bid[]> {
+  async getActiveLotBids(roomId: Room['auctionId']): Promise<Bid[]> {
     const activeLotId = await this.getActiveLotId(roomId);
 
     if (!activeLotId) {
@@ -129,7 +134,7 @@ export class RoomRepository {
     return this.getLotBids(roomId, activeLotId);
   }
 
-  async getActiveLotCurrentBid(roomId: Room['id']): Promise<Bid | undefined> {
+  async getActiveLotCurrentBid(roomId: Room['auctionId']): Promise<Bid | undefined> {
     const activeLotBids = await this.getActiveLotBids(roomId);
 
     return activeLotBids.length
@@ -137,7 +142,7 @@ export class RoomRepository {
       : activeLotBids[0];
   }
 
-  async getActiveLotId(roomId: Room['id']): Promise<string | undefined> {
+  async getActiveLotId(roomId: Room['auctionId']): Promise<string | undefined> {
     const roomKey = this.getRoomKey(roomId);
 
     const activeLotId = await this.activeLotId.get(roomKey);
@@ -145,25 +150,25 @@ export class RoomRepository {
     return activeLotId || undefined;
   }
 
-  async getLots(roomId: Room['id']): Promise<Array<RoomLot>> {
+  async getLots(roomId: Room['auctionId']): Promise<Array<RoomLot>> {
     const roomKey = this.getRoomKey(roomId);
 
     return this.lotsList.getAll(roomKey);
   }
 
-  async getInvites(roomId: Room['id']): Promise<RoomInvite[]> {
+  async getInvites(roomId: Room['auctionId']): Promise<RoomInvite[]> {
     const roomKey = this.getRoomKey(roomId);
 
     return this.invites.getList(roomKey);
   }
 
-  async getLotBids(roomId: Room['id'], lotId: RoomLot['id']): Promise<Bid[]> {
+  async getLotBids(roomId: Room['auctionId'], lotId: RoomLot['id']): Promise<Bid[]> {
     const roomKey = this.getBidsKey(roomId, lotId);
 
     return this.bids.getAll(roomKey);
   }
 
-  async getRoomInfo(roomId: Room['id']) {
+  async getRoomInfo(roomId: Room['auctionId']) {
     const activeLotIdPromise = this.getActiveLotId(roomId);
 
     const lotsPromise = this.getLots(roomId);
@@ -335,8 +340,10 @@ export class RoomRepository {
     return newBid;
   }
 
-  async clearRoom(id: Room['id']) {
+  async clearRoom(id: Room['auctionId']) {
     const roomKey = this.getRoomKey(id);
+
+    const lots = await this.lotsList.getAll(roomKey);
 
     await Promise.all([
       this.activeLotId.clear(roomKey),
@@ -344,7 +351,7 @@ export class RoomRepository {
       this.lotsList.clear(roomKey),
       this.rooms.clear(roomKey),
       this.invites.clear(roomKey),
-      this.bids.clear(roomKey),
+      ...lots.map((lot) => this.bids.clear(this.getBidsKey(id, lot.id))),
     ]);
   }
 }

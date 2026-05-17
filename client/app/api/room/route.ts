@@ -9,11 +9,11 @@ const createRoom = async (req: Request) => {
 
   const response = NextResponse.json(data);
 
-  response.cookies.set(`roomToken:${data.room.id}`, data.token, {
+  response.cookies.set(`roomToken:${data.room.auctionId}`, data.token, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    path: `/api/room/${data.room.id}/admin`,
+    path: `/api/room/${data.room.auctionId}/admin`,
   });
 
   return response;

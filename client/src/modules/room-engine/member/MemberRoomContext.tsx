@@ -23,20 +23,19 @@ type MemberRoomContextValue = {
 const MemberRoomContext = createContext<MemberRoomContextValue | null>(null);
 
 type MemberRoomProviderProps = {
-  roomId: string;
+  auctionId: string;
   onError?: (error: Error) => void;
   children: ReactNode;
 };
 
-export function MemberRoomProvider({ roomId, children }: MemberRoomProviderProps) {
-  const engine = useMemberEngine(roomId);
+export function MemberRoomProvider({ auctionId, children }: MemberRoomProviderProps) {
+  const engine = useMemberEngine(auctionId);
   const onError = useErrorNotification();
   const router = useRouter();
 
   useEffect(() => {
     engine.onAuctionFinished(() => {
-      const auctionId = engine.getState().auction?.id;
-      if (auctionId) router.push(`/results/${auctionId}`);
+      router.push(`/results/${auctionId}`);
     });
     engine.setOnError(onError);
   }, [engine, router, onError]);

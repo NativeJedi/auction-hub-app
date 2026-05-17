@@ -12,14 +12,14 @@ import { auctionsApiClient } from '@/src/api/auctions-api-client/api';
 export const createRoom = ({ auctionId }: { auctionId: string }) =>
   auctionsApiClient.post<CreateRoomResponseDto>('/room', { auctionId });
 
-export const fetchAdminRoomInfo = ({ roomId }: { roomId: string }) =>
-  auctionsApiClient.get<RoomAdminInfoResponseDto>(`/room/${roomId}/admin`);
+export const fetchAdminRoomInfo = ({ auctionId }: { auctionId: string }) =>
+  auctionsApiClient.get<RoomAdminInfoResponseDto>(`/room/${auctionId}/admin`);
 
-export const fetchRoomInfo = ({ roomId }: { roomId: string }) =>
-  auctionsApiClient.get<RoomInfoResponseDto>(`/room/${roomId}`);
+export const fetchRoomInfo = ({ auctionId }: { auctionId: string }) =>
+  auctionsApiClient.get<RoomInfoResponseDto>(`/room/${auctionId}`);
 
-export const sendRoomInvite = (roomId: Room['id'], dto: SendInviteDto) =>
-  auctionsApiClient.post(`/room/${roomId}/invite`, dto);
+export const sendRoomInvite = (auctionId: Room['auctionId'], dto: SendInviteDto) =>
+  auctionsApiClient.post(`/room/${auctionId}/invite`, dto);
 
-export const confirmRoomInvite = (roomId: Room['id'], dto: ConfirmRoomInviteDto) =>
-  auctionsApiClient.post<ConfirmRoomInviteResponseDto>(`/room/${roomId}/invite/confirm`, dto);
+export const confirmRoomInvite = (auctionId: Room['auctionId'], dto: ConfirmRoomInviteDto) =>
+  auctionsApiClient.post<ConfirmRoomInviteResponseDto>(`/room/${auctionId}/invite/confirm`, dto);

@@ -7,20 +7,19 @@ export enum RoomRole {
 }
 
 export class RoomAuction extends PickType(Auction, [
-  'id',
   'name',
   'description',
 ]) {}
 
 export class Room {
-  id: string;
+  auctionId: string;
   ownerId: string;
   auction: RoomAuction;
 }
 
 export class RoomAuthorizedMember {
   id: string;
-  roomId: Room['id'];
+  auctionId: Room['auctionId'];
   email: string;
   name: string;
   role: RoomRole.MEMBER;
@@ -28,7 +27,7 @@ export class RoomAuthorizedMember {
 
 export class RoomAuthorizedOwner {
   id: string;
-  roomId: Room['id'];
+  auctionId: Room['auctionId'];
   email: string;
   role: RoomRole.ADMIN;
 }

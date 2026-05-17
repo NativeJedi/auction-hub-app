@@ -20,7 +20,6 @@ import {
   RoomRole,
 } from './entities/room.entity';
 import { RoomRoles, RoomSockerUser } from './guards/decorators';
-import { RoomLot } from './entities/room-lot.entity';
 
 type PublishEvent = {
   room: string;
@@ -59,12 +58,12 @@ export class RoomGateway implements OnModuleDestroy {
     });
   }
 
-  private getRoomKey(roomId: string) {
-    return `room:${roomId}`;
+  private getRoomKey(auctionId: string) {
+    return `room:${auctionId}`;
   }
 
-  private getUserRoomKey(roomId: string, userId: string) {
-    return `${this.getRoomKey(roomId)}:${userId}`;
+  private getUserRoomKey(auctionId: string, userId: string) {
+    return `${this.getRoomKey(auctionId)}:${userId}`;
   }
 
   async handleConnection(client: Socket) {
@@ -84,14 +83,14 @@ export class RoomGateway implements OnModuleDestroy {
 
     const { payload } = result;
 
-    if (!this.subscribedRooms.has(payload.roomId)) {
-      await this.sub.subscribe(this.getRoomKey(payload.roomId));
-      this.subscribedRooms.add(payload.roomId);
+    if (!this.subscribedRooms.has(payload.auctionId)) {
+      await this.sub.subscribe(this.getRoomKey(payload.auctionId));
+      this.subscribedRooms.add(payload.auctionId);
     }
 
     if (!this.subscribedRooms.has(payload.sub)) {
       await this.sub.subscribe(
-        this.getUserRoomKey(payload.roomId, payload.sub),
+        this.getUserRoomKey(payload.auctionId, payload.sub),
       );
       this.subscribedRooms.add(payload.sub);
     }
@@ -143,8 +142,8 @@ export class RoomGateway implements OnModuleDestroy {
       return;
     }
 
-    await client.join(this.getRoomKey(user.roomId));
-    await client.join(this.getUserRoomKey(user.roomId, user.id));
+    await client.join(this.getRoomKey(user.auctionId));
+    await client.join(this.getUserRoomKey(user.auctionId, user.id));
   }
 
   @UseGuards(WSRoomRolesGuard)
@@ -155,9 +154,13 @@ export class RoomGateway implements OnModuleDestroy {
     @RoomSockerUser() user: RoomAuthorizedOwner,
   ) {
     try {
-      const data: RoomLot = await this.roomService.placeNextLot(user);
+      const result = await this.roomService.placeNextLot(user);
 
-      this.publishRoomEvent(user.roomId, 'newLot', data);
+      if (result.autoFinished) {
+        this.publishRoomEvent(user.auctionId, 'auctionFinished', {});
+      } else {
+        this.publishRoomEvent(user.auctionId, 'newLot', result.lot);
+      }
     } catch (e) {
       client.emit('error', { message: e.message });
     }
@@ -175,7 +178,7 @@ export class RoomGateway implements OnModuleDestroy {
       const newBid: BidDto = await this.roomService.placeBid(user, bid);
 
       // TODO: hide email for members channel
-      this.publishRoomEvent(user.roomId, 'newBid', newBid);
+      this.publishRoomEvent(user.auctionId, 'newBid', newBid);
     } catch (e) {
       client.emit('error', { message: e.message });
     }
@@ -191,7 +194,7 @@ export class RoomGateway implements OnModuleDestroy {
     try {
       await this.roomService.finishAuction(user);
 
-      this.publishRoomEvent(user.roomId, 'auctionFinished', {});
+      this.publishRoomEvent(user.auctionId, 'auctionFinished', {});
     } catch (e) {
       client.emit('error', { message: e.message });
     }

@@ -13,11 +13,11 @@ const defaultApi: AdminRoomApi = { fetchAdminRoomInfo };
 
 export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   constructor(
-    roomId: string,
+    auctionId: string,
     socket: BaseSocket,
     private readonly api: AdminRoomApi = defaultApi
   ) {
-    super(roomId, socket);
+    super(auctionId, socket);
   }
 
   protected getInitialData(): AdminRoomData {
@@ -32,7 +32,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   }
 
   protected async fetchInitialData(): Promise<Partial<AdminRoomData>> {
-    const data = await this.api.fetchAdminRoomInfo({ roomId: this.roomId });
+    const data = await this.api.fetchAdminRoomInfo({ auctionId: this.auctionId });
 
     return {
       auction: data.room.auction,
@@ -91,7 +91,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   // Static factory — called before a room engine instance exists
   static async createRoom(auctionId: string): Promise<Room> {
     const { room, token } = await createRoom({ auctionId });
-    setRoomToken(room.id, token);
+    setRoomToken(room.auctionId, token);
     return room;
   }
 

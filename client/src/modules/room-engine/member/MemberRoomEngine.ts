@@ -11,9 +11,9 @@ import { RoomEngine } from '../core/RoomEngine';
 import { MemberRoomData } from './types';
 
 export interface MemberRoomApi {
-  fetchRoomInfo: (params: { roomId: string }) => Promise<RoomInfoResponseDto>;
+  fetchRoomInfo: (params: { auctionId: string }) => Promise<RoomInfoResponseDto>;
   confirmRoomInvite: (
-    roomId: string,
+    auctionId: string,
     dto: { token: string }
   ) => Promise<ConfirmRoomInviteResponseDto>;
 }
@@ -22,11 +22,11 @@ const defaultApi: MemberRoomApi = { fetchRoomInfo, confirmRoomInvite };
 
 export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
   constructor(
-    roomId: string,
+    auctionId: string,
     socket: BaseSocket,
     private readonly api: MemberRoomApi = defaultApi
   ) {
-    super(roomId, socket);
+    super(auctionId, socket);
   }
 
   protected getInitialData(): MemberRoomData {
@@ -80,7 +80,7 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
 
   protected async fetchInitialData(): Promise<Partial<MemberRoomData>> {
     const { room, activeLot, activeLotBids, user } = await this.api.fetchRoomInfo({
-      roomId: this.roomId,
+      auctionId: this.auctionId,
     });
 
     return {
@@ -125,8 +125,8 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
   // Actions
 
   async confirmInvite(inviteToken: string): Promise<void> {
-    const { token } = await this.api.confirmRoomInvite(this.roomId, { token: inviteToken });
-    setRoomToken(this.roomId, token);
+    const { token } = await this.api.confirmRoomInvite(this.auctionId, { token: inviteToken });
+    setRoomToken(this.auctionId, token);
   }
 
   changeBidAmount(totalAmount: number) {

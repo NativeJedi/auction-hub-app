@@ -3,8 +3,9 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { Auction, AuctionStatus } from '../auctions/entities/auction.entity';
+import { Auction } from '../auctions/entities/auction.entity';
 import { AuctionsService } from '../auctions/auctions.service';
 import { TokenPayload, TokenService } from '../auth/token.service';
 import { EmailService } from '../email/email.service';
@@ -23,6 +24,7 @@ import { RoomInfoResponseDto, RoomInfoOwnerResponseDto } from './dto/room.dto';
 import { BuyersService } from '../buyers/buyers.service';
 import { LotsService } from '../lots/lots.service';
 import { LotStatus } from '../lots/entities/lots.entity';
+import { RoomLot } from './entities/room-lot.entity';
 import { ApiAuthorizationError } from '../../errors';
 import { pickArrayFields, pickFields } from '../../utils/pick';
 import { AppConfigService } from '../../config/app-config.service';
@@ -48,7 +50,6 @@ export class RoomService {
     ]);
 
     const roomAuction: RoomAuction = {
-      id: auction.id,
       name: auction.name,
       description: auction.description,
     };
@@ -57,26 +58,30 @@ export class RoomService {
       throw new BadRequestException('No lots created for this auction');
     }
 
-    const room = await this.roomRepository.createRoom(id, roomAuction, lots);
+    if (await this.roomRepository.roomExists(auctionId)) {
+      throw new UnprocessableEntityException(
+        'Auction already has an active room',
+      );
+    }
+
+    const room = await this.roomRepository.createRoom(id, auctionId, roomAuction, lots);
 
     const token = this.tokenService.roomMemberToken.generate({
       sub: id,
       email,
       role: RoomRole.ADMIN,
-      roomId: room.id,
+      auctionId: room.auctionId,
     });
 
-    await this.auctionsService.updateOne(id, auctionId, {
-      status: AuctionStatus.STARTED,
-    });
+    await this.auctionsService.startAuction(auctionId);
 
     return { room, token };
   }
 
   async getOwnerRoomInfo(
-    roomId: Room['id'],
+    auctionId: Room['auctionId'],
   ): Promise<RoomInfoOwnerResponseDto> {
-    const fullInfo = await this.roomRepository.getRoomInfo(roomId);
+    const fullInfo = await this.roomRepository.getRoomInfo(auctionId);
 
     if (!fullInfo.room) {
       throw new NotFoundException('Room not found');
@@ -89,10 +94,10 @@ export class RoomService {
   }
 
   async getRoomInfo(
-    roomId: Room['id'],
+    auctionId: Room['auctionId'],
     currentUser?: RoomAuthorizedUser | null,
   ): Promise<RoomInfoResponseDto> {
-    const fullInfo = await this.roomRepository.getRoomInfo(roomId);
+    const fullInfo = await this.roomRepository.getRoomInfo(auctionId);
 
     const { room } = fullInfo;
 
@@ -110,7 +115,7 @@ export class RoomService {
 
     return {
       room: {
-        id: roomId,
+        auctionId,
         auction: pickFields(room.auction, ['name', 'description']),
       },
       activeLot: fullInfo.activeLot,
@@ -124,15 +129,15 @@ export class RoomService {
     };
   }
 
-  async sendRoomInvite(roomId: string, { email, name }: CreateInviteDto) {
-    const room = await this.roomRepository.getRoom(roomId);
+  async sendRoomInvite(auctionId: string, { email, name }: CreateInviteDto) {
+    const room = await this.roomRepository.getRoom(auctionId);
 
     if (!room) {
       throw new NotFoundException('Room not found');
     }
 
     const existingUser = await this.roomRepository.getMemberByEmail(
-      roomId,
+      auctionId,
       email,
     );
 
@@ -140,7 +145,7 @@ export class RoomService {
       throw new ConflictException('User already accepted invite');
     }
 
-    const invite = await this.roomRepository.createInvite(roomId, {
+    const invite = await this.roomRepository.createInvite(auctionId, {
       email,
       name,
     });
@@ -150,7 +155,7 @@ export class RoomService {
       email,
     });
 
-    const inviteLink = `${this.appConfig.urls.CLIENT_URL}/room/${roomId}/invite/confirm?token=${token}`;
+    const inviteLink = `${this.appConfig.urls.CLIENT_URL}/room/${auctionId}/invite/confirm?token=${token}`;
 
     await this.emailService.sendEmail(
       email,
@@ -161,7 +166,7 @@ export class RoomService {
     return { invite, room };
   }
 
-  async confirmRoomInvite(roomId: string, token: string) {
+  async confirmRoomInvite(auctionId: string, token: string) {
     const result = this.tokenService.roomMemberInviteToken.validate(token);
 
     if (!result.payload) {
@@ -169,7 +174,7 @@ export class RoomService {
     }
 
     const { room, member } = await this.roomRepository.createMember(
-      roomId,
+      auctionId,
       result.payload.email,
     );
 
@@ -177,7 +182,7 @@ export class RoomService {
       sub: member.id,
       email: member.email,
       name: member.name,
-      roomId: room.id,
+      auctionId: room.auctionId,
       role: RoomRole.MEMBER,
     });
 
@@ -188,23 +193,27 @@ export class RoomService {
     };
   }
 
-  async finishAuction(owner: RoomAuthorizedOwner) {
+  async finishAuction(owner: RoomAuthorizedOwner): Promise<void> {
     await this.finishActiveLot(owner);
+    await this.completeAuction(owner);
+  }
 
-    const room = await this.roomRepository.getRoom(owner.roomId);
+  private async completeAuction(owner: RoomAuthorizedOwner): Promise<void> {
+    const room = await this.roomRepository.getRoom(owner.auctionId);
 
     if (room) {
-      await this.auctionsService.markAsFinished(room.auction.id);
+      await this.lotsService.bulkMarkUnsold(room.auctionId);
+      await this.auctionsService.finishAuction(room.auctionId);
     }
 
-    this.roomRepository.clearRoom(owner.roomId);
+    this.roomRepository.clearRoom(owner.auctionId);
   }
 
   async finishActiveLot(owner: RoomAuthorizedOwner) {
     const [room, activeLotId, activeBid] = await Promise.all([
-      this.roomRepository.getRoom(owner.roomId),
-      this.roomRepository.getActiveLotId(owner.roomId),
-      this.roomRepository.getActiveLotCurrentBid(owner.roomId),
+      this.roomRepository.getRoom(owner.auctionId),
+      this.roomRepository.getActiveLotId(owner.auctionId),
+      this.roomRepository.getActiveLotCurrentBid(owner.auctionId),
     ]);
 
     if (!room) {
@@ -216,7 +225,7 @@ export class RoomService {
     }
 
     if (!activeBid) {
-      await this.lotsService.updateLot(owner.id, room.auction.id, activeLotId, {
+      await this.lotsService.updateLot(owner.id, room.auctionId, activeLotId, {
         status: LotStatus.UNSOLD,
       });
 
@@ -224,36 +233,45 @@ export class RoomService {
     }
 
     await Promise.all([
-      this.lotsService.updateLot(owner.id, room.auction.id, activeLotId, {
+      this.lotsService.updateLot(owner.id, room.auctionId, activeLotId, {
         status: LotStatus.SOLD,
         soldPrice: activeBid.amount,
       }),
-      this.buyersService.saveBuyer(owner.id, room.auction.id, activeLotId, {
+      this.buyersService.saveBuyer(owner.id, room.auctionId, activeLotId, {
         name: activeBid.name,
         email: activeBid.email,
       }),
     ]);
   }
 
-  async placeNextLot(owner: RoomAuthorizedOwner) {
+  async placeNextLot(
+    owner: RoomAuthorizedOwner,
+  ): Promise<
+    { lot: RoomLot; autoFinished: false } | { lot: null; autoFinished: true }
+  > {
     await this.finishActiveLot(owner);
 
-    const nextLot = await this.roomRepository.getNextLot(owner.roomId);
+    const nextLot = await this.roomRepository.getNextLot(owner.auctionId);
 
     if (!nextLot) {
-      throw new NotFoundException('No more lots');
+      await this.completeAuction(owner);
+      return { lot: null, autoFinished: true };
     }
 
-    await this.roomRepository.setActiveLot(owner.roomId, nextLot.id);
+    await this.roomRepository.setActiveLot(owner.auctionId, nextLot.id);
 
-    return nextLot;
+    return { lot: nextLot, autoFinished: false };
   }
 
   async placeBid(
     member: RoomAuthorizedMember,
     bid: CreateBidDto,
   ): Promise<BidDto> {
-    const newBid = await this.roomRepository.setBid(member.roomId, member, bid);
+    const newBid = await this.roomRepository.setBid(
+      member.auctionId,
+      member,
+      bid,
+    );
 
     return newBid;
   }

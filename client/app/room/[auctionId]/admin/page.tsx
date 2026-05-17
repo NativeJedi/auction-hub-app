@@ -3,19 +3,19 @@
 import { Button } from '@/ui-kit/ui/button';
 import { MonitorIcon, PowerIcon } from 'lucide-react';
 import LotStrip from './LotStrip';
-import Participants from '@/app/room/[roomId]/admin/Participants';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import Participants from '@/app/room/[auctionId]/admin/Participants';
+import { useAuctionId } from '@/app/room/[auctionId]/hooks';
 import { AdminRoomProvider } from '@/src/modules/room-engine/admin/AdminRoomContext';
 import { useAdminRoom } from '@/src/modules/room-engine/admin/hooks/useAdminRoom';
-import RoomHeader from '@/app/room/[roomId]/components/RoomHeader';
-import CurrentLot from '@/app/room/[roomId]/components/CurrentLot';
-import Bids from '@/app/room/[roomId]/components/Bids';
-import { RoomErrorBoundary } from '@/app/room/[roomId]/components/RoomErrorBoundary';
+import RoomHeader from '@/app/room/[auctionId]/components/RoomHeader';
+import CurrentLot from '@/app/room/[auctionId]/components/CurrentLot';
+import Bids from '@/app/room/[auctionId]/components/Bids';
+import { RoomErrorBoundary } from '@/app/room/[auctionId]/components/RoomErrorBoundary';
 
 const RoomAdminPage = () => {
   const { engine, isLoading, auction, activeLot, lots, bids, members, invites, isLastLot } =
     useAdminRoom();
-  const roomId = useRoomId();
+  const auctionId = useAuctionId();
 
   const lotButton = isLastLot ? (
     <Button size="sm" variant="destructive" onClick={() => engine.finishAuction()}>
@@ -31,7 +31,7 @@ const RoomAdminPage = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <RoomHeader isLoading={isLoading} title={auction?.name} description={auction?.description}>
         <Button variant="outline" asChild>
-          <a href={`/room/${roomId}`} target="_blank" rel="noreferrer">
+          <a href={`/room/${auctionId}`} target="_blank" rel="noreferrer">
             <MonitorIcon className="size-3.5" />
             <span className="hidden sm:inline">Open display</span>
           </a>
@@ -58,11 +58,11 @@ const RoomAdminPage = () => {
 };
 
 const AdminPage = () => {
-  const roomId = useRoomId();
+  const auctionId = useAuctionId();
 
   return (
     <RoomErrorBoundary>
-      <AdminRoomProvider roomId={roomId}>
+      <AdminRoomProvider auctionId={auctionId}>
         <RoomAdminPage />
       </AdminRoomProvider>
     </RoomErrorBoundary>

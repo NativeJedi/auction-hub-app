@@ -51,11 +51,11 @@ export class RoomController {
   })
   @RoomRoles(RoomRole.ADMIN)
   @UseGuards(RoomAuthGuard)
-  @Get(':roomId/admin')
+  @Get(':auctionId/admin')
   getAdminRoomInfo(
-    @Param('roomId') roomId: string,
+    @Param('auctionId') auctionId: string,
   ): Promise<RoomInfoOwnerResponseDto> {
-    return this.roomService.getOwnerRoomInfo(roomId);
+    return this.roomService.getOwnerRoomInfo(auctionId);
   }
 
   @ApiOperation({ summary: 'Get auction room info by id' })
@@ -64,12 +64,12 @@ export class RoomController {
     type: RoomInfoResponseDto,
   })
   @UseGuards(RoomAuthOptionalGuard)
-  @Get(':roomId')
+  @Get(':auctionId')
   getRoomInfo(
-    @Param('roomId') roomId: string,
+    @Param('auctionId') auctionId: string,
     @RoomUser() roomUser: RoomAuthorizedUser | null,
   ): Promise<RoomInfoResponseDto> {
-    return this.roomService.getRoomInfo(roomId, roomUser);
+    return this.roomService.getRoomInfo(auctionId, roomUser);
   }
 
   @ApiOperation({ summary: 'Send room invite to user email' })
@@ -77,15 +77,18 @@ export class RoomController {
     status: 200,
   })
   @HttpCode(200)
-  @Post(':roomId/invite')
+  @Post(':auctionId/invite')
   async sendRoomInvite(
-    @Param('roomId') roomId: string,
+    @Param('auctionId') auctionId: string,
     @Body() dto: CreateInviteDto,
   ) {
-    const { invite, room } = await this.roomService.sendRoomInvite(roomId, dto);
+    const { invite, room } = await this.roomService.sendRoomInvite(
+      auctionId,
+      dto,
+    );
 
     this.roomGateway.publishRoomUserEvent(
-      roomId,
+      auctionId,
       room.ownerId,
       'newInvite',
       invite,
@@ -97,18 +100,18 @@ export class RoomController {
     status: 200,
   })
   @HttpCode(200)
-  @Post(':roomId/invite/confirm')
+  @Post(':auctionId/invite/confirm')
   async confirmRoomInvite(
-    @Param('roomId') roomId: string,
+    @Param('auctionId') auctionId: string,
     @Body() dto: ConfirmInviteDto,
   ) {
     const { room, member, token } = await this.roomService.confirmRoomInvite(
-      roomId,
+      auctionId,
       dto.token,
     );
 
     this.roomGateway.publishRoomUserEvent(
-      roomId,
+      auctionId,
       room.ownerId,
       'newMember',
       member,

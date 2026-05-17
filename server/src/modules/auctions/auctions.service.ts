@@ -7,14 +7,16 @@ import {
 import { AuctionResultsDto, LotResultDto } from './dto/auction-results.dto';
 import { User } from '../../modules/users/entities/user.entity';
 import { UsersService } from '../../modules/users/users.service';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Auction, AuctionStatus } from './entities/auction.entity';
-import { LotStatus } from '../lots/entities/lots.entity';
-import { Repository } from 'typeorm';
+import { Lot, LotStatus } from '../lots/entities/lots.entity';
+import { Buyer } from '../buyers/entities/buyer.entity';
+import { DataSource, Repository } from 'typeorm';
 import {
   PaginatedResponseDto,
   QueryPaginationDto,
 } from '../pagination/pagination.dto';
+import { RoomRepository } from '../room/room.repository';
 
 @Injectable()
 export class AuctionsService {
@@ -22,6 +24,9 @@ export class AuctionsService {
     private readonly usersService: UsersService,
     @InjectRepository(Auction)
     private readonly auctionsRepository: Repository<Auction>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+    private readonly roomRepository: RoomRepository,
   ) {}
 
   async findOwner(ownerId: User['id']) {
@@ -120,7 +125,58 @@ export class AuctionsService {
     await this.auctionsRepository.delete({ owner, id });
   }
 
-  async markAsFinished(id: string): Promise<void> {
+  async resetAuction(
+    ownerId: User['id'],
+    auctionId: Auction['id'],
+  ): Promise<void> {
+    await this.roomRepository.clearRoom(auctionId);
+
+    await this.dataSource.transaction(async (manager) => {
+      const auction = await manager.findOne(Auction, {
+        where: { id: auctionId, owner: { id: ownerId } },
+      });
+
+      if (!auction) {
+        throw new NotFoundException(`Auction with id ${auctionId} not found`);
+      }
+
+      const lots = await manager.find(Lot, {
+        where: { auction: { id: auctionId } },
+        relations: ['buyer'],
+      });
+
+      const buyerIds = lots.filter((l) => l.buyer).map((l) => l.buyer.id);
+
+      await manager
+        .createQueryBuilder()
+        .update(Lot)
+        .set({ status: LotStatus.CREATED, soldPrice: null, buyer: null as any })
+        .where('"auctionId" = :auctionId', { auctionId })
+        .execute();
+
+      if (buyerIds.length > 0) {
+        await manager.delete(Buyer, buyerIds);
+      }
+
+      await manager.update(
+        Auction,
+        { id: auctionId },
+        {
+          status: AuctionStatus.CREATED,
+          finishedAt: null,
+        },
+      );
+    });
+  }
+
+  async startAuction(auctionId: string): Promise<void> {
+    await this.auctionsRepository.update(
+      { id: auctionId },
+      { status: AuctionStatus.STARTED },
+    );
+  }
+
+  async finishAuction(id: string): Promise<void> {
     await this.auctionsRepository.update(
       { id },
       { status: AuctionStatus.FINISHED, finishedAt: new Date() },
@@ -147,11 +203,14 @@ export class AuctionsService {
 
     const soldRawLots = auction.lots.filter((l) => l.status === LotStatus.SOLD);
 
-    const valuesByCurrency = soldRawLots.reduce<Record<string, number>>((acc, lot) => {
-      if (lot.soldPrice == null) return acc;
-      acc[lot.currency] = (acc[lot.currency] ?? 0) + lot.soldPrice;
-      return acc;
-    }, {});
+    const valuesByCurrency = soldRawLots.reduce<Record<string, number>>(
+      (acc, lot) => {
+        if (lot.soldPrice == null) return acc;
+        acc[lot.currency] = (acc[lot.currency] ?? 0) + lot.soldPrice;
+        return acc;
+      },
+      {},
+    );
 
     return {
       id: auction.id,

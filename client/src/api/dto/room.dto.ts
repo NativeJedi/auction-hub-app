@@ -1,10 +1,10 @@
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
 
-export type RoomAuction = Pick<Auction, 'id' | 'name' | 'description'>;
+export type RoomAuction = Pick<Auction, 'name' | 'description'>;
 
 export type Room = {
-  id: string;
+  auctionId: string;
   ownerId: string;
   auction: RoomAuction;
 };
@@ -59,7 +59,7 @@ export type RoomUser = {
 
 export type RoomInfoResponseDto = {
   room: {
-    id: Room['id'];
+    auctionId: Room['auctionId'];
 
     auction: RoomAuction;
   };

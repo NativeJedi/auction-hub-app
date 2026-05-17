@@ -4,7 +4,7 @@ import RoomHeader from './components/RoomHeader';
 import CurrentLot from './components/CurrentLot';
 import RoomCard from './components/RoomCard';
 import Bids from './components/Bids';
-import { useRoomId } from '@/app/room/[roomId]/hooks';
+import { useAuctionId } from '@/app/room/[auctionId]/hooks';
 import { RoomErrorBoundary } from './components/RoomErrorBoundary';
 import { PublicRoomProvider } from '@/src/modules/room-engine/public/PublicRoomContext';
 import { usePublicRoom } from '@/src/modules/room-engine/public/hooks/usePublicRoom';
@@ -102,10 +102,10 @@ const RoomDisplayPage = () => {
 };
 
 const RoomPage = () => {
-  const roomId = useRoomId();
+  const auctionId = useAuctionId();
   return (
     <RoomErrorBoundary>
-      <PublicRoomProvider roomId={roomId}>
+      <PublicRoomProvider auctionId={auctionId}>
         <RoomDisplayPage />
       </PublicRoomProvider>
     </RoomErrorBoundary>

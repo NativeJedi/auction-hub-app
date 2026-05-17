@@ -3,7 +3,7 @@ import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { Gavel } from 'lucide-react';
 import { PropsWithChildren } from 'react';
 import { PublicBidInfo } from '@/src/api/dto/room.dto';
-import RoomCard from '@/app/room/[roomId]/components/RoomCard';
+import RoomCard from '@/app/room/[auctionId]/components/RoomCard';
 
 type Props = {
   bids: PublicBidInfo[];

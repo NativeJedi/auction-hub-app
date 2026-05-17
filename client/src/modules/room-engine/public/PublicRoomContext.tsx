@@ -23,19 +23,18 @@ type PublicRoomContextValue = {
 const PublicRoomContext = createContext<PublicRoomContextValue | null>(null);
 
 type PublicRoomProviderProps = {
-  roomId: string;
+  auctionId: string;
   children: ReactNode;
 };
 
-export function PublicRoomProvider({ roomId, children }: PublicRoomProviderProps) {
-  const engine = usePublicEngine(roomId);
+export function PublicRoomProvider({ auctionId, children }: PublicRoomProviderProps) {
+  const engine = usePublicEngine(auctionId);
   const onError = useErrorNotification();
   const router = useRouter();
 
   useEffect(() => {
     engine.onAuctionFinished(() => {
-      const auctionId = engine.getState().auction?.id;
-      if (auctionId) router.push(`/results/${auctionId}`);
+      router.push(`/results/${auctionId}`);
     });
     engine.setOnError(onError);
   }, [engine, router, onError]);

@@ -8,7 +8,7 @@ import {
 import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { RoomLot } from '@/src/api/dto/room.dto';
 import { ImageOff } from 'lucide-react';
-import RoomCard from '@/app/room/[roomId]/components/RoomCard';
+import RoomCard from '@/app/room/[auctionId]/components/RoomCard';
 
 type Props = {
   tool?: React.ReactNode;

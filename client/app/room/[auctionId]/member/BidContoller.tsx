@@ -1,5 +1,5 @@
 import { useNumberInput } from '@/src/modules/forms/fields/Number/useNumberInput';
-import RoomCard from '@/app/room/[roomId]/components/RoomCard';
+import RoomCard from '@/app/room/[auctionId]/components/RoomCard';
 import { useMemberRoom } from '@/src/modules/room-engine/member/hooks/useMemberRoom';
 
 const MAX_BID_AMOUNT = 9_999_999;
