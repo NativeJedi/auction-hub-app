@@ -230,4 +230,15 @@ describe('AuctionsService', () => {
       expect(result.unsoldCount).toBe(1);
     });
   });
+
+  describe('findOne', () => {
+    it.todo('returns finishedAt when auction status is FINISHED');
+    it.todo('returns null for finishedAt when auction status is CREATED');
+  });
+
+  describe('updateOne', () => {
+    it.todo('throws BadRequestException when auction status is STARTED');
+    it.todo('throws BadRequestException when auction status is FINISHED');
+    it.todo('saves and returns updated auction when status is CREATED');
+  });
 });

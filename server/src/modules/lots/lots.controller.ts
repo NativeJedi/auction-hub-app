@@ -82,6 +82,7 @@ export class LotsController {
     @AuthUser() user: TokenPayload,
     @Body() lot: UpdateLotDto,
   ): Promise<LotDto> {
+    await this.lotsService.assertAuctionEditable(user.sub, auctionId);
     return this.lotsService.updateLot(user.sub, auctionId, lotId, lot);
   }
 

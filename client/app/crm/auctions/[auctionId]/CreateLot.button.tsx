@@ -10,9 +10,10 @@ import { lotImagesModal } from '@/app/crm/auctions/[auctionId]/LotImages.modal';
 
 type Props = {
   auctionId: Auction['id'];
+  disabled?: boolean;
 };
 
-const CreateLotButton = ({ auctionId }: Props) => {
+const CreateLotButton = ({ auctionId, disabled }: Props) => {
   const router = useRouter();
   const handleError = useErrorNotification();
 
@@ -39,7 +40,7 @@ const CreateLotButton = ({ auctionId }: Props) => {
   };
 
   return (
-    <Button className="min-w-[100px]" onClick={handleCreateClick}>
+    <Button className="min-w-[100px]" onClick={handleCreateClick} disabled={disabled}>
       <Plus /> Add
     </Button>
   );

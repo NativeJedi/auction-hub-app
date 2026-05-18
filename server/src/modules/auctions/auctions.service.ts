@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   UpdateAuctionDto,
   CreateAuctionDto,
@@ -101,18 +101,20 @@ export class AuctionsService {
   ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
 
-    const auction = await this.auctionsRepository.preload({
-      id,
-      owner,
-      ...updateAuctionDto,
-    });
+    const auction = await this.auctionsRepository.findOne({ where: { id, owner } });
 
     if (!auction) {
       throw new NotFoundException(`Auction with id ${id} not found`);
     }
 
-    const { owner: aucOwner, ...response } =
-      await this.auctionsRepository.save(auction);
+    if (auction.status !== AuctionStatus.CREATED) {
+      throw new BadRequestException('Auction cannot be edited after it has started');
+    }
+
+    const { owner: aucOwner, ...response } = await this.auctionsRepository.save({
+      ...auction,
+      ...updateAuctionDto,
+    });
 
     return response;
   }

@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Auction } from '../auctions/entities/auction.entity';
+import { Auction, AuctionStatus } from '../auctions/entities/auction.entity';
 import {
   AddLotImageDto,
   CreateLotDto,
@@ -47,6 +48,13 @@ export class LotsService {
 
   private findAuction(userId: User['id'], auctionId: Auction['id']) {
     return this.auctionsService.findOne(userId, auctionId);
+  }
+
+  async assertAuctionEditable(userId: User['id'], auctionId: Auction['id']) {
+    const auction = await this.findAuction(userId, auctionId);
+    if (auction.status !== AuctionStatus.CREATED) {
+      throw new BadRequestException('Auction cannot be edited after it has started');
+    }
   }
 
   async findAll(userId: User['id'], auctionId: Auction['id']) {
@@ -147,6 +155,7 @@ export class LotsService {
     lotId: Lot['id'],
     count: number,
   ): Promise<PresignedUrlItemDto[]> {
+    await this.assertAuctionEditable(userId, auctionId);
     await this.findLot(userId, auctionId, lotId);
 
     const s3Keys = Array.from(
@@ -163,6 +172,7 @@ export class LotsService {
     lotId: Lot['id'],
     images: AddLotImageDto[],
   ): Promise<LotImageDto[]> {
+    await this.assertAuctionEditable(userId, auctionId);
     const lot = await this.findLot(userId, auctionId, lotId);
 
     const s3KeyPrefix = getS3KeyPrefix(lotId);
@@ -191,6 +201,7 @@ export class LotsService {
     lotId: Lot['id'],
     imageId: LotImage['id'],
   ) {
+    await this.assertAuctionEditable(userId, auctionId);
     await this.findLot(userId, auctionId, lotId); // check for the owner
 
     const image = await this.lotImageRepository.findOne({
