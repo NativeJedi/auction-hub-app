@@ -50,6 +50,7 @@ describe('RoomService', () => {
           provide: AuctionsService,
           useValue: {
             findOne: jest.fn(),
+            findEditableOne: jest.fn(),
             startAuction: jest.fn(),
             finishAuction: jest.fn(),
             resetAuction: jest.fn(),
@@ -114,7 +115,7 @@ describe('RoomService', () => {
     const lots = [{ id: 'lot-1', name: 'Lot 1', startPrice: 100, currency: 'USD' }];
 
     beforeEach(() => {
-      auctionsService.findOne.mockResolvedValue({
+      auctionsService.findEditableOne.mockResolvedValue({
         id: 'auction-1',
         name: 'Test',
         description: null,
