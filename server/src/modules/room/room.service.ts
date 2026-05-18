@@ -45,13 +45,10 @@ export class RoomService {
     const { sub: id, email } = user;
 
     const [auction, lots] = await Promise.all([
-      this.auctionsService.findOne(id, auctionId),
+      this.auctionsService.findEditableOne(id, auctionId),
       this.lotsService.findAll(id, auctionId),
     ]);
 
-    if (auction.status !== AuctionStatus.CREATED) {
-      throw new BadRequestException('Auction is not in CREATED state');
-    }
 
     const roomAuction: RoomAuction = {
       name: auction.name,

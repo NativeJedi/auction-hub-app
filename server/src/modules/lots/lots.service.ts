@@ -46,10 +46,8 @@ export class LotsService {
   }
 
   async findAll(userId: User['id'], auctionId: Auction['id']) {
-    const auction = await this.auctionsService.findOne(userId, auctionId);
-
     const lots = await this.lotsRepository.find({
-      where: { auction: { id: auction.id } },
+      where: { auction: { id: auctionId, owner: { id: userId } }, },
       relations: ['buyer', 'images'],
     });
 

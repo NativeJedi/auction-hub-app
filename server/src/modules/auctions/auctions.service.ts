@@ -119,21 +119,7 @@ export class AuctionsService {
     id: Auction['id'],
     updateAuctionDto: UpdateAuctionDto,
   ): Promise<AuctionDto> {
-    const owner = await this.findOwner(ownerId);
-
-    const auction = await this.auctionsRepository.findOne({
-      where: { id, owner },
-    });
-
-    if (!auction) {
-      throw new NotFoundException(`Auction with id ${id} not found`);
-    }
-
-    if (auction.status !== AuctionStatus.CREATED) {
-      throw new BadRequestException(
-        'Auction cannot be edited after it has started',
-      );
-    }
+    const auction = await this.findEditableOne(ownerId, id);
 
     const { owner: aucOwner, ...response } = await this.auctionsRepository.save(
       {
