@@ -268,15 +268,15 @@ export class RoomService {
     return { lot: nextLot, autoFinished: false };
   }
 
-  async restartAuction(ownerId: string, auctionId: string): Promise<void> {
+  async resetAuction(ownerId: string, auctionId: string): Promise<void> {
     const auction = await this.auctionsService.findOne(ownerId, auctionId);
 
-    if (auction.status !== AuctionStatus.FINISHED) {
-      throw new BadRequestException('Auction is not in FINISHED state');
+    if (auction.status === AuctionStatus.CREATED) {
+      throw new BadRequestException('Auction has not been started yet');
     }
 
     await this.roomRepository.clearRoom(auctionId);
-    await this.auctionsService.restartAuction(ownerId, auctionId);
+    await this.auctionsService.resetAuction(ownerId, auctionId);
   }
 
   async placeBid(

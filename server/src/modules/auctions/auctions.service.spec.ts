@@ -77,7 +77,7 @@ describe('AuctionsService', () => {
     dataSource = module.get(getDataSourceToken()) as any;
   });
 
-  describe('restartAuction', () => {
+  describe('resetAuction', () => {
     let manager: Record<string, any>;
 
     beforeEach(() => {
@@ -97,7 +97,7 @@ describe('AuctionsService', () => {
     });
 
     it('calls DataSource.transaction', async () => {
-      await service.restartAuction('user-1', 'auction-1');
+      await service.resetAuction('user-1', 'auction-1');
 
       expect(dataSource.transaction).toHaveBeenCalled();
     });
@@ -109,7 +109,7 @@ describe('AuctionsService', () => {
       ];
       manager.find.mockResolvedValue(lotsWithBuyer);
 
-      await service.restartAuction('user-1', 'auction-1');
+      await service.resetAuction('user-1', 'auction-1');
 
       expect(manager.createQueryBuilder).toHaveBeenCalled();
       expect(manager.delete).toHaveBeenCalledWith(Buyer, ['b-1', 'b-2']);
@@ -123,7 +123,7 @@ describe('AuctionsService', () => {
     it('skips buyer deletion when no lots have a buyer', async () => {
       manager.find.mockResolvedValue([{ id: 'lot-1', buyer: null }]);
 
-      await service.restartAuction('user-1', 'auction-1');
+      await service.resetAuction('user-1', 'auction-1');
 
       expect(manager.delete).not.toHaveBeenCalled();
     });
@@ -131,14 +131,14 @@ describe('AuctionsService', () => {
     it('throws NotFoundException when auction not found for owner', async () => {
       manager.findOne.mockResolvedValue(null);
 
-      await expect(service.restartAuction('user-1', 'auction-1')).rejects.toThrow(
+      await expect(service.resetAuction('user-1', 'auction-1')).rejects.toThrow(
         NotFoundException,
       );
     });
 
     // "calls roomRepository.clearRoom before transaction" is not applicable here:
     // AuctionsService does not inject RoomRepository. Clearing the room before restart
-    // is the responsibility of RoomService.restartAuction (tested in room.service.spec.ts).
+    // is the responsibility of RoomService.resetAuction (tested in room.service.spec.ts).
   });
 
   describe('getAuctionResults', () => {

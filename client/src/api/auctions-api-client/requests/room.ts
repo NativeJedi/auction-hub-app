@@ -26,3 +26,6 @@ export const confirmRoomInvite = (auctionId: Room['auctionId'], dto: ConfirmRoom
 
 export const finishAuction = ({ auctionId }: { auctionId: string }) =>
   auctionsApiClient.post(`/room/${auctionId}/finish`);
+
+export const resetAuction = ({ auctionId }: { auctionId: string }) =>
+  auctionsApiClient.post(`/room/${auctionId}/reset`);

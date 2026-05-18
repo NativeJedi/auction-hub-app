@@ -2,6 +2,7 @@ import { formatISODate } from '@/src/utils/date';
 import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
 import LotsList from '@/app/crm/auctions/[auctionId]/LotsList.table';
 import StartAuctionButton from '@/app/crm/auctions/[auctionId]/StartAuction.button';
+import ResetAuctionButton from '@/app/crm/auctions/[auctionId]/ResetAuction.button';
 import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
 import { AuctionStatus } from '@/src/api/dto/auction.dto';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/ui-kit/ui/card';
@@ -38,6 +39,10 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
             )}
             {auction.status === AuctionStatus.CREATED && (
               <StartAuctionButton auctionId={auction.id} />
+            )}
+            {(auction.status === AuctionStatus.STARTED ||
+              auction.status === AuctionStatus.FINISHED) && (
+              <ResetAuctionButton auctionId={auction.id} />
             )}
           </div>
         </CardHeader>

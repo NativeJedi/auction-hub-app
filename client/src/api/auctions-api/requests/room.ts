@@ -37,3 +37,6 @@ export const finishAuctionServer = ({ auctionId, token }: { auctionId: string; t
   auctionsAPI.post(`/room/${auctionId}/finish`, null, {
     headers: { ['x-room-token']: token },
   });
+
+export const resetAuctionServer = ({ auctionId }: { auctionId: string }) =>
+  auctionsAPI.post(`/room/${auctionId}/reset`);
