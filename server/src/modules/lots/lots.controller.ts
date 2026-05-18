@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { LotsService } from './lots.service';
+import { AuctionsService } from '../auctions/auctions.service';
 import {
   AddLotImagesDto,
   CreateLotsDto,
@@ -67,7 +68,7 @@ export class LotsController {
     @Param('lotId') lotId: string,
     @AuthUser() user: TokenPayload,
   ): Promise<LotDto> {
-    return this.lotsService.findLot(user.sub, auctionId, lotId);
+    return this.lotsService.findAuctionLot(user.sub, auctionId, lotId);
   }
 
   @ApiOperation({ summary: 'Update lot by id' })
@@ -82,8 +83,7 @@ export class LotsController {
     @AuthUser() user: TokenPayload,
     @Body() lot: UpdateLotDto,
   ): Promise<LotDto> {
-    await this.lotsService.assertAuctionEditable(user.sub, auctionId);
-    return this.lotsService.updateLot(user.sub, auctionId, lotId, lot);
+    return this.lotsService.updateEditableLot(user.sub, auctionId, lotId, lot);
   }
 
   @ApiOperation({ summary: 'Delete lot by id' })

@@ -22,7 +22,7 @@ export class BuyersService {
     lotId: Lot['id'],
     buyer: CreateBuyerDto,
   ): Promise<Buyer> {
-    const lot = await this.lotsService.findLot(userId, auctionId, lotId);
+    const lot = await this.lotsService.findAuctionLot(userId, auctionId, lotId);
 
     return this.buyersRepository.save({
       ...buyer,

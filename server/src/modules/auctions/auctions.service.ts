@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   UpdateAuctionDto,
   CreateAuctionDto,
@@ -94,6 +98,22 @@ export class AuctionsService {
     return auction;
   }
 
+  async findEditableOne(ownerId: User['id'], id: Auction['id']) {
+    const auction = await this.findOne(ownerId, id);
+
+    this.checkEditableStatus(auction);
+
+    return auction;
+  }
+
+  checkEditableStatus(auction: Auction) {
+    if (auction.status !== AuctionStatus.CREATED) {
+      throw new BadRequestException(
+        'Auction cannot be edited after it has started',
+      );
+    }
+  }
+
   async updateOne(
     ownerId: User['id'],
     id: Auction['id'],
@@ -101,20 +121,26 @@ export class AuctionsService {
   ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
 
-    const auction = await this.auctionsRepository.findOne({ where: { id, owner } });
+    const auction = await this.auctionsRepository.findOne({
+      where: { id, owner },
+    });
 
     if (!auction) {
       throw new NotFoundException(`Auction with id ${id} not found`);
     }
 
     if (auction.status !== AuctionStatus.CREATED) {
-      throw new BadRequestException('Auction cannot be edited after it has started');
+      throw new BadRequestException(
+        'Auction cannot be edited after it has started',
+      );
     }
 
-    const { owner: aucOwner, ...response } = await this.auctionsRepository.save({
-      ...auction,
-      ...updateAuctionDto,
-    });
+    const { owner: aucOwner, ...response } = await this.auctionsRepository.save(
+      {
+        ...auction,
+        ...updateAuctionDto,
+      },
+    );
 
     return response;
   }

@@ -1,10 +1,9 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Auction, AuctionStatus } from '../auctions/entities/auction.entity';
+import { Auction } from '../auctions/entities/auction.entity';
 import {
   AddLotImageDto,
   CreateLotDto,
@@ -15,7 +14,7 @@ import {
 } from './dto/lot.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Lot, LotStatus } from './entities/lots.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { AuctionsService } from '../auctions/auctions.service';
 import { v4 as uuid } from 'uuid';
@@ -46,19 +45,8 @@ export class LotsService {
     };
   }
 
-  private findAuction(userId: User['id'], auctionId: Auction['id']) {
-    return this.auctionsService.findOne(userId, auctionId);
-  }
-
-  async assertAuctionEditable(userId: User['id'], auctionId: Auction['id']) {
-    const auction = await this.findAuction(userId, auctionId);
-    if (auction.status !== AuctionStatus.CREATED) {
-      throw new BadRequestException('Auction cannot be edited after it has started');
-    }
-  }
-
   async findAll(userId: User['id'], auctionId: Auction['id']) {
-    const auction = await this.findAuction(userId, auctionId);
+    const auction = await this.auctionsService.findOne(userId, auctionId);
 
     const lots = await this.lotsRepository.find({
       where: { auction: { id: auction.id } },
@@ -74,7 +62,10 @@ export class LotsService {
     lots: CreateLotDto[],
   ) {
     // TODO: limit lots creation count
-    const auction = await this.findAuction(userId, auctionId);
+    const auction = await this.auctionsService.findEditableOne(
+      userId,
+      auctionId,
+    );
 
     const createdLots = lots.map((lot) => ({
       ...lot,
@@ -86,36 +77,67 @@ export class LotsService {
     return savedLots.map((lot) => this.mapLotEntityToDto(lot));
   }
 
-  async findLot(
+  private async findLot(
     userId: User['id'],
     auctionId: Auction['id'],
     lotId: Lot['id'],
   ) {
-    const auction = await this.findAuction(userId, auctionId);
-
     const lot = await this.lotsRepository.findOne({
       where: {
         id: lotId,
-        auction: { id: auction.id },
+        auction: {
+          id: auctionId,
+          owner: { id: userId },
+        },
       },
+      relations: ['auction'],
     });
 
     if (!lot) {
       throw new NotFoundException('Lot not found');
     }
 
+    return lot;
+  }
+
+  async findEditableAuctionLot(
+    userId: User['id'],
+    auctionId: Auction['id'],
+    lotId: Lot['id'],
+  ) {
+    const lot = await this.findLot(userId, auctionId, lotId);
+
+    this.auctionsService.checkEditableStatus(lot.auction);
+
     return this.mapLotEntityToDto(lot);
   }
 
-  async updateLot(
+  async findAuctionLot(
+    userId: User['id'],
+    auctionId: Auction['id'],
+    lotId: Lot['id'],
+  ) {
+    const lot = await this.findLot(userId, auctionId, lotId);
+
+    return this.mapLotEntityToDto(lot);
+  }
+
+  async updateEditableLot(
     userId: User['id'],
     auctionId: Auction['id'],
     lotId: Lot['id'],
     lot: UpdateLotDto,
   ) {
-    await this.findLot(userId, auctionId, lotId);
+    const existedLot = await this.findEditableAuctionLot(
+      userId,
+      auctionId,
+      lotId,
+    );
 
-    const savedLot = await this.lotsRepository.save({ id: lotId, ...lot });
+    const savedLot = await this.lotsRepository.save({
+      id: existedLot.id,
+      ...lot,
+    });
 
     return this.mapLotEntityToDto(savedLot);
   }
@@ -125,28 +147,9 @@ export class LotsService {
     auctionId: Auction['id'],
     lotId: Lot['id'],
   ) {
-    const auction = await this.findAuction(userId, auctionId);
+    const lot = await this.findEditableAuctionLot(userId, auctionId, lotId);
 
-    await this.lotsRepository.delete({ auction, id: lotId });
-  }
-
-  async bulkMarkUnsold(auctionId: Auction['id']): Promise<void> {
-    await this.lotsRepository.update(
-      { auction: { id: auctionId }, status: LotStatus.CREATED },
-      { status: LotStatus.UNSOLD },
-    );
-  }
-
-  async bulkResetLots(
-    auctionId: Auction['id'],
-    manager: EntityManager,
-  ): Promise<void> {
-    await manager
-      .createQueryBuilder()
-      .update(Lot)
-      .set({ status: LotStatus.CREATED, soldPrice: null, buyer: null as any })
-      .where('"auctionId" = :auctionId', { auctionId })
-      .execute();
+    await this.lotsRepository.delete({ id: lot.id });
   }
 
   async createPresignedUrls(
@@ -155,8 +158,7 @@ export class LotsService {
     lotId: Lot['id'],
     count: number,
   ): Promise<PresignedUrlItemDto[]> {
-    await this.assertAuctionEditable(userId, auctionId);
-    await this.findLot(userId, auctionId, lotId);
+    await this.findEditableAuctionLot(userId, auctionId, lotId);
 
     const s3Keys = Array.from(
       { length: count },
@@ -172,8 +174,7 @@ export class LotsService {
     lotId: Lot['id'],
     images: AddLotImageDto[],
   ): Promise<LotImageDto[]> {
-    await this.assertAuctionEditable(userId, auctionId);
-    const lot = await this.findLot(userId, auctionId, lotId);
+    const lot = await this.findEditableAuctionLot(userId, auctionId, lotId);
 
     const s3KeyPrefix = getS3KeyPrefix(lotId);
 
@@ -201,8 +202,7 @@ export class LotsService {
     lotId: Lot['id'],
     imageId: LotImage['id'],
   ) {
-    await this.assertAuctionEditable(userId, auctionId);
-    await this.findLot(userId, auctionId, lotId); // check for the owner
+    await this.findEditableAuctionLot(userId, auctionId, lotId);
 
     const image = await this.lotImageRepository.findOne({
       where: { id: imageId, lot: { id: lotId } },
@@ -212,5 +212,44 @@ export class LotsService {
 
     await this.storageService.deleteObject(image.s3Key);
     await this.lotImageRepository.delete(image.id);
+  }
+
+  // Methods below work with started auction
+
+  async makeCreatedLotsUnsold(
+    userId: User['id'],
+    auctionId: Auction['id'],
+  ): Promise<void> {
+    const auction = await this.auctionsService.findOne(userId, auctionId);
+
+    await this.lotsRepository.update(
+      { auction: { id: auction.id }, status: LotStatus.CREATED },
+      { status: LotStatus.UNSOLD },
+    );
+  }
+
+  async makeLotUnsold(
+    userId: User['id'],
+    auctionId: Auction['id'],
+    lotId: Lot['id'],
+  ) {
+    const lot = await this.findAuctionLot(userId, auctionId, lotId);
+
+    await this.lotsRepository.save({ id: lot.id, status: LotStatus.UNSOLD });
+  }
+
+  async makeLotSold(
+    userId: User['id'],
+    auctionId: Auction['id'],
+    lotId: Lot['id'],
+    soldPrice: Lot['soldPrice'],
+  ) {
+    const lot = await this.findAuctionLot(userId, auctionId, lotId);
+
+    await this.lotsRepository.save({
+      id: lot.id,
+      status: LotStatus.SOLD,
+      soldPrice,
+    });
   }
 }
