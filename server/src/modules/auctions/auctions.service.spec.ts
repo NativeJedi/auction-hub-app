@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AuctionsService } from './auctions.service';
 import { Auction, AuctionStatus } from './entities/auction.entity';
@@ -41,6 +41,7 @@ describe('AuctionsService', () => {
   let service: AuctionsService;
   let auctionRepo: any;
   let dataSource: { transaction: jest.Mock };
+  let usersService: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -75,6 +76,7 @@ describe('AuctionsService', () => {
     service = module.get(AuctionsService);
     auctionRepo = module.get(getRepositoryToken(Auction));
     dataSource = module.get(getDataSourceToken()) as any;
+    usersService = module.get(UsersService);
   });
 
   describe('resetAuction', () => {
@@ -228,6 +230,113 @@ describe('AuctionsService', () => {
 
       expect(result.soldCount).toBe(1);
       expect(result.unsoldCount).toBe(1);
+    });
+  });
+
+  describe('findOne', () => {
+    it('returns finishedAt when auction status is FINISHED', async () => {
+      // T-001: finishedAt is passed through from the repo when status is FINISHED
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.findOne.mockResolvedValue({
+        id: 'auction-1',
+        status: AuctionStatus.FINISHED,
+        finishedAt: new Date('2025-01-15'),
+      });
+
+      const result = await service.findOne('user-1', 'auction-1');
+
+      expect(result.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('returns null for finishedAt when auction status is CREATED', async () => {
+      // T-001: finishedAt is null when status is CREATED
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.findOne.mockResolvedValue({
+        id: 'auction-1',
+        status: AuctionStatus.CREATED,
+        finishedAt: null,
+      });
+
+      const result = await service.findOne('user-1', 'auction-1');
+
+      expect(result.finishedAt).toBeNull();
+    });
+  });
+
+  describe('updateOne', () => {
+    it('throws BadRequestException when auction status is STARTED', async () => {
+      // T-002 AC: throws BadRequestException when auction status is STARTED
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.findOne.mockResolvedValue({
+        id: 'auction-1',
+        status: AuctionStatus.STARTED,
+      });
+
+      await expect(
+        service.updateOne('user-1', 'auction-1', { name: 'X' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when auction status is FINISHED', async () => {
+      // T-002 AC: throws BadRequestException when auction status is FINISHED
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.findOne.mockResolvedValue({
+        id: 'auction-1',
+        status: AuctionStatus.FINISHED,
+      });
+
+      await expect(
+        service.updateOne('user-1', 'auction-1', { name: 'X' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('saves and returns updated auction when status is CREATED', async () => {
+      // T-002 AC: saves and returns updated auction when status is CREATED
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.findOne.mockResolvedValue({
+        id: 'auction-1',
+        name: 'Old',
+        status: AuctionStatus.CREATED,
+      });
+      auctionRepo.save.mockResolvedValue({
+        id: 'auction-1',
+        name: 'New',
+        status: AuctionStatus.CREATED,
+        owner: { id: 'user-1' },
+      });
+
+      const result = await service.updateOne('user-1', 'auction-1', { name: 'New' });
+
+      expect(auctionRepo.save).toHaveBeenCalledWith({
+        id: 'auction-1',
+        name: 'New',
+        status: AuctionStatus.CREATED,
+      });
+      expect(result.name).toBe('New');
+      expect(result).not.toHaveProperty('owner');
+    });
+  });
+
+  describe('checkEditableStatus', () => {
+    it('throws BadRequestException when auction status is STARTED', () => {
+      // T-002 AC: throws BadRequestException when auction status is STARTED
+      expect(() =>
+        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.STARTED } as any),
+      ).toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when auction status is FINISHED', () => {
+      // T-002 AC: throws BadRequestException when auction status is FINISHED
+      expect(() =>
+        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.FINISHED } as any),
+      ).toThrow(BadRequestException);
+    });
+
+    it('does not throw when auction status is CREATED', () => {
+      // T-002 AC: does not throw when auction status is CREATED
+      expect(() =>
+        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.CREATED } as any),
+      ).not.toThrow();
     });
   });
 });

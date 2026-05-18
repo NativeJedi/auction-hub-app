@@ -28,7 +28,7 @@ const LotStatusBadge = ({ status }: { status: LotStatus }) => {
   return <Badge variant={variantMap[status]}>{status}</Badge>;
 };
 
-const getColumns = (auctionId: Auction['id']): Columns<Lot> => [
+const getColumns = (auctionId: Auction['id'], isLocked?: boolean): Columns<Lot> => [
   {
     header: 'Name',
     render: (lot) => lot.name,
@@ -62,17 +62,17 @@ const getColumns = (auctionId: Auction['id']): Columns<Lot> => [
     align: 'center',
     render: (lot) => (
       <>
-        <DeleteLotButton auctionId={auctionId} lot={lot} />
-        <ManageLotImagesButton auctionId={auctionId} lot={lot} />
+        <DeleteLotButton auctionId={auctionId} lot={lot} disabled={isLocked} />
+        <ManageLotImagesButton auctionId={auctionId} lot={lot} disabled={isLocked} />
       </>
     ),
   },
 ];
 
-const LotsList = async ({ auctionId }: { auctionId: Auction['id'] }) => {
+const LotsList = async ({ auctionId, isLocked }: { auctionId: Auction['id']; isLocked?: boolean }) => {
   const lots = await fetchLotsServer(auctionId);
 
-  const columns = getColumns(auctionId);
+  const columns = getColumns(auctionId, isLocked);
 
   return <DataTable data={lots} columns={columns} />;
 };

@@ -10,6 +10,7 @@ export type Auction = {
   description?: string;
   status: AuctionStatus;
   createdAt: string;
+  finishedAt: string | null;
 };
 
 export type CreateAuctionDto = Pick<Auction, 'name' | 'description'>;

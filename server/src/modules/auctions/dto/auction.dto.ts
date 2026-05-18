@@ -20,6 +20,9 @@ export class AuctionDto {
 
   @ApiProperty({ example: '2025-09-01T12:00:00Z' })
   createdAt: Date;
+
+  @ApiProperty({ example: '2025-09-01T18:00:00Z', nullable: true })
+  finishedAt: Date | null;
 }
 
 export class CreateAuctionDto extends PickType(AuctionDto, [

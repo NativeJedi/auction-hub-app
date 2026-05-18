@@ -45,13 +45,10 @@ export class RoomService {
     const { sub: id, email } = user;
 
     const [auction, lots] = await Promise.all([
-      this.auctionsService.findOne(id, auctionId),
+      this.auctionsService.findEditableOne(id, auctionId),
       this.lotsService.findAll(id, auctionId),
     ]);
 
-    if (auction.status !== AuctionStatus.CREATED) {
-      throw new BadRequestException('Auction is not in CREATED state');
-    }
 
     const roomAuction: RoomAuction = {
       name: auction.name,
@@ -68,7 +65,12 @@ export class RoomService {
       );
     }
 
-    const room = await this.roomRepository.createRoom(id, auctionId, roomAuction, lots);
+    const room = await this.roomRepository.createRoom(
+      id,
+      auctionId,
+      roomAuction,
+      lots,
+    );
 
     const token = this.tokenService.roomMemberToken.generate({
       sub: id,
@@ -198,7 +200,10 @@ export class RoomService {
   }
 
   async finishAuction(owner: RoomAuthorizedOwner): Promise<void> {
-    const auction = await this.auctionsService.findOne(owner.id, owner.auctionId);
+    const auction = await this.auctionsService.findOne(
+      owner.id,
+      owner.auctionId,
+    );
 
     if (auction.status !== AuctionStatus.STARTED) {
       throw new BadRequestException('Auction is not in STARTED state');
@@ -209,7 +214,7 @@ export class RoomService {
   }
 
   private async completeAuction(owner: RoomAuthorizedOwner): Promise<void> {
-    await this.lotsService.bulkMarkUnsold(owner.auctionId);
+    await this.lotsService.makeCreatedLotsUnsold(owner.id, owner.auctionId);
     await this.auctionsService.finishAuction(owner.auctionId);
     await this.roomRepository.clearRoom(owner.auctionId);
   }
@@ -230,18 +235,22 @@ export class RoomService {
     }
 
     if (!activeBid) {
-      await this.lotsService.updateLot(owner.id, room.auctionId, activeLotId, {
-        status: LotStatus.UNSOLD,
-      });
+      await this.lotsService.makeLotUnsold(
+        owner.id,
+        room.auctionId,
+        activeLotId,
+      );
 
       return;
     }
 
     await Promise.all([
-      this.lotsService.updateLot(owner.id, room.auctionId, activeLotId, {
-        status: LotStatus.SOLD,
-        soldPrice: activeBid.amount,
-      }),
+      this.lotsService.makeLotSold(
+        owner.id,
+        room.auctionId,
+        activeLotId,
+        activeBid.amount,
+      ),
       this.buyersService.saveBuyer(owner.id, room.auctionId, activeLotId, {
         name: activeBid.name,
         email: activeBid.email,

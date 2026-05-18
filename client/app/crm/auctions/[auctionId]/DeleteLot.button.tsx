@@ -15,9 +15,10 @@ import { Trash2 } from 'lucide-react';
 type Props = {
   lot: Lot;
   auctionId: Auction['id'];
+  disabled?: boolean;
 };
 
-export const DeleteLotButton = ({ lot, auctionId }: Props) => {
+export const DeleteLotButton = ({ lot, auctionId, disabled }: Props) => {
   const { showToast } = useNotification();
   const handleError = useErrorNotification();
   const router = useRouter();
@@ -46,7 +47,7 @@ export const DeleteLotButton = ({ lot, auctionId }: Props) => {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={handleDelete} title={`Delete ${lot.name}`}>
+    <Button variant="ghost" size="icon" onClick={handleDelete} title={`Delete ${lot.name}`} disabled={disabled}>
       <Trash2 />
     </Button>
   );

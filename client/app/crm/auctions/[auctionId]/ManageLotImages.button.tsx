@@ -11,9 +11,10 @@ import { useErrorNotification } from '@/src/modules/notifications/NotifcationCon
 type Props = {
   lot: Lot;
   auctionId: Auction['id'];
+  disabled?: boolean;
 };
 
-const ManageLotImagesButton = ({ lot, auctionId }: Props) => {
+const ManageLotImagesButton = ({ lot, auctionId, disabled }: Props) => {
   const handleError = useErrorNotification();
   const router = useRouter();
 
@@ -28,7 +29,7 @@ const ManageLotImagesButton = ({ lot, auctionId }: Props) => {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={handleClick} title={`Manage ${lot.name} images`}>
+    <Button variant="ghost" size="icon" onClick={handleClick} title={`Manage ${lot.name} images`} disabled={disabled}>
       <Images />
     </Button>
   );

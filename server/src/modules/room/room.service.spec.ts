@@ -50,6 +50,7 @@ describe('RoomService', () => {
           provide: AuctionsService,
           useValue: {
             findOne: jest.fn(),
+            findEditableOne: jest.fn(),
             startAuction: jest.fn(),
             finishAuction: jest.fn(),
             resetAuction: jest.fn(),
@@ -84,8 +85,9 @@ describe('RoomService', () => {
           provide: LotsService,
           useValue: {
             findAll: jest.fn(),
-            bulkMarkUnsold: jest.fn(),
-            updateLot: jest.fn(),
+            makeCreatedLotsUnsold: jest.fn(),
+            makeLotUnsold: jest.fn(),
+            makeLotSold: jest.fn(),
           },
         },
       ],
@@ -105,7 +107,7 @@ describe('RoomService', () => {
     roomRepository.getRoom.mockResolvedValue(mockRoom);
     roomRepository.getActiveLotId.mockResolvedValue('lot-1');
     roomRepository.getActiveLotCurrentBid.mockResolvedValue(undefined);
-    lotsService.updateLot.mockResolvedValue(undefined);
+    lotsService.makeLotUnsold.mockResolvedValue(undefined);
   };
 
   describe('createRoom', () => {
@@ -113,7 +115,7 @@ describe('RoomService', () => {
     const lots = [{ id: 'lot-1', name: 'Lot 1', startPrice: 100, currency: 'USD' }];
 
     beforeEach(() => {
-      auctionsService.findOne.mockResolvedValue({
+      auctionsService.findEditableOne.mockResolvedValue({
         id: 'auction-1',
         name: 'Test',
         description: null,
@@ -167,7 +169,7 @@ describe('RoomService', () => {
     beforeEach(() => {
       stubFinishActiveLot();
       roomRepository.setActiveLot.mockResolvedValue(undefined);
-      lotsService.bulkMarkUnsold.mockResolvedValue(undefined);
+      lotsService.makeCreatedLotsUnsold.mockResolvedValue(undefined);
       auctionsService.finishAuction.mockResolvedValue(undefined);
       roomRepository.clearRoom.mockResolvedValue(undefined);
     });
@@ -206,7 +208,7 @@ describe('RoomService', () => {
 
       await service.placeNextLot(owner);
 
-      expect(lotsService.bulkMarkUnsold).toHaveBeenCalledWith('auction-1');
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, 'auction-1');
       expect(auctionsService.finishAuction).toHaveBeenCalledWith('auction-1');
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
     });
@@ -216,7 +218,7 @@ describe('RoomService', () => {
 
       await service.placeNextLot(owner);
 
-      expect(lotsService.bulkMarkUnsold).not.toHaveBeenCalled();
+      expect(lotsService.makeCreatedLotsUnsold).not.toHaveBeenCalled();
       expect(auctionsService.finishAuction).not.toHaveBeenCalled();
       expect(roomRepository.clearRoom).not.toHaveBeenCalled();
     });
@@ -226,7 +228,7 @@ describe('RoomService', () => {
     beforeEach(() => {
       auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.STARTED });
       stubFinishActiveLot();
-      lotsService.bulkMarkUnsold.mockResolvedValue(undefined);
+      lotsService.makeCreatedLotsUnsold.mockResolvedValue(undefined);
       auctionsService.finishAuction.mockResolvedValue(undefined);
       roomRepository.clearRoom.mockResolvedValue(undefined);
     });
@@ -234,7 +236,7 @@ describe('RoomService', () => {
     it('calls bulkMarkUnsold then finishAuction then clearRoom', async () => {
       await service.finishAuction(owner);
 
-      expect(lotsService.bulkMarkUnsold).toHaveBeenCalledWith('auction-1');
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, 'auction-1');
       expect(auctionsService.finishAuction).toHaveBeenCalledWith('auction-1');
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
     });
@@ -251,7 +253,7 @@ describe('RoomService', () => {
       roomRepository.getRoom.mockResolvedValue(null);
 
       await expect(service.finishAuction(owner)).rejects.toThrow(NotFoundException);
-      expect(lotsService.bulkMarkUnsold).not.toHaveBeenCalled();
+      expect(lotsService.makeCreatedLotsUnsold).not.toHaveBeenCalled();
     });
   });
 
@@ -262,7 +264,7 @@ describe('RoomService', () => {
       stubFinishActiveLot();
       roomRepository.getNextLot.mockResolvedValue(undefined);
       roomRepository.setActiveLot.mockResolvedValue(undefined);
-      lotsService.bulkMarkUnsold.mockResolvedValue(undefined);
+      lotsService.makeCreatedLotsUnsold.mockResolvedValue(undefined);
       auctionsService.finishAuction.mockResolvedValue(undefined);
       roomRepository.clearRoom.mockResolvedValue(undefined);
     });
@@ -270,7 +272,7 @@ describe('RoomService', () => {
     it('calls bulkMarkUnsold with the auction id from the room', async () => {
       await service.placeNextLot(owner);
 
-      expect(lotsService.bulkMarkUnsold).toHaveBeenCalledWith(owner.auctionId);
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, owner.auctionId);
     });
 
     it('calls markAsFinished (auctionsService.finishAuction) with the auction id from the room', async () => {
