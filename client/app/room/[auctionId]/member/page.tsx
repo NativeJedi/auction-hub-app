@@ -18,7 +18,7 @@ const RoomMemberPage = () => {
   } = useMemberRoomContext();
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
+    <div className="h-dvh flex flex-col overflow-hidden bg-muted/30">
       <RoomHeader isLoading={isLoading} title={auction?.name} description={auction?.description} />
 
       <main className="flex-1 overflow-y-auto pb-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

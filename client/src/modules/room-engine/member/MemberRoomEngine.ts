@@ -46,7 +46,6 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
   }
 
   get isWinning(): boolean {
-    console.log(this.data.user, this.leadingBid);
     return (
       this.data.user != null &&
       this.leadingBid != null &&

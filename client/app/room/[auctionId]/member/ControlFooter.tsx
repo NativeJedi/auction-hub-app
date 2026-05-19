@@ -36,7 +36,10 @@ const ControlFooter = () => {
   };
 
   return (
-    <footer className="bg-background border-t px-4 py-3 flex flex-col gap-1.5 flex-shrink-0">
+    <footer
+      className="bg-background border-t px-4 pt-3 flex flex-col gap-1.5 flex-shrink-0 relative z-10"
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+    >
       <div className="max-w-lg mx-auto w-full flex flex-col gap-1.5">
         <Button
           disabled={isSubmitBidDisabled}

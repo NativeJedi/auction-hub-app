@@ -15,7 +15,7 @@ const confirmRoomInvite = async (req: Request, { params }: Options) => {
 
   response.cookies.set(`roomToken:${auctionId}`, data.token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: `/api/room/${auctionId}`,
   });
