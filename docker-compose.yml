@@ -16,9 +16,9 @@ services:
     image: postgres:16
     container_name: auction-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: auction-hub-db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
@@ -79,22 +79,20 @@ services:
       CHOKIDAR_INTERVAL: "300"
       PORT: 3000
       REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
-      CLIENT_URL: http://localhost:3001
+      DATABASE_URL: ${DATABASE_URL}
+      CLIENT_URL: ${CLIENT_URL}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
-      JWT_ACCESS_TTL: 900
-      JWT_REFRESH_TTL: 172800
-      # Storage (MinIO for dev)
-      STORAGE_ENDPOINT: http://minio:9000
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
       STORAGE_BUCKET: ${STORAGE_BUCKET}
       STORAGE_REGION: ${STORAGE_REGION}
-      # URL for browser (not for a docker image)
-      STORAGE_PUBLIC_URL: http://localhost:9000
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_HOST: ${EMAIL_HOST}
@@ -118,15 +116,14 @@ services:
       NODE_ENV: production
       PORT: 3000
       REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
-      CLIENT_URL: http://localhost:3001
+      DATABASE_URL: ${DATABASE_URL}
+      CLIENT_URL: ${CLIENT_URL}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
-      JWT_ACCESS_TTL: 900
-      JWT_REFRESH_TTL: 172800
-      # Storage (AWS S3 for prod)
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
       STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
@@ -153,7 +150,7 @@ services:
     command: sh -c "npm run migration:generate"
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgres://postgres:postgres@db:5432/auction-hub-db
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - db
     volumes:
@@ -169,16 +166,16 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
+      HOSTNAME: ${HOSTNAME:-localhost}
       CHOKIDAR_USEPOLLING: true
-      NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
       API_URL: http://api-dev:3000/api/v1
       REDIS_URL: redis://redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
-      JWT_ACCESS_TTL: 900
-      JWT_REFRESH_TTL: 172800
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
     ports:
       - "3001:3001"
     volumes:
@@ -197,15 +194,15 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      NEXT_PUBLIC_API_WEBSOCKET_URL: http://localhost:3000/ws/room
+      HOSTNAME: ${HOSTNAME:-localhost}
       API_URL: http://api-prod:3000/api/v1
       REDIS_URL: redis://redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET: ${JWT_ROOM_MEMBER_INVITE_TOKEN_SECRET}
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
-      JWT_ACCESS_TTL: 900
-      JWT_REFRESH_TTL: 172800
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
     ports:
       - "3001:3001"
     depends_on:

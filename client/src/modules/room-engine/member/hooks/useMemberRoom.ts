@@ -5,6 +5,8 @@ import { useMemberRoomContext } from '@/src/modules/room-engine/member/MemberRoo
 export function useMemberRoom() {
   const { engine, state } = useMemberRoomContext();
 
+  if (state.error) throw new Error(state.error);
+
   return {
     engine,
     isLoading: state.isLoading,

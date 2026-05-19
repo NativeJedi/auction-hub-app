@@ -13,7 +13,7 @@ const startAuction = async (_req: Request, { params }: Options) => {
 
   response.cookies.set(`roomToken:${data.room.auctionId}`, data.token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: `/api/room/${data.room.auctionId}`,
   });

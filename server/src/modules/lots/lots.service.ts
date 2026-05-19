@@ -47,8 +47,9 @@ export class LotsService {
 
   async findAll(userId: User['id'], auctionId: Auction['id']) {
     const lots = await this.lotsRepository.find({
-      where: { auction: { id: auctionId, owner: { id: userId } }, },
+      where: { auction: { id: auctionId, owner: { id: userId } } },
       relations: ['buyer', 'images'],
+      order: { createdAt: 'ASC' },
     });
 
     return lots.map((lot) => this.mapLotEntityToDto(lot));

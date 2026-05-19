@@ -6,7 +6,8 @@ class BaseSocket {
   constructor(private readonly SOCKET_URL: string) {}
 
   connect(token: string): Promise<void> {
-    console.log('Connecting to', this.SOCKET_URL);
+    if (this.socket) return Promise.resolve();
+
     return new Promise((resolve, reject) => {
       this.socket = io(this.SOCKET_URL, {
         transports: ['websocket'],

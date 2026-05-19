@@ -79,17 +79,15 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
       this.setState({ activeLot: lot, bids: [] });
     });
 
-    this.socket.onEvent<RoomMember>('memberJoined', (member) => {
-      this.setState({ members: [...this.data.members, member] });
-    });
-
     this.socket.onEvent<RoomInvite>('newInvite', (invite) => {
-      this.setState({ invites: [...this.data.invites, invite] });
+      const exists = this.data.invites.some((inv) => inv.id === invite.id);
+      if (!exists) this.setState({ invites: [...this.data.invites, invite] });
     });
 
     this.socket.onEvent<RoomMember>('newMember', (member) => {
+      const exists = this.data.members.some((m) => m.id === member.id);
       this.setState({
-        members: [...this.data.members, member],
+        members: exists ? this.data.members : [...this.data.members, member],
         invites: this.data.invites.filter((inv) => inv.id !== member.id),
       });
     });

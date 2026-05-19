@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { deleteAuction } from '@/src/api/auctions-api-client/requests/auctions';
 import { Button } from '@/ui-kit/ui/button';
 import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 type DeleteAuctionButtonProps = {
   auction: Auction;
@@ -19,8 +20,10 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
   const { showToast } = useNotification();
   const handleError = useErrorNotification();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
+    setLoading(true);
     const { result } = await confirmModal.show({
       title: 'Delete Auction',
       description: `Do you really want to delete the auction "${auction.name}"?`,
@@ -40,6 +43,8 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
       router.refresh();
     } catch (err) {
       handleError(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,6 +54,7 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
       size="icon"
       onClick={handleDelete}
       title={`Delete auction ${auction.name}`}
+      loading={loading}
     >
       <Trash2 />
     </Button>
