@@ -23,6 +23,7 @@ const ResetAuctionButton = ({ auctionId }: { auctionId: string }) => {
     if (result === 'closed') return;
 
     setIsLoading(true);
+
     try {
       await resetAuction({ auctionId });
       router.refresh();

@@ -7,6 +7,7 @@ import { useErrorNotification } from '@/src/modules/notifications/NotifcationCon
 import { Plus } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
 import { lotImagesModal } from '@/app/crm/auctions/[auctionId]/LotImages.modal';
+import { useState } from 'react';
 
 type Props = {
   auctionId: Auction['id'];
