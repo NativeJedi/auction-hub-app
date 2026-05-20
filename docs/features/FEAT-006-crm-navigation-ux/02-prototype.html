@@ -1,0 +1,618 @@
+<!--
+  FEAT-006-crm-navigation-ux — 02-prototype.html  (v2)
+  Detected framework: shadcn/ui New York style (components.json + @radix-ui/* in package.json)
+  Token sources: client/app/globals.css (OKLCH palette, --radius 0.625rem, Geist Mono font)
+  Baseline prototype: FEAT-001-auction-results-page/02-prototype.html
+
+  Design changes from v1:
+    - Removed sticky breadcrumb bar. Breadcrumb is now inline in the page body, above the H1.
+      This eliminates the "sticky bar for a single line of text" overhead and the title/crumb duplication.
+    - Breadcrumb shows ONLY the parent path (not the current page).
+      Current page = H1. No duplication.
+    - /crm/auctions: no breadcrumb (root page — the H1 "Auctions" is sufficient orientation).
+      DESIGN NOTE vs AC-1: AC-1 requires a single-segment "Auctions" breadcrumb on the list page.
+      This prototype proposes omitting it because it adds no navigation value at root level.
+      If AC-1 must be preserved literally, re-add a non-sticky breadcrumb line above the H1.
+    - Auction detail: Card wrapper replaced with a flat page-header zone
+      (breadcrumb ← back link → H1 + badge + action → description + meta).
+      Lots: compact label + button row above the table; no separate section-title H2.
+
+  Open questions: see <!-- OPEN: ... --> comments inline.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FEAT-006 — CRM Navigation UX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Geist Mono', 'ui-monospace', 'monospace'] },
+          borderRadius: { DEFAULT: '0.625rem', sm: '0.375rem', md: '0.5rem', lg: '0.625rem' },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* ── Design tokens (mirrored from client/app/globals.css) ── */
+    :root {
+      --background:             oklch(1 0 0);
+      --foreground:             oklch(0.145 0 0);
+      --primary:                oklch(0.59 0.14 242);
+      --primary-foreground:     oklch(1 0 0);
+      --muted:                  oklch(0.97 0 0);
+      --muted-foreground:       oklch(0.556 0 0);
+      --border:                 oklch(0.922 0 0);
+      --card:                   oklch(1 0 0);
+      --destructive:            oklch(0.58 0.22 27);
+      --destructive-foreground: oklch(1 0 0);
+      --success:                oklch(0.527 0.154 150);
+      --ring:                   oklch(0.59 0.14 242);
+      --radius:                 0.625rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Geist Mono', ui-monospace, monospace;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Prototype meta nav ── */
+    .proto-nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 100;
+      background: oklch(0.2 0 0);
+      color: oklch(0.75 0 0);
+      font-family: inherit;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      height: 30px;
+    }
+    .proto-nav-label {
+      color: oklch(0.5 0 0);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 10px;
+    }
+    .proto-btn {
+      background: oklch(0.3 0 0);
+      color: oklch(0.85 0 0);
+      border: 1px solid oklch(0.38 0 0);
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .proto-btn:hover { background: oklch(0.38 0 0); }
+    .proto-btn.active { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+
+    /* ── CRM Top Bar (sticky, FR-4 Logout + FR-6 Lang switcher) ── */
+    /* Offset: proto-nav 30px only — breadcrumb is no longer sticky */
+    .crm-topbar {
+      position: fixed;
+      top: 30px;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      height: 52px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: 16px;
+    }
+    .app-brand {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .topbar-actions { display: flex; align-items: center; gap: 6px; }
+
+    /* Page content: proto-nav 30 + topbar 52 = 82px */
+    .page-content { margin-top: 82px; }
+
+    /* ── Buttons (shadcn New York) ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 36px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+      line-height: 1;
+      text-decoration: none;
+    }
+    .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .btn-sm { height: 32px; padding: 0 10px; font-size: 12px; }
+
+    .btn-default { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+    .btn-default:hover { background: oklch(0.52 0.14 242); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--foreground); }
+    .btn-outline:hover { background: var(--muted); }
+    .btn-ghost { background: transparent; border-color: transparent; color: var(--foreground); }
+    .btn-ghost:hover { background: var(--muted); }
+    .btn-destructive-outline { background: transparent; border-color: var(--destructive); color: var(--destructive); }
+    .btn-destructive-outline:hover { background: oklch(0.97 0.015 27); }
+    .btn-destructive { background: var(--destructive); color: var(--destructive-foreground); border-color: var(--destructive); }
+    .btn-destructive:hover { background: oklch(0.51 0.22 27); }
+
+    /* ── Lang dropdown (FR-6) ── */
+    .lang-wrapper { position: relative; }
+    #lang-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.06);
+      min-width: 196px;
+      z-index: 200;
+      overflow: hidden;
+    }
+    #lang-dropdown.hidden { display: none; }
+    .lang-option { display: flex; align-items: center; gap: 8px; padding: 9px 14px; font-size: 13px; cursor: pointer; user-select: none; }
+    .lang-option:hover:not(.disabled) { background: var(--muted); }
+    .lang-option.active { font-weight: 600; }
+    .lang-option.disabled { color: var(--muted-foreground); cursor: default; font-size: 12px; }
+    .lang-check { color: var(--primary); font-weight: 700; width: 14px; flex-shrink: 0; }
+
+    /* ── Logout confirm ── */
+    .logout-confirm-area { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .logout-confirm-area.hidden { display: none; }
+
+    /* ── Inline breadcrumb (in page body, above H1) ── */
+    .page-breadcrumb-nav { margin-bottom: 8px; }
+    .page-breadcrumb-list {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+    }
+    .page-breadcrumb-list li { display: flex; align-items: center; }
+    .breadcrumb-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted-foreground);
+      text-decoration: none;
+      font-size: 12px;
+      border-radius: 3px;
+      padding: 1px 2px;
+      transition: color 0.1s;
+    }
+    .breadcrumb-back:hover { color: var(--primary); text-decoration: underline; }
+    .breadcrumb-back:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+    /* ── Page header zone (detail page) ── */
+    .page-header { margin-bottom: 28px; }
+    .page-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .page-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .page-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 3px; }
+    .page-title {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+    .page-header-description {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    .page-header-meta {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      margin-top: 4px;
+    }
+
+    /* ── Section divider ── */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 24px;
+    }
+
+    /* ── Lots sub-header ── */
+    .lots-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .lots-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+    }
+
+    /* ── List page header (H1 + action) ── */
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .list-title {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 0.375rem;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .badge-created  { background: oklch(0.93 0.025 242); color: var(--primary); }
+    .badge-started  { background: oklch(0.92 0.05  150); color: var(--success); }
+    .badge-finished { background: oklch(0.94 0 0);       color: var(--muted-foreground); }
+
+    /* ── Table ── */
+    .table-wrapper {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.07);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: var(--muted); }
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(0,0,0,0.02); }
+    .td-name { font-weight: 500; }
+    .td-meta { font-size: 12px; color: var(--muted-foreground); }
+    .table-link { color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; }
+    .table-link:hover { text-decoration: underline; }
+
+    /* Screen show/hide */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════
+       PROTOTYPE META NAV
+       ═══════════════════════════════ -->
+  <div class="proto-nav" role="navigation" aria-label="Prototype screen switcher">
+    <span class="proto-nav-label">Prototype</span>
+    <button class="proto-btn active" id="proto-btn-1" type="button" onclick="showScreen('auctions-list')">
+      Screen 1 — /crm/auctions
+    </button>
+    <button class="proto-btn" id="proto-btn-2" type="button" onclick="showScreen('auction-detail')">
+      Screen 2 — /crm/auctions/[id]
+    </button>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       CRM TOP BAR — sticky
+       FR-4: Logout  |  FR-6: Lang switcher
+       ═══════════════════════════════ -->
+  <header class="crm-topbar">
+    <span class="app-brand">AuctionHub CRM</span>
+
+    <div class="topbar-actions">
+
+      <!-- FR-6: Language switcher stub (non-functional v1) -->
+      <!-- OPEN: tooltip "Coming soon" vs disabled state — see spec §11 -->
+      <div class="lang-wrapper">
+        <button
+          class="btn btn-ghost btn-sm"
+          id="lang-btn"
+          type="button"
+          title="Language switching coming soon"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          onclick="toggleLang(event)"
+        >
+          EN
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2.5 4.5l3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div id="lang-dropdown" class="hidden" role="listbox" aria-label="Language">
+          <div class="lang-option active" role="option" aria-selected="true">
+            <span class="lang-check" aria-hidden="true">✓</span> EN — English
+          </div>
+          <div class="lang-option disabled" role="option" aria-disabled="true">
+            <span class="lang-check" aria-hidden="true"></span>
+            FR — Français <span style="font-size:10px;margin-left:4px;opacity:0.65">coming soon</span>
+          </div>
+          <div class="lang-option disabled" role="option" aria-disabled="true">
+            <span class="lang-check" aria-hidden="true"></span>
+            DE — Deutsch <span style="font-size:10px;margin-left:4px;opacity:0.65">coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FR-4/5: Logout — POST /api/auth/logout (NFR-2: button, not link) -->
+      <div id="logout-default-area">
+        <button class="btn btn-destructive-outline btn-sm" type="button" onclick="showLogoutConfirm()">
+          Log out
+        </button>
+      </div>
+      <div class="logout-confirm-area hidden" id="logout-confirm-area">
+        <span style="color:var(--muted-foreground)">Log out?</span>
+        <button class="btn btn-destructive btn-sm" type="button" onclick="confirmLogout()">Confirm</button>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="cancelLogout()">Cancel</button>
+      </div>
+
+    </div>
+  </header><!-- /.crm-topbar -->
+
+
+  <!-- ═══════════════════════════════
+       SCREEN 1 — /crm/auctions
+       AC-3: Logout visible  |  AC-5: EN visible
+       No breadcrumb at root level (design proposal — see file header note re AC-1)
+       ═══════════════════════════════ -->
+  <section id="screen-auctions-list" class="screen active page-content">
+    <div style="padding: 28px 28px 48px; max-width: 1024px; margin: 0 auto;">
+
+      <!-- List page header (CrmHeader: title + action) -->
+      <div class="list-header">
+        <h1 class="list-title">Auctions</h1>
+        <button class="btn btn-default" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Create Auction
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a class="table-link" role="button" tabindex="0"
+                   onclick="showScreen('auction-detail')"
+                   onkeydown="if(event.key==='Enter')showScreen('auction-detail')">
+                  Summer Art Auction 2025
+                </a>
+              </td>
+              <td><span class="badge badge-created">Created</span></td>
+              <td class="td-meta">Jan 15, 2025</td>
+              <td style="text-align:right">
+                <button class="btn btn-outline btn-sm" type="button" onclick="showScreen('auction-detail')">View</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="td-name">Annual Charity Gala</span></td>
+              <td><span class="badge badge-created">Created</span></td>
+              <td class="td-meta">Apr 20, 2025</td>
+              <td style="text-align:right"><button class="btn btn-outline btn-sm" type="button">View</button></td>
+            </tr>
+            <tr>
+              <td><span class="td-name">Spring Wine &amp; Spirits</span></td>
+              <td><span class="badge badge-started">Started</span></td>
+              <td class="td-meta">Mar 5, 2025</td>
+              <td style="text-align:right"><button class="btn btn-outline btn-sm" type="button">View</button></td>
+            </tr>
+            <tr>
+              <td><span class="td-name">Winter Collectibles 2024</span></td>
+              <td><span class="badge badge-finished">Finished</span></td>
+              <td class="td-meta">Nov 1, 2024</td>
+              <td style="text-align:right"><button class="btn btn-outline btn-sm" type="button">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════
+       SCREEN 2 — /crm/auctions/[id]
+       AC-2: breadcrumb "← Auctions" above H1 (no duplication)
+       AC-3: Logout visible  |  AC-5: EN visible
+       ═══════════════════════════════ -->
+  <section id="screen-auction-detail" class="screen page-content">
+    <div style="padding: 28px 28px 48px; max-width: 1024px; margin: 0 auto;">
+
+      <!-- Page header zone: breadcrumb → H1 → description → meta (no Card wrapper) -->
+      <div class="page-header">
+
+        <!-- FR-3: breadcrumb shows only the parent link, not the current page
+             NFR-1: <nav aria-label="Breadcrumb"><ol><li> -->
+        <nav aria-label="Breadcrumb" class="page-breadcrumb-nav">
+          <ol class="page-breadcrumb-list">
+            <li>
+              <a class="breadcrumb-back" href="#" onclick="event.preventDefault(); showScreen('auctions-list')">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Auctions
+              </a>
+            </li>
+          </ol>
+        </nav>
+
+        <!-- H1 + badge + action in a single row -->
+        <div class="page-header-row">
+          <div class="page-header-left">
+            <h1 class="page-title">Summer Art Auction 2025</h1>
+            <span class="badge badge-created">Created</span>
+          </div>
+          <div class="page-header-right">
+            <!-- Start Auction shown when status = CREATED -->
+            <button class="btn btn-default" type="button">Start Auction</button>
+          </div>
+        </div>
+
+        <p class="page-header-description">
+          Curated selection of contemporary and classical artworks from European galleries.
+        </p>
+        <p class="page-header-meta">
+          Created Jan 15, 2025 &nbsp;·&nbsp; ID a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        </p>
+      </div>
+
+      <!-- Divider between auction info and lots -->
+      <hr class="section-divider" />
+
+      <!-- Lots sub-section: compact label + action, then table -->
+      <div class="lots-header">
+        <span class="lots-label">Lots</span>
+        <button class="btn btn-default btn-sm" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Create Lot
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Medium</th>
+              <th>Reserve</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-meta">1</td>
+              <td class="td-name">Sunset Boulevard</td>
+              <td class="td-meta">Oil on canvas</td>
+              <td>$2,400</td>
+              <td><span class="badge badge-created">Pending</span></td>
+            </tr>
+            <tr>
+              <td class="td-meta">2</td>
+              <td class="td-name">Abstract Forms #7</td>
+              <td class="td-meta">Mixed media</td>
+              <td>$1,800</td>
+              <td><span class="badge badge-created">Pending</span></td>
+            </tr>
+            <tr>
+              <td class="td-meta">3</td>
+              <td class="td-name">The Harbour at Dusk</td>
+              <td class="td-meta">Watercolour</td>
+              <td>$950</td>
+              <td><span class="badge badge-created">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+
+  <script>
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
+      document.querySelectorAll('.proto-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id === 'auctions-list' ? 'proto-btn-1' : 'proto-btn-2').classList.add('active');
+      closeLang();
+      cancelLogout();
+      window.scrollTo({ top: 0 });
+    }
+
+    /* Lang switcher (FR-6) */
+    function toggleLang(e) {
+      e.stopPropagation();
+      const dd = document.getElementById('lang-dropdown');
+      const btn = document.getElementById('lang-btn');
+      const opening = dd.classList.contains('hidden');
+      dd.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    }
+    function closeLang() {
+      document.getElementById('lang-dropdown').classList.add('hidden');
+      document.getElementById('lang-btn').setAttribute('aria-expanded', 'false');
+    }
+
+    /* Logout (FR-4/5, NFR-2) */
+    function showLogoutConfirm() {
+      document.getElementById('logout-default-area').style.display = 'none';
+      document.getElementById('logout-confirm-area').classList.remove('hidden');
+    }
+    function cancelLogout() {
+      document.getElementById('logout-default-area').style.display = '';
+      document.getElementById('logout-confirm-area').classList.add('hidden');
+    }
+    function confirmLogout() {
+      /* Production: POST /api/auth/logout → clear localStorage room tokens → redirect /crm/auth */
+      alert('Prototype: POST /api/auth/logout → redirect /crm/auth');
+      cancelLogout();
+    }
+
+    document.addEventListener('click', closeLang);
+  </script>
+</body>
+</html>

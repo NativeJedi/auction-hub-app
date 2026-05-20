@@ -6,7 +6,6 @@ import {
   finishAuction,
   resetAuction,
 } from '@/src/api/auctions-api-client/requests/room';
-import { setRoomToken } from '@/src/utils/local-storage';
 import { AdminRoomData } from './types';
 import { RoomEngine } from '../core/RoomEngine';
 
@@ -96,7 +95,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
   // Static factory — called before a room engine instance exists
   static async startAuction(auctionId: string): Promise<Room> {
     const { room, token } = await startAuction({ auctionId });
-    setRoomToken(room.auctionId, token);
+    RoomEngine.setRoomToken(room.auctionId, token);
     return room;
   }
 
