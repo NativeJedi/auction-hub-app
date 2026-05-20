@@ -1,5 +1,4 @@
 import type BaseSocket from '@/src/sockets/base-socket';
-import { getRoomToken } from '@/src/utils/local-storage';
 import { Lifecycle } from './types';
 
 export abstract class RoomEngine<TData> {
@@ -68,7 +67,7 @@ export abstract class RoomEngine<TData> {
     try {
       const data = await this.fetchInitialData();
       this.setState(data);
-      const token = getRoomToken(this.auctionId);
+      const token = RoomEngine.getRoomToken(this.auctionId);
 
       await this.socket.connect(token ?? '');
 
@@ -86,6 +85,18 @@ export abstract class RoomEngine<TData> {
   destroy(): void {
     this.socket.disconnect();
     this.listeners.clear();
+  }
+
+  static setRoomToken(auctionId: string, token: string): void {
+    localStorage.setItem(`room:${auctionId}:token`, token);
+  }
+
+  static getRoomToken(auctionId: string): string | null {
+    return localStorage.getItem(`room:${auctionId}:token`);
+  }
+
+  static clearAllRoomTokens(): void {
+    localStorage.clear();
   }
 
   // Common socket events shared across all roles

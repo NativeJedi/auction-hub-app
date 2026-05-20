@@ -6,7 +6,6 @@ import type {
   RoomLot,
 } from '@/src/api/dto/room.dto';
 import { confirmRoomInvite, fetchRoomInfo } from '@/src/api/auctions-api-client/requests/room';
-import { setRoomToken } from '@/src/utils/local-storage';
 import { RoomEngine } from '../core/RoomEngine';
 import { MemberRoomData } from './types';
 
@@ -125,7 +124,7 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
 
   async confirmInvite(inviteToken: string): Promise<void> {
     const { token } = await this.api.confirmRoomInvite(this.auctionId, { token: inviteToken });
-    setRoomToken(this.auctionId, token);
+    RoomEngine.setRoomToken(this.auctionId, token);
   }
 
   changeBidAmount(totalAmount: number) {

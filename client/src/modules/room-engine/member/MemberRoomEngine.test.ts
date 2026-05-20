@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemberRoomEngine } from './MemberRoomEngine';
-import { setRoomToken } from '@/src/utils/local-storage';
+import { RoomEngine } from '../core/RoomEngine';
 import type BaseSocket from '@/src/sockets/base-socket';
-
-vi.mock('@/src/utils/local-storage', () => ({
-  setRoomToken: vi.fn(),
-  getRoomToken: vi.fn(),
-}));
 
 const stubSocket = {
   connect: vi.fn(),
@@ -18,8 +13,11 @@ const stubSocket = {
 } as unknown as BaseSocket;
 
 describe('MemberRoomEngine', () => {
+  let setRoomTokenSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    setRoomTokenSpy = vi.spyOn(RoomEngine, 'setRoomToken').mockImplementation(() => {});
   });
 
   it('confirmInvite stores token under room:${auctionId}:token key in localStorage', async () => {
@@ -32,6 +30,6 @@ describe('MemberRoomEngine', () => {
     await engine.confirmInvite('invite-token-abc');
 
     expect(mockApi.confirmRoomInvite).toHaveBeenCalledWith('auction-1', { token: 'invite-token-abc' });
-    expect(setRoomToken).toHaveBeenCalledWith('auction-1', 'member-token');
+    expect(setRoomTokenSpy).toHaveBeenCalledWith('auction-1', 'member-token');
   });
 });
