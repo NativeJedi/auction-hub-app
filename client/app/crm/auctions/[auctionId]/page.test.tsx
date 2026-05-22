@@ -28,7 +28,7 @@ vi.mock('@/app/crm/auctions/[auctionId]/CreateLot.button', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children }: any) => <>{children}</>,
+  default: ({ href, children }: any) => <a href={href}>{children}</a>,
 }));
 
 import AuctionPage from './page';
@@ -91,8 +91,34 @@ describe('AuctionPage', () => {
     expect(screen.queryByText(/finished at/i)).not.toBeInTheDocument();
   });
 
-  it.todo('renders back link with "Auctions" text pointing to /crm/auctions');
-  it.todo('does not render a Card element wrapping auction info');
-  it.todo('renders auction name in H1 with status badge in the same row');
-  it.todo('renders Lots section header with "Lots" title');
+  it('renders back link with "Auctions" text pointing to /crm/auctions', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    render(await AuctionPage({ params: params() }));
+
+    const link = screen.getByRole('link', { name: /auctions/i });
+    expect(link).toHaveAttribute('href', '/crm/auctions');
+  });
+
+  it('does not render a Card element wrapping auction info', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    render(await AuctionPage({ params: params() }));
+
+    // shadcn Card uses data-slot="card"; the redesign removed the Card wrapper
+    expect(document.querySelector('[data-slot="card"]')).toBeNull();
+  });
+
+  it('renders auction name in H1 with status badge in the same row', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Test Auction' })).toBeInTheDocument();
+    expect(screen.getByText(AuctionStatus.CREATED)).toBeInTheDocument();
+  });
+
+  it('renders Lots section header with "Lots" title', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.getByText('Lots')).toBeInTheDocument();
+  });
 });
