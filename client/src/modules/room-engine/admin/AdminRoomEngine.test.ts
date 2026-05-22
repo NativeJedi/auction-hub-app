@@ -1,11 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminRoomEngine } from './AdminRoomEngine';
-import { setRoomToken } from '@/src/utils/local-storage';
-
-vi.mock('@/src/utils/local-storage', () => ({
-  setRoomToken: vi.fn(),
-  getRoomToken: vi.fn(),
-}));
+import { RoomEngine } from '../core/RoomEngine';
 
 vi.mock('@/src/api/auctions-api-client/requests/room', () => ({
   startAuction: vi.fn(),
@@ -32,8 +27,11 @@ describe('AdminRoomEngine.resetAuction', () => {
 });
 
 describe('AdminRoomEngine.startAuction', () => {
+  let setRoomTokenSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    setRoomTokenSpy = vi.spyOn(RoomEngine, 'setRoomToken').mockImplementation(() => {});
   });
 
   it('startAuction stores token under room:${auctionId}:token key in localStorage', async () => {
@@ -45,6 +43,6 @@ describe('AdminRoomEngine.startAuction', () => {
 
     await AdminRoomEngine.startAuction('auction-1');
 
-    expect(setRoomToken).toHaveBeenCalledWith('auction-1', 'admin-token');
+    expect(setRoomTokenSpy).toHaveBeenCalledWith('auction-1', 'admin-token');
   });
 });

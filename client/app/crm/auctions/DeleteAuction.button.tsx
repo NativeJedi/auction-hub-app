@@ -23,7 +23,6 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    setLoading(true);
     const { result } = await confirmModal.show({
       title: 'Delete Auction',
       description: `Do you really want to delete the auction "${auction.name}"?`,
@@ -32,6 +31,8 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
     if (result === 'closed') return;
 
     try {
+      setLoading(true);
+
       await deleteAuction(auction.id);
 
       showToast({
