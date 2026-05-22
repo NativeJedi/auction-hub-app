@@ -1,7 +1,9 @@
 import { fetchAuctionResultsServer } from '@/src/api/auctions-api/requests/auctions';
-import AuctionResultsHeader from './components/AuctionResultsHeader';
+import { formatISODate } from '@/src/utils/date';
+import AuctionPageHeader from '@/src/components/AuctionPageHeader';
 import ResultsStats from './components/ResultsStats';
 import LotResultsTable from './components/LotResultsTable';
+import HeadedLayout from '@/src/layouts/HeadedLayout';
 
 type ResultsPageProps = {
   params: Promise<{ auctionId: string }>;
@@ -12,10 +14,23 @@ const AuctionResultsPage = async ({ params, searchParams }: ResultsPageProps) =>
   const [{ auctionId }, { role }] = await Promise.all([params, searchParams]);
 
   const results = await fetchAuctionResultsServer(auctionId);
+  const isAdmin = role === 'admin';
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
-      <AuctionResultsHeader auctionId={auctionId} name={results.name} description={results.description} finishedAt={results.finishedAt} isAdmin={role === 'admin'} />
+    <HeadedLayout showControls={isAdmin}>
+      <AuctionPageHeader
+        back={
+          isAdmin ? { href: `/crm/auctions/${auctionId}`, label: 'Back to auction' } : undefined
+        }
+        title={results.name}
+        description={results.description}
+        meta={[
+          {
+            text: results.finishedAt ? `Finished: ${formatISODate(results.finishedAt)}` : '',
+            isVisible: !!results.finishedAt,
+          },
+        ]}
+      />
 
       <ResultsStats
         totalLots={results.totalLots}
@@ -25,7 +40,7 @@ const AuctionResultsPage = async ({ params, searchParams }: ResultsPageProps) =>
       />
 
       <LotResultsTable lots={results.lots} />
-    </div>
+    </HeadedLayout>
   );
 };
 

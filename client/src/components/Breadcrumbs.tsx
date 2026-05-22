@@ -23,18 +23,16 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, index) => {
-          const isLast = index === items.length - 1;
-
           return (
             <React.Fragment key={index}>
               {index > 0 && <BreadcrumbSeparator>/</BreadcrumbSeparator>}
               <BreadcrumbItem>
-                {isLast || !item.href ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                ) : (
+                {item.href ? (
                   <BreadcrumbLink asChild>
                     <Link href={item.href}>{item.label}</Link>
                   </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
             </React.Fragment>

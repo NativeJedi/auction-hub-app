@@ -27,10 +27,6 @@ vi.mock('@/app/crm/auctions/[auctionId]/CreateLot.button', () => ({
   default: () => null,
 }));
 
-vi.mock('@/src/layouts/CrmHeader', () => ({
-  default: () => null,
-}));
-
 vi.mock('next/link', () => ({
   default: ({ children }: any) => <>{children}</>,
 }));
@@ -94,4 +90,9 @@ describe('AuctionPage', () => {
 
     expect(screen.queryByText(/finished at/i)).not.toBeInTheDocument();
   });
+
+  it.todo('renders back link with "Auctions" text pointing to /crm/auctions');
+  it.todo('does not render a Card element wrapping auction info');
+  it.todo('renders auction name in H1 with status badge in the same row');
+  it.todo('renders Lots section header with "Lots" title');
 });

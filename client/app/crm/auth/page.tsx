@@ -9,6 +9,7 @@ import { login, register } from '@/src/api/auctions-api-client/requests/auth';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
 import FormLayout from '@/src/layouts/FormLayout';
+import HeadedLayout from '@/src/layouts/HeadedLayout';
 
 type FormProps = {
   onChangeView: () => void;
@@ -124,20 +125,22 @@ export default function AuthPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-base-200 p-4 transition-colors">
-      {isLogin ? (
-        <LoginForm
-          onChangeView={handleChangeView}
-          onSubmit={handleSuccessSubmit}
-          onError={handleError}
-        />
-      ) : (
-        <RegisterForm
-          onChangeView={handleChangeView}
-          onSubmit={handleSuccessSubmit}
-          onError={handleError}
-        />
-      )}
-    </main>
+    <HeadedLayout showLogout={false}>
+      <div className="flex items-center justify-center bg-base-200 transition-colors flex-1">
+        {isLogin ? (
+          <LoginForm
+            onChangeView={handleChangeView}
+            onSubmit={handleSuccessSubmit}
+            onError={handleError}
+          />
+        ) : (
+          <RegisterForm
+            onChangeView={handleChangeView}
+            onSubmit={handleSuccessSubmit}
+            onError={handleError}
+          />
+        )}
+      </div>
+    </HeadedLayout>
   );
 }
