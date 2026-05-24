@@ -30,4 +30,16 @@ export class UsersService {
   findById(id: User['id']) {
     return this.usersRepository.findOneBy({ id });
   }
+
+  findByGoogleId(googleId: NonNullable<User['googleId']>) {
+    return this.usersRepository.findOneBy({ googleId });
+  }
+
+  // No-op when userId does not exist (TypeORM update returns affected=0); callers guard upstream.
+  async linkGoogleId(
+    userId: User['id'],
+    googleId: NonNullable<User['googleId']>,
+  ) {
+    await this.usersRepository.update({ id: userId }, { googleId });
+  }
 }

@@ -16,10 +16,13 @@ export class AuthService {
   private async validateUser({
     email,
     password,
-  }: Pick<User, 'email' | 'password'>) {
+  }: {
+    email: User['email'];
+    password: string;
+  }) {
     const user = await this.usersService.findByEmail(email, true);
 
-    if (!user) {
+    if (!user || user.password === null) {
       return null;
     }
 
