@@ -71,7 +71,9 @@ describe('LotsService', () => {
     it('throws BadRequestException when auction is not editable', async () => {
       // T-002 AC: create lot is rejected when auction is STARTED or FINISHED
       auctionsService.findEditableOne.mockRejectedValue(
-        new BadRequestException('Auction cannot be edited after it has started'),
+        new BadRequestException(
+          'Auction cannot be edited after it has started',
+        ),
       );
 
       await expect(
@@ -110,7 +112,9 @@ describe('LotsService', () => {
     it('throws BadRequestException when auction is not editable', async () => {
       // T-002 AC: throws BadRequestException when auction is STARTED or FINISHED
       lotsRepo.findOne.mockResolvedValue(
-        makeLot({ auction: { id: 'auction-1', status: AuctionStatus.STARTED } }),
+        makeLot({
+          auction: { id: 'auction-1', status: AuctionStatus.STARTED },
+        }),
       );
       auctionsService.checkEditableStatus.mockImplementation(() => {
         throw new BadRequestException(
@@ -119,7 +123,9 @@ describe('LotsService', () => {
       });
 
       await expect(
-        service.updateEditableLot('user-1', 'auction-1', 'lot-1', { name: 'X' }),
+        service.updateEditableLot('user-1', 'auction-1', 'lot-1', {
+          name: 'X',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -135,7 +141,10 @@ describe('LotsService', () => {
         { name: 'New Name' },
       );
 
-      expect(lotsRepo.save).toHaveBeenCalledWith({ id: 'lot-1', name: 'New Name' });
+      expect(lotsRepo.save).toHaveBeenCalledWith({
+        id: 'lot-1',
+        name: 'New Name',
+      });
       expect(result.name).toBe('New Name');
       expect(Array.isArray(result.images)).toBe(true);
     });

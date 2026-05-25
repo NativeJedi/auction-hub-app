@@ -16,10 +16,7 @@ export class AuthService {
   private async validateUser({
     email,
     password,
-  }: {
-    email: User['email'];
-    password: string;
-  }) {
+  }: Pick<User, 'email' | 'password'>) {
     const user = await this.usersService.findByEmail(email, true);
 
     if (!user || user.password === null) {

@@ -6,10 +6,7 @@ export enum RoomRole {
   MEMBER = 'MEMBER',
 }
 
-export class RoomAuction extends PickType(Auction, [
-  'name',
-  'description',
-]) {}
+export class RoomAuction extends PickType(Auction, ['name', 'description']) {}
 
 export class Room {
   auctionId: string;

@@ -32,21 +32,31 @@ describe('RoomController', () => {
         },
       ],
     })
-      .overrideGuard(AuthGuard).useValue({ canActivate: () => true })
-      .overrideGuard(RoomAuthGuard).useValue({ canActivate: () => true })
-      .overrideGuard(RoomAuthOptionalGuard).useValue({ canActivate: () => true })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RoomAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RoomAuthOptionalGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     controller = module.get(RoomController);
-    roomService = module.get(RoomService) as any;
-    roomGateway = module.get(RoomGateway) as any;
+    roomService = module.get(RoomService);
+    roomGateway = module.get(RoomGateway);
 
     jest.clearAllMocks();
   });
 
   describe('getAdminRoomInfo', () => {
     it('auctionId param is extracted and passed to service on getAdminRoomInfo', async () => {
-      roomService.getOwnerRoomInfo.mockResolvedValue({ room: {}, lots: [], activeLot: null, activeLotBids: [], members: [], invites: [] });
+      roomService.getOwnerRoomInfo.mockResolvedValue({
+        room: {},
+        lots: [],
+        activeLot: null,
+        activeLotBids: [],
+        members: [],
+        invites: [],
+      });
 
       await controller.getAdminRoomInfo('auction-1');
 
@@ -56,7 +66,12 @@ describe('RoomController', () => {
 
   describe('getRoomInfo', () => {
     it('auctionId param is extracted and passed to service on getRoomInfo', async () => {
-      roomService.getRoomInfo.mockResolvedValue({ room: {}, activeLot: null, activeLotBids: [], user: null });
+      roomService.getRoomInfo.mockResolvedValue({
+        room: {},
+        activeLot: null,
+        activeLotBids: [],
+        user: null,
+      });
 
       await controller.getRoomInfo('auction-1', null);
 
@@ -93,9 +108,15 @@ describe('RoomController', () => {
         token: 'room-token',
       });
 
-      const result = await controller.confirmRoomInvite('auction-1', dto as any);
+      const result = await controller.confirmRoomInvite(
+        'auction-1',
+        dto as any,
+      );
 
-      expect(roomService.confirmRoomInvite).toHaveBeenCalledWith('auction-1', dto.token);
+      expect(roomService.confirmRoomInvite).toHaveBeenCalledWith(
+        'auction-1',
+        dto.token,
+      );
       expect(roomGateway.publishRoomUserEvent).toHaveBeenCalledWith(
         'auction-1',
         'user-1',

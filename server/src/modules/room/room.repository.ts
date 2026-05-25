@@ -134,7 +134,9 @@ export class RoomRepository {
     return this.getLotBids(roomId, activeLotId);
   }
 
-  async getActiveLotCurrentBid(roomId: Room['auctionId']): Promise<Bid | undefined> {
+  async getActiveLotCurrentBid(
+    roomId: Room['auctionId'],
+  ): Promise<Bid | undefined> {
     const activeLotBids = await this.getActiveLotBids(roomId);
 
     return activeLotBids.length
@@ -162,7 +164,10 @@ export class RoomRepository {
     return this.invites.getList(roomKey);
   }
 
-  async getLotBids(roomId: Room['auctionId'], lotId: RoomLot['id']): Promise<Bid[]> {
+  async getLotBids(
+    roomId: Room['auctionId'],
+    lotId: RoomLot['id'],
+  ): Promise<Bid[]> {
     const roomKey = this.getBidsKey(roomId, lotId);
 
     return this.bids.getAll(roomKey);
