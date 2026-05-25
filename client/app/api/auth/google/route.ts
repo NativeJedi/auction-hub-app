@@ -9,10 +9,7 @@ const googleAuth = async (req: Request) => {
   const { credential, nonce } = body;
 
   if (!credential || !nonce) {
-    return NextResponse.json(
-      { message: 'credential and nonce are required' },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: 'credential and nonce are required' }, { status: 400 });
   }
 
   const { accessToken, refreshToken, user } = await googleAuthServer({ credential, nonce });

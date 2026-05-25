@@ -76,7 +76,7 @@ const AppConfig: AppConfigInterface = {
   STORAGE_REGION: process.env.STORAGE_REGION!,
   STORAGE_PUBLIC_URL: process.env.STORAGE_PUBLIC_URL!,
 
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
+  GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
 };
 
 export { AppConfig, AppConfigInterface };

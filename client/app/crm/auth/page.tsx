@@ -10,6 +10,7 @@ import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
 import FormLayout from '@/src/layouts/FormLayout';
 import HeadedLayout from '@/src/layouts/HeadedLayout';
+import { GoogleSignInButton } from '@/src/modules/google-auth';
 
 type FormProps = {
   onChangeView: () => void;
@@ -70,6 +71,7 @@ function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
         </FormChangeViewButton>
       }
     >
+      <GoogleSignInButton />
       <FormBuilder<FormValues>
         schema={validationSchema}
         fields={loginFields}
@@ -98,6 +100,7 @@ function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
         </FormChangeViewButton>
       }
     >
+      <GoogleSignInButton />
       <FormBuilder<FormValues>
         schema={validationSchema}
         fields={fields}
