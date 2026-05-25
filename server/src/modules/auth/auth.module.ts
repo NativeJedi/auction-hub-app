@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { GoogleAuthService } from './google-auth.service';
 import { AuthController } from './auth.controller';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
@@ -12,11 +13,19 @@ import { UsersModule } from '../users/users.module';
   controllers: [AuthController],
   providers: [
     AuthService,
+    GoogleAuthService,
     AuthGuard,
     JwtService,
     TokenService,
     AppConfigService,
   ],
-  exports: [AuthService, AuthGuard, JwtService, TokenService, AppConfigService],
+  exports: [
+    AuthService,
+    GoogleAuthService,
+    AuthGuard,
+    JwtService,
+    TokenService,
+    AppConfigService,
+  ],
 })
 export class AuthModule {}

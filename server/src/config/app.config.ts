@@ -35,6 +35,9 @@ interface AppConfigInterface {
   STORAGE_ENDPOINT: string;
   STORAGE_REGION: string;
   STORAGE_PUBLIC_URL: string;
+
+  // google oauth
+  GOOGLE_CLIENT_ID: string;
 }
 
 const AppConfig: AppConfigInterface = {
@@ -72,6 +75,8 @@ const AppConfig: AppConfigInterface = {
   STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT!,
   STORAGE_REGION: process.env.STORAGE_REGION!,
   STORAGE_PUBLIC_URL: process.env.STORAGE_PUBLIC_URL!,
+
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
 };
 
 export { AppConfig, AppConfigInterface };

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigInterface } from '../config/app.config';
-import process from 'node:process';
 
 @Injectable()
 export class AppConfigService {
@@ -69,6 +68,12 @@ export class AppConfigService {
       STORAGE_ENDPOINT: this.config.get<string>('STORAGE_ENDPOINT')!,
       STORAGE_REGION: this.config.get<string>('STORAGE_REGION')!,
       STORAGE_PUBLIC_URL: this.config.get<string>('STORAGE_PUBLIC_URL')!,
+    };
+  }
+
+  get googleAuth() {
+    return {
+      GOOGLE_CLIENT_ID: this.config.get<string>('GOOGLE_CLIENT_ID')!,
     };
   }
 }

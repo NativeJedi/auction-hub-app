@@ -1,4 +1,4 @@
-import { AuthDto, AuthResponseDto } from '@/src/api/dto/auth.dto';
+import { AuthDto, AuthResponseDto, GoogleAuthDto } from '@/src/api/dto/auth.dto';
 import { auctionsAPI } from '@/src/api/auctions-api/api';
 
 export const loginServer = (body: AuthDto) =>
@@ -11,3 +11,9 @@ export const registerServer = (dto: AuthDto) =>
 
 export const refreshTokenServer = ({ refreshToken }: { refreshToken: string }) =>
   auctionsAPI.post<AuthResponseDto>('/auth/refresh', { refreshToken }, { skipAuth: true });
+
+export const googleNonceServer = () =>
+  auctionsAPI.get<{ nonce: string }>('/auth/google/nonce', { skipAuth: true });
+
+export const googleAuthServer = (body: GoogleAuthDto) =>
+  auctionsAPI.post<AuthResponseDto>('/auth/google', body, { skipAuth: true });

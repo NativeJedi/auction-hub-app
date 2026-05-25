@@ -208,22 +208,22 @@ In order of importance:
 
 ### Option A: Client-side Google Identity Services (GIS) + `google-auth-library` on Nest, server-generated `nonce`
 
-**Description:** The CRM auth page loads Google's GIS script (`https://accounts.google.com/gsi/client`) and renders the official Google button. Before the button renders, the BFF generates a cryptographic `nonce`, stores it in Redis under `oauth:nonce:${sessionId}` with a 5-minute TTL, and returns it to the page; the page passes it to `google.accounts.id.initialize({ client_id, nonce, callback })`. On user consent, GIS returns a signed ID token in the browser; the page POSTs `{ credential, nonce }` to the BFF, which forwards it to a new Nest endpoint `POST /auth/google`. Nest uses `google-auth-library`'s `OAuth2Client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID })` to verify the signature (against Google's JWKS), `aud`, `iss`, and `exp`, then checks `payload.nonce` against the Redis value, asserts `payload.email_verified === true`, and either finds or creates the user (per ADR-FEAT-007-01). Nest issues the standard `AuthResponseDto`; the BFF creates the session and sets the `session_id` cookie exactly as it does for password login.
+**Description:** The CRM auth page renders a custom "Continue with Google" button. On click, the browser calls Nest `GET /auth/google/nonce` (via BFF proxy) to obtain a fresh cryptographic nonce; Nest generates `randomBytes(32).toString('hex')`, stores it in Redis under `oauth:nonce:${nonce}` with a **60-second TTL**, and returns it. The page calls `google.accounts.id.initialize({ client_id, nonce, callback })` and then `google.accounts.id.prompt()` to open the consent popup. On user consent, GIS returns a signed ID token; the callback POSTs `{ credential, nonce }` to the BFF, which forwards the body to Nest `POST /auth/google`. Nest uses `google-auth-library`'s `OAuth2Client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID })` to verify the signature (against Google's JWKS), `aud`, `iss`, and `exp`, then verifies `payload.nonce === nonce` and that `oauth:nonce:${nonce}` exists in Redis (single-use: deleted immediately on read), asserts `payload.email_verified === true`, and either finds or creates the user (per ADR-FEAT-007-01). Nest issues the standard `AuthResponseDto`; the BFF creates the session and sets the `session_id` cookie exactly as it does for password login.
 
 **Pros:**
-- **No `client_secret` involved in the flow** — eliminates an entire category of credential-leak risk (env files, log lines, accidental commits)
-- Verification is a single library call (`verifyIdToken`) that atomically checks signature, `aud`, `iss`, `exp`, and (optionally) `nonce` — very hard to misuse
-- ~30 lines of new server code; ~20 lines of new BFF code
-- No callback URL configured in Google Console — eliminates `redirect_uri` mismatch and open-redirect risk classes
-- `nonce` bound to our Redis session provides CSRF defense that is explicit in our code (not hidden in an SDK)
-- GIS handles the consent UI natively — no redirect, no popup popup-blocker dance
+- **No `client_secret` involved in the flow** — eliminates an entire category of credential-leak risk
+- Verification is a single library call (`verifyIdToken`) that atomically checks signature, `aud`, `iss`, `exp`
+- No callback URL configured in Google Console — eliminates `redirect_uri` mismatch and open-redirect risk
+- Nonce generated on click → 60s TTL is sufficient; no UX issue with expiry
+- No pre-auth BFF session needed — nonce is its own Redis key, BFF is a transparent proxy
+- GIS handles the consent UI natively — no redirect, no popup-blocker dance
 - Native localhost support — works on `http://localhost:3001` in dev without HTTPS
 
 **Cons:**
-- ID token transits browser JS briefly (milliseconds between `callback` and `fetch`); an XSS on the auth page could steal it. Mitigation: the auth page must remain XSS-clean, which is a standard requirement anyway.
+- ID token transits browser JS briefly; an XSS on the auth page could steal it. Mitigation: auth page must remain XSS-clean (standard requirement).
 - No Google refresh token — we cannot silently re-authenticate against Google later. Not a problem since we issue our own refresh tokens.
-- We depend on the GIS script being reachable from `accounts.google.com` — adblockers occasionally interfere. Documented in dev docs.
-- Implementing `nonce` correctly is on us — must be cryptographically random, single-use, short-TTL, session-bound. Library does not enforce this.
+- We depend on the GIS script being reachable from `accounts.google.com` — adblockers occasionally interfere.
+- Implementing `nonce` correctly is on us — must be cryptographically random, single-use, short-TTL. Library does not enforce this.
 
 **Estimated effort:** ~1.5 days (Nest endpoint + verify path + nonce route + BFF route + UI button + tests).
 
@@ -309,7 +309,6 @@ The deprioritized driver is "Passport familiarity" — Option C's claim that the
 - **No Google API access.** Out of scope per spec NFR-3, but explicitly forecloses Drive/Calendar/Gmail integrations without re-auth.
 - **No One-Tap by default.** This ADR records the explicit-button flow. One-Tap is a UX choice that can be layered on top later without changing the trust model.
 - **No "remember which provider" UI hint.** A user who linked Google sees both the email-password form and the Google button on every visit. Account-settings UX showing "linked to Google" is out of scope here.
-- **`nonce` storage requires a pre-auth Redis session.** The BFF must mint a session (even for unauthenticated visitors) to have a key for the nonce. The existing `SessionStorage` supports this; implementation must confirm.
 - **GIS dependency on Google CDN.** If `accounts.google.com/gsi/client` is unreachable, the button does not render. Email-password remains as a fallback (FR-7), so this degrades gracefully.
 - **Revocation on Google's side is not detected.** If a user revokes our app's grant in their Google account settings, we receive no notification and take no action. The user's current CRM session continues until normal JWT expiry; on next sign-in, Google re-prompts consent and login resumes. The `user.googleId` link is not cleared automatically. Explicit unlinking is a separate backlog feature (spec §10). Resolves spec §11.2.
 
@@ -325,13 +324,13 @@ The deprioritized driver is "Passport familiarity" — Option C's claim that the
 **For the codebase:**
 
 - New server dependency: `google-auth-library` (Google's official Node client)
-- New Nest endpoint: `POST /auth/google` in `server/src/modules/auth/auth.controller.ts`, accepting `{ credential: string; nonce: string }`, returning the existing `AuthResponseDto`
-- New Nest service file: `server/src/modules/auth/google-auth.service.ts` — wraps `OAuth2Client.verifyIdToken`, asserts `email_verified`, performs the find-or-create-or-link branch using `UsersService` (extended per ADR-FEAT-007-01)
-- `server/src/modules/auth/auth.module.ts` — register the new service; provide `GOOGLE_CLIENT_ID` via `ConfigService`
-- New BFF route: `client/app/api/auth/google/route.ts` — mirrors `client/app/api/auth/login/route.ts` (calls Nest, creates session via `SessionStorage`, sets cookie)
-- New BFF route: `client/app/api/auth/google/nonce/route.ts` (or fold into a session-init route) — generates `crypto.randomBytes(32).toString('hex')`, stores at `oauth:nonce:${sessionId}` with 300s TTL via Redis, returns `{ nonce }`
-- `client/app/crm/auth/page.tsx` — add a Google-button block above or below the existing form, render via GIS, pass nonce from the nonce route, POST `{ credential, nonce }` to `/api/auth/google` on success
-- Type for `GooglePayload` (subset of `TokenPayload` from `google-auth-library`) co-located with the new service
+- New Nest endpoint: `GET /auth/google/nonce` — generates `randomBytes(32).toString('hex')`, stores at `oauth:nonce:${nonce}` with **60s TTL** in Redis, returns `{ nonce }`
+- New Nest endpoint: `POST /auth/google` — accepts `{ credential: string; nonce: string }`, returns the existing `AuthResponseDto`
+- New Nest service: `server/src/modules/auth/google-auth.service.ts` — `mintNonce()` + `signIn()`: wraps `OAuth2Client.verifyIdToken`, checks nonce existence in Redis (single-use delete-first), asserts `email_verified`, performs find-or-create-or-link
+- `server/src/modules/auth/auth.module.ts` — register `GoogleAuthService`
+- New BFF route: `client/app/api/auth/google/nonce/route.ts` — **transparent proxy** to Nest `GET /auth/google/nonce`; no Redis, no session logic
+- New BFF route: `client/app/api/auth/google/route.ts` — proxies `{ credential, nonce }` to Nest, creates session + sets cookie on success; mirrors `client/app/api/auth/login/route.ts`
+- `client/app/crm/auth/GoogleSignInButton.tsx` — custom button (not `renderButton`); on click: fetch nonce → `initialize({ client_id, nonce })` → `prompt()`; callback: POST `{ credential, nonce }` to `/api/auth/google`
 
 **For the team:**
 
