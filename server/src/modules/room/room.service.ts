@@ -23,7 +23,6 @@ import { RoomRepository } from './room.repository';
 import { RoomInfoResponseDto, RoomInfoOwnerResponseDto } from './dto/room.dto';
 import { BuyersService } from '../buyers/buyers.service';
 import { LotsService } from '../lots/lots.service';
-import { LotStatus } from '../lots/entities/lots.entity';
 import { RoomLot } from './entities/room-lot.entity';
 import { ApiAuthorizationError } from '../../errors';
 import { pickArrayFields, pickFields } from '../../utils/pick';
@@ -48,7 +47,6 @@ export class RoomService {
       this.auctionsService.findEditableOne(id, auctionId),
       this.lotsService.findAll(id, auctionId),
     ]);
-
 
     const roomAuction: RoomAuction = {
       name: auction.name,

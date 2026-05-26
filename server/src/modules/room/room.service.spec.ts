@@ -59,7 +59,9 @@ describe('RoomService', () => {
         {
           provide: TokenService,
           useValue: {
-            roomMemberToken: { generate: jest.fn().mockReturnValue('room-token') },
+            roomMemberToken: {
+              generate: jest.fn().mockReturnValue('room-token'),
+            },
             roomMemberInviteToken: {
               generate: jest.fn().mockReturnValue('invite-token'),
               validate: jest.fn(),
@@ -94,10 +96,10 @@ describe('RoomService', () => {
     }).compile();
 
     service = module.get(RoomService);
-    auctionsService = module.get(AuctionsService) as any;
-    tokenService = module.get(TokenService) as any;
-    roomRepository = module.get(RoomRepository) as any;
-    lotsService = module.get(LotsService) as any;
+    auctionsService = module.get(AuctionsService);
+    tokenService = module.get(TokenService);
+    roomRepository = module.get(RoomRepository);
+    lotsService = module.get(LotsService);
 
     jest.clearAllMocks();
   });
@@ -112,7 +114,9 @@ describe('RoomService', () => {
 
   describe('createRoom', () => {
     const user = { sub: 'user-1', email: 'owner@example.com' } as any;
-    const lots = [{ id: 'lot-1', name: 'Lot 1', startPrice: 100, currency: 'USD' }];
+    const lots = [
+      { id: 'lot-1', name: 'Lot 1', startPrice: 100, currency: 'USD' },
+    ];
 
     beforeEach(() => {
       auctionsService.findEditableOne.mockResolvedValue({
@@ -164,7 +168,12 @@ describe('RoomService', () => {
   });
 
   describe('placeNextLot', () => {
-    const nextLot = { id: 'lot-2', name: 'Lot 2', startPrice: 200, currency: 'USD' } as any;
+    const nextLot = {
+      id: 'lot-2',
+      name: 'Lot 2',
+      startPrice: 200,
+      currency: 'USD',
+    } as any;
 
     beforeEach(() => {
       stubFinishActiveLot();
@@ -199,7 +208,8 @@ describe('RoomService', () => {
       await service.placeNextLot(owner);
 
       const finishOrder = finishActiveLotSpy.mock.invocationCallOrder[0];
-      const getNextLotOrder = roomRepository.getNextLot.mock.invocationCallOrder[0];
+      const getNextLotOrder =
+        roomRepository.getNextLot.mock.invocationCallOrder[0];
       expect(finishOrder).toBeLessThan(getNextLotOrder);
     });
 
@@ -208,7 +218,10 @@ describe('RoomService', () => {
 
       await service.placeNextLot(owner);
 
-      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, 'auction-1');
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(
+        owner.id,
+        'auction-1',
+      );
       expect(auctionsService.finishAuction).toHaveBeenCalledWith('auction-1');
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
     });
@@ -226,7 +239,9 @@ describe('RoomService', () => {
 
   describe('finishAuction', () => {
     beforeEach(() => {
-      auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.STARTED });
+      auctionsService.findOne.mockResolvedValue({
+        status: AuctionStatus.STARTED,
+      });
       stubFinishActiveLot();
       lotsService.makeCreatedLotsUnsold.mockResolvedValue(undefined);
       auctionsService.finishAuction.mockResolvedValue(undefined);
@@ -236,7 +251,10 @@ describe('RoomService', () => {
     it('calls bulkMarkUnsold then finishAuction then clearRoom', async () => {
       await service.finishAuction(owner);
 
-      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, 'auction-1');
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(
+        owner.id,
+        'auction-1',
+      );
       expect(auctionsService.finishAuction).toHaveBeenCalledWith('auction-1');
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
     });
@@ -244,7 +262,8 @@ describe('RoomService', () => {
     it('calls clearRoom after auctionsService.finishAuction', async () => {
       await service.finishAuction(owner);
 
-      const finishOrder = auctionsService.finishAuction.mock.invocationCallOrder[0];
+      const finishOrder =
+        auctionsService.finishAuction.mock.invocationCallOrder[0];
       const clearOrder = roomRepository.clearRoom.mock.invocationCallOrder[0];
       expect(clearOrder).toBeGreaterThan(finishOrder);
     });
@@ -252,7 +271,9 @@ describe('RoomService', () => {
     it('rejects with NotFoundException and does not call bulkMarkUnsold when room does not exist', async () => {
       roomRepository.getRoom.mockResolvedValue(null);
 
-      await expect(service.finishAuction(owner)).rejects.toThrow(NotFoundException);
+      await expect(service.finishAuction(owner)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(lotsService.makeCreatedLotsUnsold).not.toHaveBeenCalled();
     });
   });
@@ -272,13 +293,18 @@ describe('RoomService', () => {
     it('calls bulkMarkUnsold with the auction id from the room', async () => {
       await service.placeNextLot(owner);
 
-      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(owner.id, owner.auctionId);
+      expect(lotsService.makeCreatedLotsUnsold).toHaveBeenCalledWith(
+        owner.id,
+        owner.auctionId,
+      );
     });
 
     it('calls markAsFinished (auctionsService.finishAuction) with the auction id from the room', async () => {
       await service.placeNextLot(owner);
 
-      expect(auctionsService.finishAuction).toHaveBeenCalledWith(owner.auctionId);
+      expect(auctionsService.finishAuction).toHaveBeenCalledWith(
+        owner.auctionId,
+      );
     });
 
     it('calls clearRoom with the auction id', async () => {
@@ -294,7 +320,9 @@ describe('RoomService', () => {
 
   describe('resetAuction', () => {
     beforeEach(() => {
-      auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.FINISHED });
+      auctionsService.findOne.mockResolvedValue({
+        status: AuctionStatus.FINISHED,
+      });
       roomRepository.clearRoom.mockResolvedValue(undefined);
       auctionsService.resetAuction.mockResolvedValue(undefined);
     });
@@ -302,7 +330,10 @@ describe('RoomService', () => {
     it('calls auctionsService.resetAuction with ownerId and auctionId', async () => {
       await service.resetAuction('user-1', 'auction-1');
 
-      expect(auctionsService.resetAuction).toHaveBeenCalledWith('user-1', 'auction-1');
+      expect(auctionsService.resetAuction).toHaveBeenCalledWith(
+        'user-1',
+        'auction-1',
+      );
     });
 
     it('calls roomRepository.clearRoom with auctionId before auctionsService.resetAuction', async () => {
@@ -310,12 +341,15 @@ describe('RoomService', () => {
 
       expect(roomRepository.clearRoom).toHaveBeenCalledWith('auction-1');
       const clearOrder = roomRepository.clearRoom.mock.invocationCallOrder[0];
-      const restartOrder = auctionsService.resetAuction.mock.invocationCallOrder[0];
+      const restartOrder =
+        auctionsService.resetAuction.mock.invocationCallOrder[0];
       expect(clearOrder).toBeLessThan(restartOrder);
     });
 
     it('throws BadRequestException when auction status is not FINISHED', async () => {
-      auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.CREATED });
+      auctionsService.findOne.mockResolvedValue({
+        status: AuctionStatus.CREATED,
+      });
 
       await expect(service.resetAuction('user-1', 'auction-1')).rejects.toThrow(
         BadRequestException,
@@ -324,9 +358,13 @@ describe('RoomService', () => {
 
     it('succeeds (does not throw) when auction is in STARTED state', async () => {
       // DoD: POST /reset succeeds when auction is in STARTED state
-      auctionsService.findOne.mockResolvedValue({ status: AuctionStatus.STARTED });
+      auctionsService.findOne.mockResolvedValue({
+        status: AuctionStatus.STARTED,
+      });
 
-      await expect(service.resetAuction('user-1', 'auction-1')).resolves.toBeUndefined();
+      await expect(
+        service.resetAuction('user-1', 'auction-1'),
+      ).resolves.toBeUndefined();
     });
   });
 

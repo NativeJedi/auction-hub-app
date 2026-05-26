@@ -75,7 +75,7 @@ describe('AuctionsService', () => {
 
     service = module.get(AuctionsService);
     auctionRepo = module.get(getRepositoryToken(Auction));
-    dataSource = module.get(getDataSourceToken()) as any;
+    dataSource = module.get(getDataSourceToken());
     usersService = module.get(UsersService);
   });
 
@@ -305,7 +305,9 @@ describe('AuctionsService', () => {
         owner: { id: 'user-1' },
       });
 
-      const result = await service.updateOne('user-1', 'auction-1', { name: 'New' });
+      const result = await service.updateOne('user-1', 'auction-1', {
+        name: 'New',
+      });
 
       expect(auctionRepo.save).toHaveBeenCalledWith({
         id: 'auction-1',
@@ -321,21 +323,30 @@ describe('AuctionsService', () => {
     it('throws BadRequestException when auction status is STARTED', () => {
       // T-002 AC: throws BadRequestException when auction status is STARTED
       expect(() =>
-        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.STARTED } as any),
+        service.checkEditableStatus({
+          id: 'auction-1',
+          status: AuctionStatus.STARTED,
+        } as any),
       ).toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when auction status is FINISHED', () => {
       // T-002 AC: throws BadRequestException when auction status is FINISHED
       expect(() =>
-        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.FINISHED } as any),
+        service.checkEditableStatus({
+          id: 'auction-1',
+          status: AuctionStatus.FINISHED,
+        } as any),
       ).toThrow(BadRequestException);
     });
 
     it('does not throw when auction status is CREATED', () => {
       // T-002 AC: does not throw when auction status is CREATED
       expect(() =>
-        service.checkEditableStatus({ id: 'auction-1', status: AuctionStatus.CREATED } as any),
+        service.checkEditableStatus({
+          id: 'auction-1',
+          status: AuctionStatus.CREATED,
+        } as any),
       ).not.toThrow();
     });
   });

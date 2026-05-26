@@ -28,4 +28,11 @@ export class RedisSimpleRepository<T> extends BaseRepository {
   clear(key: CombinedKey) {
     return this.client.del(this.getFullKey(key));
   }
+
+  // Atomic read+delete. Requires Redis >= 6.2.
+  async getDel(key: CombinedKey) {
+    const entity = await this.client.getdel(this.getFullKey(key));
+
+    return entity ? (JSON.parse(entity) as T) : null;
+  }
 }

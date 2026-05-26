@@ -4,7 +4,7 @@ type Props = React.PropsWithChildren<{
   showControls?: boolean;
   showLogout?: boolean;
 }>;
-export default async function HeadedLayout({
+export default function HeadedLayout({
   children,
   showLogout = true,
   showControls = true,

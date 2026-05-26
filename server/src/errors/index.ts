@@ -3,6 +3,7 @@ import { UnauthorizedException } from '@nestjs/common';
 enum UnauthorizedErrorReason {
   EXPIRED_TOKEN = 'EXPIRED_TOKEN',
   INVALID_AUTH = 'INVALID_AUTH',
+  NONCE_NOT_FOUND = 'NONCE_NOT_FOUND',
 }
 
 export class ApiAuthorizationError extends UnauthorizedException {
@@ -17,5 +18,11 @@ export class ApiAuthorizationError extends UnauthorizedException {
 export class ApiTokenExpiredError extends ApiAuthorizationError {
   constructor() {
     super(UnauthorizedErrorReason.EXPIRED_TOKEN);
+  }
+}
+
+export class ApiNonceNotFoundError extends ApiAuthorizationError {
+  constructor() {
+    super(UnauthorizedErrorReason.NONCE_NOT_FOUND);
   }
 }

@@ -9,8 +9,11 @@ export class User {
   @Column({ length: 255, unique: true })
   email: string;
 
-  @Column({ length: 255, select: false })
-  password: string;
+  @Column({ type: 'varchar', length: 255, select: false, nullable: true })
+  password: string | null;
+
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  googleId: string | null;
 
   @OneToMany(() => Auction, (auction) => auction.owner)
   auctions?: Auction[];

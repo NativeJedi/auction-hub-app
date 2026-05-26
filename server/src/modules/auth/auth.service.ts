@@ -19,7 +19,7 @@ export class AuthService {
   }: Pick<User, 'email' | 'password'>) {
     const user = await this.usersService.findByEmail(email, true);
 
-    if (!user) {
+    if (!user || user.password === null) {
       return null;
     }
 

@@ -26,6 +26,13 @@ const loadTestConfig = ({
     EMAIL_USER: '',
     EMAIL_PASSWORD: '',
     CLIENT_URL: 'http://localhost:3001',
+    STORAGE_ACCESS_KEY: '',
+    STORAGE_SECRET_KEY: '',
+    STORAGE_BUCKET: '',
+    STORAGE_ENDPOINT: '',
+    STORAGE_REGION: '',
+    STORAGE_PUBLIC_URL: '',
+    GOOGLE_CLIENT_ID: '',
   };
 
   return TestAppConfig;
