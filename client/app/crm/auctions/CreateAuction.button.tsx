@@ -15,8 +15,6 @@ export const CreateAuctionButton = () => {
   const [loading, setLoading] = useState(false);
 
   const handleCreateClick = async () => {
-    setLoading(true);
-
     const showResult = await createAuctionModal.show();
 
     if (showResult.result === 'closed') {
@@ -26,6 +24,8 @@ export const CreateAuctionButton = () => {
     const { name, description } = showResult.data;
 
     try {
+      setLoading(true);
+
       await createAuction({ name, description });
 
       router.refresh();

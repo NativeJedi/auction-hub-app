@@ -47,8 +47,8 @@ Extend the `User` entity with a `googleId` field (nullable, unique, 255 chars), 
 
 - [ ] All code compiles with `cd server && npm run build` and lints cleanly.
 - [ ] Test scaffold file exists with `it.todo()` placeholders for `findByGoogleId` and `linkGoogleId`.
-- [ ] `npm run migration:run` applies cleanly against a fresh DB and against a DB that already contains existing users with non-null passwords.
-- [ ] After migration, `user.google_id` accepts NULL, rejects duplicate non-null values, and `user.password` accepts NULL.
+- [ ] Schema after dev startup (with TypeORM `synchronize: true`): `user.googleId` accepts NULL, rejects duplicate non-null values, and `user.password` accepts NULL. Verified against the running dev container.
+- [ ] **Pre-prod gate (deferred — out of scope for the current dev iteration):** before the first deploy to a non-synchronize environment, regenerate a clean incremental migration against the target schema (`ALTER TABLE "user" ADD COLUMN "googleId" …`, `ALTER COLUMN "password" DROP NOT NULL`) and replace the current full-rebuild `1779649878994-Auto.ts` artifact. Apply against a staging DB that already contains existing users to confirm cleanliness.
 - [ ] Existing email-password login (`POST /auth/login`) continues to work unchanged for users whose `googleId` is NULL (manual smoke + existing tests green).
 - [ ] A user row whose `password IS NULL` cannot be logged in via the email-password endpoint (returns same generic "invalid credentials" error).
 - [ ] No regressions in `cd server && npm run test`.

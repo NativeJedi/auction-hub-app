@@ -16,7 +16,7 @@ Related requirements: US-1, FR-1, FR-3 (error display), FR-4, FR-6, FR-7
 
 ## 2. Description
 
-Create a `GoogleSignInButton` client component. On **click** (not on mount): fetch a fresh nonce from `GET /api/auth/google/nonce`, call `google.accounts.id.initialize({ client_id, nonce, callback })`, then call `google.accounts.id.prompt()`. The GIS script itself is loaded once on mount (idempotent). The `callback` POSTs `{ credential, nonce }` to `POST /api/auth/google` and navigates to the dashboard on success.
+Create a `GoogleSignInButton` client component. On **mount**, fetch a fresh nonce from `GET /api/auth/google/nonce`, call `google.accounts.id.initialize({ client_id, nonce, callback, use_fedcm_for_prompt: true })`, render Google's native button via `google.accounts.id.renderButton(container, options)`, and call `google.accounts.id.prompt()` so One-Tap appears for users with an active Google session. The bulk of this logic lives in a pure `GoogleAuthService` class (no React); a thin `useGoogleSignIn` hook adapts it to the React tree. The GIS script itself is loaded lazily and cached. The `callback` POSTs `{ credential, nonce }` to `POST /api/auth/google` and navigates to the dashboard on success. If the BFF returns `reason: NONCE_NOT_FOUND` (TTL elapsed or nonce already consumed), the service fetches a new nonce, re-initializes GIS, re-renders the button, and re-invokes `prompt()` — capped at one retry per component lifetime to prevent loops.
 
 The existing email-password form must remain unchanged in behavior and visual position.
 
@@ -61,7 +61,8 @@ The existing email-password form must remain unchanged in behavior and visual po
 - [ ] Test scaffold exists with `it.todo()` placeholders.
 - [ ] Visual: "Continue with Google" button appears on `/crm/auth` next to the existing email-password form (FR-1).
 - [ ] Visual: "Continue with Google" button appears on **both** the login and the register views of `/crm/auth`.
-- [ ] Manual smoke (dev, real Google account): clicking the button triggers the Google One Tap / popup, on consent the user lands on the same CRM dashboard route as a password login (FR-6 / AC-1).
+- [ ] Manual smoke (dev, real Google account): on page load the native Google button renders inside the container; if the visitor is signed into Google, the One-Tap card also appears. Clicking the button (or selecting an account in One-Tap) lands on the same CRM dashboard route as a password login (FR-6 / AC-1).
+- [ ] Manual smoke: when the Redis nonce TTL is temporarily reduced and allowed to expire before clicking, the BFF returns `NONCE_NOT_FOUND`, the client shows a "session expired" info toast, the button re-renders, and a second click completes the sign-in. A second consecutive `NONCE_NOT_FOUND` shows a generic error toast (no infinite retry).
 - [ ] Manual smoke: a new user who switches to the Register view and clicks "Continue with Google" lands on the dashboard with a freshly-created account (FR-4 / US-1 / AC-1).
 - [ ] Manual smoke: an existing email-password user signing in with Google for the first time lands on the dashboard and on a subsequent visit can still sign in with their original password (AC-2 — depends on T-002 link path being correct).
 - [ ] Manual smoke: when the Google account's email is unverified, the inline error message is shown and the user is not signed in (AC-3 / FR-3).
@@ -88,11 +89,12 @@ The existing email-password form must remain unchanged in behavior and visual po
 
 ## 7. Notes & Considerations
 
-- **Nonce fetched on click, not on mount.** This is the key design choice: the nonce is always fresh (generated within the last few seconds), so the 60 s Redis TTL is never a concern. No retry logic needed — every click gets a new nonce.
-- **Custom button, not `renderButton`.** We call `initialize` on click and then `prompt()`. This lets us control styling with Tailwind + shadcn and keeps the nonce flow clean. The button must still be keyboard-accessible (use a proper `<button>` element).
-- **`initialize` called on every click.** GIS allows re-initialization; calling it on each click with a fresh nonce is the correct pattern. Do not call `initialize` on mount.
+- **Nonce fetched on mount, with transparent re-init on expiry.** Minting on mount enables One-Tap to render automatically without a click; the 300 s Redis TTL covers a typical auth-page session. If the nonce still expires (or was already consumed), the BFF returns `reason: NONCE_NOT_FOUND` and the service re-fetches once. Cap retries at 1 per component lifetime — a second `NONCE_NOT_FOUND` surfaces as a fatal toast.
+- **Native `renderButton`, not a custom button.** Calling `gis.renderButton(container, options)` is what enables Google's own popup-flow + One-Tap behavior. Style via the `theme` / `size` / `text` / `shape` options Google exposes (Tailwind cannot reach inside the iframe). The button is keyboard-accessible by Google's own implementation.
+- **`initialize` called on mount, and again on the single retry path.** GIS allows re-initialization; on `NONCE_NOT_FOUND` the service fetches a new nonce, calls `initialize` + `renderButton` + `prompt` again.
 - **Sign-in and sign-up share one button.** The backend (T-002) decides create-vs-link-vs-returning based on the verified Google identity — the UI does not switch behavior based on which view the user came from.
-- ADR alignment: matches ADR-FEAT-007-02 §9 Consequences ("CRM: custom button + `prompt()` on click; nonce fetched on click").
+- **Architecture split**: `googleAuthService.ts` (pure class) owns the GIS lifecycle, nonce refresh, and retry policy; `useGoogleSignIn.ts` is a thin React adapter that wires the service's callbacks to `useRouter` and the notifications module; `GoogleSignInButton.tsx` is a DOM container plus skeleton/error fallback. Tests are split accordingly: the bulk of acceptance criteria live in `googleAuthService.test.ts` (no React), the hook test asserts only React-state and adapter wiring, the component test covers render variants.
+- ADR alignment: matches ADR-FEAT-007-02 §6 Tradeoffs (TTL=300s, `NONCE_NOT_FOUND` recovery) and §9 Consequences ("native button via `renderButton()` on mount + One-Tap via `prompt()`").
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is intentionally public. Do not import or read `GOOGLE_CLIENT_SECRET` anywhere in the client workspace.
 - Do not request any scope beyond the default OpenID identity (NFR-3). Do not pass `prompt_parent_id` or extra scopes to `initialize`.
 - Do not track the OAuth credential in any analytics event — it is a sensitive payload.

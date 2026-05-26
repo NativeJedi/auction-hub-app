@@ -1,12 +1,55 @@
 // @vitest-environment jsdom
-import { describe, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockUseGoogleSignIn } = vi.hoisted(() => ({
+  mockUseGoogleSignIn: vi.fn(),
+}));
+
+vi.mock('./useGoogleSignIn', () => ({
+  useGoogleSignIn: mockUseGoogleSignIn,
+}));
+
+import GoogleSignInButton from './GoogleSignInButton';
+
+const setHookReturn = (
+  over: Partial<{
+    error: unknown;
+  }> = {},
+) => {
+  mockUseGoogleSignIn.mockReturnValue({
+    containerRef: { current: null },
+    error: null,
+    ...over,
+  });
+};
 
 describe('GoogleSignInButton', () => {
-  it.todo('renders the "Continue with Google" button once GIS has loaded');
-  it.todo('button is disabled while GIS is loading');
-  it.todo('clicking the button triggers the sign-in flow (nonce → initialize → prompt)');
-  it.todo('on successful auth, navigates to /crm/auctions');
-  it.todo('on 401 from the BFF, renders the error message above the button');
-  it.todo('renders nothing in production when NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing');
-  it.todo('renders a dev-only hint in development when NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing');
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the container that GIS will mount the native button into', () => {
+    setHookReturn();
+
+    render(<GoogleSignInButton />);
+
+    expect(screen.getByTestId('google-signin-button')).toBeInTheDocument();
+  });
+
+  it('renders an inline error message when the hook reports an error', () => {
+    setHookReturn({ error: new Error('boom') });
+
+    render(<GoogleSignInButton />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/google sign-in is unavailable/i);
+  });
+
+  it('does not render an error message when the hook reports no error', () => {
+    setHookReturn({ error: null });
+
+    render(<GoogleSignInButton />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

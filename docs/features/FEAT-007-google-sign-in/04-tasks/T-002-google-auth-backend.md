@@ -44,10 +44,11 @@ Install `google-auth-library`, add a `GoogleAuthService` that wraps `OAuth2Clien
 1. `npm install google-auth-library` in the `server/` workspace. Confirm it resolves cleanly.
 2. Add `googleClientId` to the config service (read `GOOGLE_CLIENT_ID`, fail-fast if missing in non-test envs).
 3. Create `google-auth.service.ts`. Inject `ConfigService` (for `googleClientId`), `UsersService`, `TokenService`, and the Redis repository. Construct a singleton `OAuth2Client` from `google-auth-library` for `verifyIdToken`.
-4. Implement `signIn(credential, nonce, sessionId)`:
-   - Read `oauth:nonce:${sessionId}` from Redis. If missing → throw `UnauthorizedException('Invalid nonce')`. Delete the key immediately (single-use).
-   - Call `client.verifyIdToken({ idToken: credential, audience: googleClientId })`. On error → throw `UnauthorizedException('Invalid Google credential')`.
-   - Extract `payload`. Assert `payload.nonce === nonce` (constant-time compare). Assert `payload.email_verified === true` else throw `UnauthorizedException('Google email is not verified')` (FR-3 / NFR-2). Assert `payload.email` and `payload.sub` present.
+4. Implement `signIn({ credential, nonce })`:
+   - Call `client.verifyIdToken({ idToken: credential, audience: googleClientId })`. On error → throw `UnauthorizedException('Invalid Google credential')`. Extract `payload`; assert `payload.sub` and `payload.email` are present.
+   - Constant-time compare `payload.nonce` against the request `nonce` (`crypto.timingSafeEqual` on equal-length Buffers); reject on mismatch.
+   - Assert `payload.email_verified === true`, else throw `UnauthorizedException('Google email is not verified')` (FR-3 / NFR-2).
+   - **Only after** the three checks above pass, read `oauth:nonce:${nonce}` from Redis and delete it (single-use, delete-after-verify). If missing → throw `UnauthorizedException('Invalid nonce')`. This ordering is deliberate — see ADR-FEAT-007-02 §6 Tradeoffs: burning the nonce on first read enables a cheap DoS in which an unauthenticated attacker invalidates a victim's nonce with garbage credentials. Verify-first forces an attacker to present a Google-signed JWT bound to that nonce.
    - Branch:
      - `findByGoogleId(payload.sub)` → returning user (FR-6). Skip to token issuance.
      - Else `findByEmail(payload.email)` → existing email-password user. Call `linkGoogleId(user.id, payload.sub)` (FR-5).
@@ -68,7 +69,7 @@ Install `google-auth-library`, add a `GoogleAuthService` that wraps `OAuth2Clien
 - [ ] New-user path: no `googleId` and no `email` match → new user created with `password = null`, tokens issued (FR-4 / AC-1).
 - [ ] `email_verified: false` → 401 with clear message (FR-3 / NFR-2 / AC-3).
 - [ ] Missing, expired, single-used, or mismatched nonce → 401 (no other branch reached).
-- [ ] Nonce key is deleted from Redis on every code path that reads it (success or rejection).
+- [ ] On the success path the nonce is read+deleted from Redis after token verification. Rejection branches from `verifyIdToken`, the constant-time nonce compare, or the `email_verified` check do **not** touch the nonce — the row remains in Redis until its ≤60 s TTL expires (intentional DoS-prevention trade; see ADR-FEAT-007-02 §6 Tradeoffs).
 - [ ] No regressions in `cd server && npm run test` and existing email-password flow.
 
 ## 6. Test Plan
@@ -92,8 +93,8 @@ Install `google-auth-library`, add a `GoogleAuthService` that wraps `OAuth2Clien
 
 - **Compactness exception:** parallelization gate failed; created on user request.
 - ADR alignment: matches ADR-FEAT-007-02 §5 (chosen Option A), §9 Consequences "For the codebase".
-- The nonce is **single-use** — delete the Redis key as the first step after reading, before any other validation, so a thrown error cannot leave a replay window.
-- Use constant-time string comparison for the `payload.nonce === nonce` check (`crypto.timingSafeEqual` on Buffer pairs of equal length).
+- The nonce is **single-use** but consumed **after** token verification, not on first read. The ordering is: `verifyIdToken` → constant-time compare `payload.nonce` vs request `nonce` → assert `email_verified` → read+delete the Redis nonce. The reasoning is in ADR-FEAT-007-02 §6 Tradeoffs: deleting on first read enables a cheap DoS in which an unauthenticated attacker invalidates a victim's nonce by POSTing garbage credentials with the victim's known nonce. Verify-first forces an attacker to present a Google-signed JWT bound to that nonce, which is what the nonce mechanism is meant to prevent. Rejection branches deliberately leave the row in Redis until the ≤60 s TTL elapses — harmless, since any reuse must still pass token verification.
+- Use constant-time string comparison for the `payload.nonce === nonce` check (`crypto.timingSafeEqual` on Buffer pairs of equal length). Note: a timing attack here is not practically exploitable (server-issued nonce, attacker controls neither side of the compare), but the call is one line and removes the question from future security reviews.
 - Do not request any OAuth scope beyond OpenID (NFR-3). `verifyIdToken` is scope-agnostic — this is enforced on the client side by GIS configuration (T-004), but call it out in the service's file header comment as a reminder.
 - `sessionId` flows in from the BFF (T-003) inside the request body. Do **not** read it from a Nest-side cookie — the Nest server does not own the session cookie; the BFF does.
 - If `UsersService.create` does not currently accept a `null` password, prefer extending it in T-001's scope (revisit the entity/DTO there) rather than working around it here. Surface this to the user if discovered during implementation.

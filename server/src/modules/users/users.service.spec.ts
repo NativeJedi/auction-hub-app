@@ -1,11 +1,74 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { UsersService } from './users.service';
+import { User } from './entities/user.entity';
+
 describe('UsersService', () => {
+  let service: UsersService;
+  let usersRepo: {
+    findOneBy: jest.Mock;
+    update: jest.Mock;
+  };
+
+  beforeEach(async () => {
+    usersRepo = {
+      findOneBy: jest.fn(),
+      update: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UsersService,
+        {
+          provide: getRepositoryToken(User),
+          useValue: usersRepo,
+        },
+      ],
+    }).compile();
+
+    service = module.get(UsersService);
+  });
+
   describe('findByGoogleId', () => {
-    it.todo('returns the user when a row with that googleId exists');
-    it.todo('returns null when no row with that googleId exists');
+    it('returns the user when a row with that googleId exists', async () => {
+      // T-001 DoD: findByGoogleId returns the matching user
+      const user = { id: 'u-1', email: 'a@b.com', googleId: 'g-1' } as User;
+      usersRepo.findOneBy.mockResolvedValue(user);
+
+      const result = await service.findByGoogleId('g-1');
+
+      expect(usersRepo.findOneBy).toHaveBeenCalledWith({ googleId: 'g-1' });
+      expect(result).toBe(user);
+    });
+
+    it('returns null when no row with that googleId exists', async () => {
+      usersRepo.findOneBy.mockResolvedValue(null);
+
+      const result = await service.findByGoogleId('g-unknown');
+
+      expect(result).toBeNull();
+    });
   });
 
   describe('linkGoogleId', () => {
-    it.todo('sets googleId on the target user');
-    it.todo('is a no-op when the target user does not exist');
+    it('sets googleId on the target user via repository.update', async () => {
+      // T-001 DoD: linkGoogleId attaches Google to an existing user (FR-5)
+      usersRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.linkGoogleId('u-1', 'g-1');
+
+      expect(usersRepo.update).toHaveBeenCalledTimes(1);
+      expect(usersRepo.update).toHaveBeenCalledWith(
+        { id: 'u-1' },
+        { googleId: 'g-1' },
+      );
+    });
+
+    it('is a no-op (does not throw) when the target user does not exist', async () => {
+      // T-001 §7 Notes: TypeORM update returns affected=0 cleanly; callers guard upstream
+      usersRepo.update.mockResolvedValue({ affected: 0 });
+
+      await expect(service.linkGoogleId('missing', 'g-1')).resolves.toBeUndefined();
+    });
   });
 });

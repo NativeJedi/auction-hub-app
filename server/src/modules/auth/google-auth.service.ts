@@ -1,9 +1,9 @@
 // OAuth scope is OpenID only (NFR-3); audience is verified by google-auth-library.
 import { Injectable } from '@nestjs/common';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { AppConfigService } from '../../config/app-config.service';
-import { ApiAuthorizationError } from '../../errors';
+import { ApiAuthorizationError, ApiNonceNotFoundError } from '../../errors';
 import { RedisSimpleRepository } from '../redis/repositories/simple.repository';
 import { RedisService } from '../redis/redis.service';
 import { User } from '../users/entities/user.entity';
@@ -12,7 +12,7 @@ import { GoogleAuthDto } from './dto/google-auth.dto';
 import { TokenService } from './token.service';
 
 const NONCE_NAMESPACE = 'oauth:nonce';
-const NONCE_TTL_SECONDS = 60;
+const NONCE_TTL_SECONDS = 300;
 
 @Injectable()
 export class GoogleAuthService {
@@ -43,7 +43,12 @@ export class GoogleAuthService {
     // (attacker submits garbage credential with a valid nonce to invalidate it).
     const payload = await this.verifyCredential(credential);
 
-    if (payload.nonce !== nonce) {
+    const expectedNonce = Buffer.from(payload.nonce ?? '');
+    const providedNonce = Buffer.from(nonce);
+    if (
+      expectedNonce.length !== providedNonce.length ||
+      !timingSafeEqual(expectedNonce, providedNonce)
+    ) {
       throw new ApiAuthorizationError();
     }
 
@@ -52,9 +57,12 @@ export class GoogleAuthService {
     }
 
     // All token-side checks passed — now consume the nonce exactly once.
+    // Missing nonce here means TTL expired OR the credential was already used
+    // (single-use; we delete on success). The server cannot tell these apart;
+    // the client treats both as "session expired — try again" and re-inits.
     const nonceExists = await this.nonces.get(nonce);
     if (!nonceExists) {
-      throw new ApiAuthorizationError();
+      throw new ApiNonceNotFoundError();
     }
     await this.nonces.clear(nonce);
 
