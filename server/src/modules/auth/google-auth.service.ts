@@ -60,11 +60,12 @@ export class GoogleAuthService {
     // Missing nonce here means TTL expired OR the credential was already used
     // (single-use; we delete on success). The server cannot tell these apart;
     // the client treats both as "session expired — try again" and re-inits.
-    const nonceExists = await this.nonces.get(nonce);
+    // Atomic GETDEL closes the TOCTOU window between concurrent requests
+    // presenting the same {credential, nonce} pair.
+    const nonceExists = await this.nonces.getDel(nonce);
     if (!nonceExists) {
       throw new ApiNonceNotFoundError();
     }
-    await this.nonces.clear(nonce);
 
     const user = await this.resolveUser(payload);
     const { accessToken, refreshToken } = await this.generateTokens(user);

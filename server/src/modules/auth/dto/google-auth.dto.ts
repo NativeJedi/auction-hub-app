@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class GoogleAuthDto {
   @ApiProperty({ description: 'Google ID token (JWT) returned by GIS' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(4096)
   credential: string;
 
   @ApiProperty({
@@ -12,5 +13,6 @@ export class GoogleAuthDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(128)
   nonce: string;
 }

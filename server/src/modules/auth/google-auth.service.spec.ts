@@ -13,6 +13,7 @@ type NonceRepoMock = {
   get: jest.Mock;
   set: jest.Mock;
   clear: jest.Mock;
+  getDel: jest.Mock;
 };
 
 const makeTicket = (payload: Partial<TokenPayload> | null) => ({
@@ -53,6 +54,7 @@ describe('GoogleAuthService', () => {
       get: jest.fn(),
       set: jest.fn().mockResolvedValue('OK'),
       clear: jest.fn().mockResolvedValue(1),
+      getDel: jest.fn(),
     };
 
     createSimpleRepository = jest.fn().mockReturnValue(nonceRepo);
@@ -118,7 +120,7 @@ describe('GoogleAuthService', () => {
       // FR-6 / AC-2 returning: lookup by googleId wins
       const existing = { id: 'u-1', email: 'a@b.com' };
       usersService.findByGoogleId.mockResolvedValue(existing);
-      nonceRepo.get.mockResolvedValue('1');
+      nonceRepo.getDel.mockResolvedValue('1');
 
       const result = await service.signIn({
         credential: 'tok',
@@ -141,7 +143,7 @@ describe('GoogleAuthService', () => {
       const existing = { id: 'u-2', email: 'a@b.com' };
       usersService.findByGoogleId.mockResolvedValue(null);
       usersService.findByEmail.mockResolvedValue(existing);
-      nonceRepo.get.mockResolvedValue('1');
+      nonceRepo.getDel.mockResolvedValue('1');
 
       const result = await service.signIn({
         credential: 'tok',
@@ -160,7 +162,7 @@ describe('GoogleAuthService', () => {
       usersService.findByGoogleId.mockResolvedValue(null);
       usersService.findByEmail.mockResolvedValue(null);
       usersService.create.mockResolvedValue({ id: 'u-3', email: 'a@b.com' });
-      nonceRepo.get.mockResolvedValue('1');
+      nonceRepo.getDel.mockResolvedValue('1');
 
       const result = await service.signIn({
         credential: 'tok',
@@ -187,7 +189,7 @@ describe('GoogleAuthService', () => {
       ).rejects.toBeInstanceOf(ApiAuthorizationError);
 
       expect(usersService.findByGoogleId).not.toHaveBeenCalled();
-      expect(nonceRepo.clear).not.toHaveBeenCalled();
+      expect(nonceRepo.getDel).not.toHaveBeenCalled();
     });
 
     it('rejects with ApiAuthorizationError when payload.nonce mismatches the request nonce', async () => {
@@ -200,11 +202,11 @@ describe('GoogleAuthService', () => {
       ).rejects.toBeInstanceOf(ApiAuthorizationError);
 
       expect(usersService.findByGoogleId).not.toHaveBeenCalled();
-      expect(nonceRepo.clear).not.toHaveBeenCalled();
+      expect(nonceRepo.getDel).not.toHaveBeenCalled();
     });
 
     it('rejects with ApiNonceNotFoundError when the nonce key is missing in Redis (expired or already consumed)', async () => {
-      nonceRepo.get.mockResolvedValue(null);
+      nonceRepo.getDel.mockResolvedValue(null);
 
       await expect(
         service.signIn({ credential: 'tok', nonce: 'nonce-1' }),
@@ -221,8 +223,7 @@ describe('GoogleAuthService', () => {
         service.signIn({ credential: 'tok', nonce: 'nonce-1' }),
       ).rejects.toBeInstanceOf(ApiAuthorizationError);
 
-      expect(nonceRepo.get).not.toHaveBeenCalled();
-      expect(nonceRepo.clear).not.toHaveBeenCalled();
+      expect(nonceRepo.getDel).not.toHaveBeenCalled();
     });
 
     it('rejects with ApiAuthorizationError when payload is missing sub or email', async () => {
@@ -235,19 +236,20 @@ describe('GoogleAuthService', () => {
       ).rejects.toBeInstanceOf(ApiAuthorizationError);
     });
 
-    it('clears the nonce key exactly once on the success path (DoS resistance — clear only after all checks pass)', async () => {
-      // Anchor: google-auth.service.ts:42 "burning the nonce before this would allow DoS"
+    it('consumes the nonce key atomically exactly once on the success path (DoS resistance — getDel only after all checks pass)', async () => {
+      // Anchor: google-auth.service.ts "burning the nonce before this would allow DoS"
       // Nonce is preserved on every rejection branch; consumed only on success.
+      // GETDEL is atomic — closes the TOCTOU window between concurrent valid requests.
       usersService.findByGoogleId.mockResolvedValue({
         id: 'u-1',
         email: 'a@b.com',
       });
-      nonceRepo.get.mockResolvedValue('1');
+      nonceRepo.getDel.mockResolvedValue('1');
 
       await service.signIn({ credential: 'tok', nonce: 'nonce-1' });
 
-      expect(nonceRepo.clear).toHaveBeenCalledTimes(1);
-      expect(nonceRepo.clear).toHaveBeenCalledWith('nonce-1');
+      expect(nonceRepo.getDel).toHaveBeenCalledTimes(1);
+      expect(nonceRepo.getDel).toHaveBeenCalledWith('nonce-1');
     });
   });
 });
