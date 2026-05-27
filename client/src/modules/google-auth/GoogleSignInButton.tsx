@@ -6,7 +6,7 @@ export default function GoogleSignInButton() {
   const { containerRef, error } = useGoogleSignIn();
 
   return (
-    <div className="mb-4">
+    <div>
       <div
         ref={containerRef}
         data-testid="google-signin-button"
