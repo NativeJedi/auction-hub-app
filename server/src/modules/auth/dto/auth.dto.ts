@@ -51,9 +51,12 @@ export class RegisterResponseDto {
   status: 'pending_confirmation';
 }
 
-export class ConfirmEmailResponseDto {
-  @ApiProperty({ enum: ['confirmed'] })
-  status: 'confirmed';
+export class ConfirmEmailResponseDto extends PickType(AuthResponseDto, [
+  'accessToken',
+  'refreshToken',
+]) {
+  @ApiProperty({ type: AuthUserDto })
+  user: AuthUserDto;
 }
 
 export class ResendConfirmationDto {

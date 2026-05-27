@@ -24,9 +24,7 @@ export type RegisterResponseDto = {
   status: 'pending_confirmation';
 };
 
-export type ConfirmEmailResponseDto = {
-  status: string;
-};
+export type ConfirmEmailResponseDto = AuthResponseDto;
 
 export type ResendConfirmationResponseDto = {
   status: string;

@@ -145,7 +145,11 @@ export class AuthService {
       }
 
       await this.usersService.setEmailVerified(payload.sub);
-      return { status: 'confirmed' };
+
+      const user = await this.usersService.findById(payload.sub);
+      const { accessToken, refreshToken } = await this.generateTokens(user!);
+
+      return { accessToken, refreshToken, user: { id: user!.id, email: user!.email } };
     } catch (e) {
       if (e instanceof HttpException) throw e;
       throw new HttpException(
