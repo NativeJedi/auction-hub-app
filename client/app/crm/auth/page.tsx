@@ -13,7 +13,7 @@ import HeadedLayout from '@/src/layouts/HeadedLayout';
 import { GoogleSignInButton } from '@/src/modules/google-auth';
 import { Button } from '@/ui-kit/ui/button';
 import { useQueryParam } from '@/src/utils/url';
-import { isObjectWithProperty } from '@/src/utils/checkers';
+import { hasErrorData } from '@/src/utils/checkers';
 
 type FormProps = {
   onChangeView: () => void;
@@ -56,15 +56,11 @@ const loginFields: FormField[] = [
   },
 ];
 
-const isEmailNotVerifiedError = (error: unknown): boolean =>
-  isObjectWithProperty(error, 'data') &&
-  isObjectWithProperty((error as Record<string, unknown>).data, 'message') &&
-  (error as Record<string, Record<string, unknown>>).data.message === 'EMAIL_NOT_VERIFIED';
+const isEmailNotVerifiedError = (error: unknown) =>
+  hasErrorData(error, 'message', 'EMAIL_NOT_VERIFIED');
 
-const is429Error = (error: unknown): boolean =>
-  isObjectWithProperty(error, 'data') &&
-  isObjectWithProperty((error as Record<string, unknown>).data, 'statusCode') &&
-  (error as Record<string, Record<string, unknown>>).data.statusCode === 429;
+const is429Error = (error: unknown) =>
+  hasErrorData(error, 'statusCode', 429);
 
 function CheckEmailView({ email, onResend }: { email: string; onResend: () => void }) {
   return (
