@@ -157,8 +157,8 @@ describe('GoogleAuthService', () => {
       expect(result.user).toEqual({ id: 'u-2', email: 'a@b.com' });
     });
 
-    it('create path: both lookups miss → creates user with email, googleId, password: null', async () => {
-      // FR-4 / AC-1: new user via Google
+    it('create path: both lookups miss → creates user with email, googleId, password: null, emailVerified: true', async () => {
+      // FR-5 / AC-5: new Google user is pre-verified — email_verified asserted at line 55
       usersService.findByGoogleId.mockResolvedValue(null);
       usersService.findByEmail.mockResolvedValue(null);
       usersService.create.mockResolvedValue({ id: 'u-3', email: 'a@b.com' });
@@ -173,10 +173,15 @@ describe('GoogleAuthService', () => {
         email: 'a@b.com',
         googleId: 'g-sub-1',
         password: null,
+        emailVerified: true,
       });
       expect(usersService.linkGoogleId).not.toHaveBeenCalled();
       expect(result.user).toEqual({ id: 'u-3', email: 'a@b.com' });
     });
+
+    it.todo(
+      'link path: existing unverified account → linkGoogleId called, resulting user can sign in (emailVerified set atomically)',
+    );
 
     it('rejects with ApiAuthorizationError when payload.email_verified is false', async () => {
       // FR-3 / NFR-2 / AC-3: reject when Google reports email_verified: false

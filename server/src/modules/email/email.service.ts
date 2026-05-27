@@ -22,6 +22,15 @@ export class EmailService {
     });
   }
 
+  async sendConfirmationEmail(to: string, token: string): Promise<void> {
+    const url = `${this.appConfig.urls.CLIENT_URL}/confirm-email?token=${token}`;
+    await this.sendEmail(
+      to,
+      'Confirm your email — Auction Hub',
+      `Click the link to confirm your email:\n\n${url}\n\nThe link expires in 24 hours.`,
+    );
+  }
+
   async sendEmail(to: string, subject: string, text: string) {
     const info = await this.transporter.sendMail({
       from: '"Auction hub" <no-reply@auction-hub.com>',

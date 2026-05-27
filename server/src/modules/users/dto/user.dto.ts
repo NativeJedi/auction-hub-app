@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
 import { PickType } from '@nestjs/mapped-types';
 
 export class UserDto {
@@ -20,10 +20,16 @@ export class UserDto {
   @IsOptional()
   @IsString()
   googleId?: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
 }
 
 export class CreateUserDto extends PickType(UserDto, [
   'email',
   'password',
   'googleId',
+  'emailVerified',
 ] as const) {}

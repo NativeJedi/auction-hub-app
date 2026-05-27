@@ -119,6 +119,7 @@ export class GoogleAuthService {
       email: payload.email,
       googleId: payload.sub,
       password: null,
+      emailVerified: true,
     });
   }
 

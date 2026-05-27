@@ -45,3 +45,24 @@ export class RefreshResponseDto extends PickType(AuthDto, [
   'accessToken',
   'refreshToken',
 ]) {}
+
+export class RegisterResponseDto {
+  @ApiProperty({ enum: ['pending_confirmation'] })
+  status: 'pending_confirmation';
+}
+
+export class ConfirmEmailResponseDto {
+  @ApiProperty({ enum: ['confirmed'] })
+  status: 'confirmed';
+}
+
+export class ResendConfirmationDto {
+  @ApiProperty({ example: 'test@example.com' })
+  @IsEmail()
+  email: string;
+}
+
+export class ResendConfirmationResponseDto {
+  @ApiProperty({ enum: ['email_sent', 'already_verified'] })
+  status: 'email_sent' | 'already_verified';
+}
