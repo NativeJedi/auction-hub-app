@@ -18,18 +18,18 @@ function LoginForm() {
   const handleError = useErrorNotification();
   const router = useRouter();
 
-  const handleSubmit = (values: FormValues) => {
-    return login(values)
-      .then(() => {
-        router.push('/crm/auctions');
-      })
-      .catch((error: unknown) => {
-        if (isEmailNotVerifiedError(error)) {
-          router.push(`/crm/auth?type=confirm&pending=${encodeURIComponent(values.email)}`);
-        } else {
-          handleError(error, 'Authorization failed');
-        }
-      });
+  const handleSubmit = async (values: FormValues) => {
+    try {
+      await login(values);
+
+      router.push('/crm/auctions');
+    } catch (error: unknown) {
+      if (isEmailNotVerifiedError(error)) {
+        router.push(`/crm/auth?type=confirm&pending=${encodeURIComponent(values.email)}`);
+      } else {
+        handleError(error, 'Authorization failed');
+      }
+    }
   };
 
   return (

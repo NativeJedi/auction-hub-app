@@ -12,11 +12,13 @@ function RegisterForm() {
   const handleError = useErrorNotification();
 
   const handleSubmit = async (values: FormValues) => {
-    register(values)
-      .then(() => {
-        router.push(`/crm/auth?type=confirm&pending=${encodeURIComponent(values.email)}`);
-      })
-      .catch((error) => handleError(error, 'Registration failed'));
+    try {
+      await register(values);
+
+      router.push(`/crm/auth?type=confirm&pending=${encodeURIComponent(values.email)}`);
+    } catch (error: unknown) {
+      handleError(error, 'Registration failed');
+    }
   };
 
   return (
