@@ -11,7 +11,7 @@ type Auction = {
   status: AuctionStatus;
 };
 
-export function getAuctionActions(auction: Auction): Action[] {
+export function getAuctionActions(auction: Auction, hasLots: boolean): Action[] {
   return [
     {
       component: (
@@ -26,7 +26,7 @@ export function getAuctionActions(auction: Auction): Action[] {
     },
     {
       component: <StartAuctionButton auctionId={auction.id} />,
-      isVisible: auction.status === AuctionStatus.CREATED,
+      isVisible: auction.status === AuctionStatus.CREATED && hasLots,
     },
     {
       component: <ResetAuctionButton auctionId={auction.id} />,

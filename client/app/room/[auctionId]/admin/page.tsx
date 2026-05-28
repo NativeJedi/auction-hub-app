@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/ui-kit/ui/button';
+import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { MonitorIcon, PowerIcon } from 'lucide-react';
 import LotStrip from './LotStrip';
 import Participants from '@/app/room/[auctionId]/admin/Participants';
@@ -17,7 +18,9 @@ const RoomAdminPage = () => {
     useAdminRoom();
   const auctionId = useAuctionId();
 
-  const lotButton = isLastLot ? (
+  const lotButton = isLoading ? (
+    <Skeleton className="h-8 w-24 rounded-md" />
+  ) : isLastLot ? (
     <Button size="sm" variant="destructive" onClick={() => engine.finishAuction()}>
       Finish lot
     </Button>

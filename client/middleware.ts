@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
 
-const publicRoutes = ['/crm/auth', '/room', '/results'];
+const publicRoutes = ['/crm/auth', '/room', '/results', '/confirm-email'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
