@@ -33,12 +33,12 @@ export class EmailService {
   }
 
   async sendEmail(to: string, subject: string, text: string) {
-    const info = await this.transporter.sendMail({
+    const info = (await this.transporter.sendMail({
       from: '"Auction hub" <no-reply@auction-hub.com>',
       to,
       subject,
       text,
-    });
+    })) as { messageId: string };
 
     console.log('Message sent: %s', info.messageId);
   }

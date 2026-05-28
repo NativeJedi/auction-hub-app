@@ -5,7 +5,7 @@ import AuctionStatusBadge from '@/app/crm/auctions/Auction.status';
 import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
 import { AuctionStatus } from '@/src/api/dto/auction.dto';
 import AuctionPageHeader from '@/src/components/AuctionPageHeader';
-import { useAuctionActions } from './useAuctionActions';
+import { getAuctionActions } from './auctionActions';
 
 type LotsPageProps = {
   params: Promise<{
@@ -19,7 +19,7 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
   const auction = await fetchAuctionByIdServer(auctionId);
   const isLocked = auction.status !== AuctionStatus.CREATED;
 
-  const actions = useAuctionActions(auction);
+  const actions = getAuctionActions(auction);
 
   const meta = [
     { text: `Created ${formatISODate(auction.createdAt)}` },

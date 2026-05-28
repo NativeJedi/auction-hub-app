@@ -53,7 +53,8 @@ export class AuctionsService {
       owner,
     };
 
-    const { owner: aucOwner, ...response } =
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { owner: _owner, ...response } =
       await this.auctionsRepository.save(auction);
 
     return response;
@@ -121,12 +122,11 @@ export class AuctionsService {
   ): Promise<AuctionDto> {
     const auction = await this.findEditableOne(ownerId, id);
 
-    const { owner: aucOwner, ...response } = await this.auctionsRepository.save(
-      {
-        ...auction,
-        ...updateAuctionDto,
-      },
-    );
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { owner: _owner, ...response } = await this.auctionsRepository.save({
+      ...auction,
+      ...updateAuctionDto,
+    });
 
     return response;
   }
@@ -160,6 +160,7 @@ export class AuctionsService {
       await manager
         .createQueryBuilder()
         .update(Lot)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         .set({ status: LotStatus.CREATED, soldPrice: null, buyer: null as any })
         .where('"auctionId" = :auctionId', { auctionId })
         .execute();

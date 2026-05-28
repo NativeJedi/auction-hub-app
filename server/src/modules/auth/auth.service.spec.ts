@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as bcrypt from 'bcrypt';
+import * as bcryptModule from 'bcrypt';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 import { UsersService } from '../users/users.service';
@@ -37,7 +37,10 @@ describe('AuthService', () => {
       accessToken: { generate: jest.fn().mockResolvedValue('access-token') },
       refreshToken: { generate: jest.fn().mockResolvedValue('refresh-token') },
     };
-    resendLimits = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined) };
+    resendLimits = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+    };
     confirmCodes = {
       get: jest.fn(),
       set: jest.fn().mockResolvedValue(undefined),
@@ -46,10 +49,12 @@ describe('AuthService', () => {
     emailService = { sendConfirmationEmail: jest.fn() };
 
     const redisService = {
-      createSimpleRepository: jest.fn().mockImplementation((namespace: string) => {
-        if (namespace === 'confirm_codes') return confirmCodes;
-        return resendLimits;
-      }),
+      createSimpleRepository: jest
+        .fn()
+        .mockImplementation((namespace: string) => {
+          if (namespace === 'confirm_codes') return confirmCodes;
+          return resendLimits;
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -64,8 +69,10 @@ describe('AuthService', () => {
 
     service = module.get(AuthService);
 
-    bcryptCompareSpy = jest.spyOn(bcrypt, 'compare');
-    bcryptHashSpy = jest.spyOn(bcrypt, 'hash');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    bcryptCompareSpy = jest.spyOn(bcryptModule, 'compare');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    bcryptHashSpy = jest.spyOn(bcryptModule, 'hash');
   });
 
   afterEach(() => {
@@ -77,7 +84,10 @@ describe('AuthService', () => {
     it('stores a confirmation code in Redis, sends a confirmation email, and returns { status: pending_confirmation }', async () => {
       // FR-1 / AC-1: registration triggers confirmation email via opaque code; no tokens issued yet
       usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
+      usersService.create.mockResolvedValue({
+        id: 'u-1',
+        email: 'test@example.com',
+      });
       bcryptHashSpy.mockResolvedValue('hashed-pw' as never);
 
       const result = await service.register({
@@ -86,18 +96,26 @@ describe('AuthService', () => {
       });
 
       expect(confirmCodes.set).toHaveBeenCalledTimes(1);
-      const [code, userId] = confirmCodes.set.mock.calls[0];
+      const [[code, userId]] = confirmCodes.set.mock.calls as [
+        [string, string],
+      ];
       expect(typeof code).toBe('string');
       expect(code.length).toBeGreaterThan(0);
       expect(userId).toBe('u-1');
-      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith('test@example.com', code);
+      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        code,
+      );
       expect(result).toEqual({ status: 'pending_confirmation' });
     });
 
     it('does NOT call tokenService to generate tokens', async () => {
       // FR-1 / AC-1: user cannot log in before confirming; no tokens at registration
       usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
+      usersService.create.mockResolvedValue({
+        id: 'u-1',
+        email: 'test@example.com',
+      });
       bcryptHashSpy.mockResolvedValue('hashed-pw' as never);
 
       await service.register({ email: 'test@example.com', password: 'secret' });
@@ -113,7 +131,10 @@ describe('AuthService', () => {
         email: 'test@example.com',
       });
 
-      const result = await service.register({ email: 'test@example.com', password: 'secret' });
+      const result = await service.register({
+        email: 'test@example.com',
+        password: 'secret',
+      });
 
       expect(result).toEqual({ status: 'pending_confirmation' });
       expect(usersService.create).not.toHaveBeenCalled();
@@ -125,7 +146,10 @@ describe('AuthService', () => {
     it('burns the confirmation code, calls setEmailVerified, and returns auth tokens', async () => {
       // AC-2: clicking the link marks the account verified and auto-logs the user in (single-use via getDel)
       confirmCodes.getDel.mockResolvedValue('u-1');
-      usersService.findById.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
+      usersService.findById.mockResolvedValue({
+        id: 'u-1',
+        email: 'test@example.com',
+      });
 
       const result = await service.confirmEmail('valid-code');
 
@@ -155,10 +179,12 @@ describe('AuthService', () => {
       confirmCodes.getDel.mockResolvedValue('ghost-id');
       usersService.findById.mockResolvedValue(null);
 
-      await expect(service.confirmEmail('orphaned-code')).rejects.toMatchObject({
-        status: HttpStatus.FORBIDDEN,
-        message: 'INVALID_CONFIRMATION_TOKEN',
-      });
+      await expect(service.confirmEmail('orphaned-code')).rejects.toMatchObject(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'INVALID_CONFIRMATION_TOKEN',
+        },
+      );
 
       expect(usersService.setEmailVerified).not.toHaveBeenCalled();
     });
@@ -178,8 +204,11 @@ describe('AuthService', () => {
 
       expect(resendLimits.set).toHaveBeenCalledWith('test@example.com', 1);
       expect(confirmCodes.set).toHaveBeenCalledTimes(1);
-      const [code] = confirmCodes.set.mock.calls[0];
-      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith('test@example.com', code);
+      const [[code]] = confirmCodes.set.mock.calls as [[string]];
+      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(
+        'test@example.com',
+        code,
+      );
       expect(result).toEqual({ status: 'email_sent' });
     });
 

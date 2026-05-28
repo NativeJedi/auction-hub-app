@@ -14,6 +14,9 @@ import { LotsService } from '../lots/lots.service';
 import { AppConfigService } from '../../config/app-config.service';
 import { AuctionStatus } from '../auctions/entities/auction.entity';
 import { RoomRole } from './entities/room.entity';
+import { TokenPayload } from '../auth/token.service';
+import { RoomLot } from './entities/room-lot.entity';
+import { RedisService } from '../redis/redis.service';
 
 const owner = {
   id: 'user-1',
@@ -113,7 +116,7 @@ describe('RoomService', () => {
   };
 
   describe('createRoom', () => {
-    const user = { sub: 'user-1', email: 'owner@example.com' } as any;
+    const user: TokenPayload = { sub: 'user-1', email: 'owner@example.com' };
     const lots = [
       { id: 'lot-1', name: 'Lot 1', startPrice: 100, currency: 'USD' },
     ];
@@ -173,7 +176,7 @@ describe('RoomService', () => {
       name: 'Lot 2',
       startPrice: 200,
       currency: 'USD',
-    } as any;
+    } as unknown as RoomLot;
 
     beforeEach(() => {
       stubFinishActiveLot();
@@ -372,7 +375,9 @@ describe('RoomService', () => {
     let repo: RoomRepository;
 
     beforeEach(() => {
-      const mockAppConfig = { jwt: { JWT_ROOM_TTL: 3600 } } as any;
+      const mockAppConfig = {
+        jwt: { JWT_ROOM_TTL: 3600 },
+      } as unknown as AppConfigService;
       const mockRedisService = {
         createSimpleRepository: jest.fn().mockReturnValue({
           get: jest.fn(),
@@ -391,7 +396,7 @@ describe('RoomService', () => {
           push: jest.fn(),
           clear: jest.fn(),
         }),
-      } as any;
+      } as unknown as RedisService;
       repo = new RoomRepository(mockAppConfig, mockRedisService);
     });
 

@@ -13,13 +13,15 @@ export const RoomRoles = (...roles: RoomRole[]) =>
 export const RoomSockerUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): RoomAuthorizedUser | null => {
     const client: Socket = ctx.switchToWs().getClient();
-    return client.data?.user ?? null;
+    return (client.data as { user?: RoomAuthorizedUser }).user ?? null;
   },
 );
 
 export const RoomUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): RoomAuthorizedUser | null => {
-    const request = ctx.switchToHttp().getRequest();
-    return request['roomUser'] ?? null;
+    const request = ctx
+      .switchToHttp()
+      .getRequest<{ roomUser?: RoomAuthorizedUser }>();
+    return request.roomUser ?? null;
   },
 );

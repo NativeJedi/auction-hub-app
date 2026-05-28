@@ -82,13 +82,17 @@ describe('UsersService', () => {
       await service.setEmailVerified('u-1');
 
       expect(usersRepo.update).toHaveBeenCalledTimes(1);
-      expect(usersRepo.update).toHaveBeenCalledWith('u-1', { emailVerified: true });
+      expect(usersRepo.update).toHaveBeenCalledWith('u-1', {
+        emailVerified: true,
+      });
     });
 
     it('propagates a DB error if the repository throws', async () => {
       usersRepo.update.mockRejectedValue(new Error('DB connection lost'));
 
-      await expect(service.setEmailVerified('u-1')).rejects.toThrow('DB connection lost');
+      await expect(service.setEmailVerified('u-1')).rejects.toThrow(
+        'DB connection lost',
+      );
     });
   });
 });

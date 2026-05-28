@@ -93,7 +93,11 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Confirm email address' })
-  @ApiResponse({ status: 200, description: 'Email confirmed', type: ConfirmEmailResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Email confirmed',
+    type: ConfirmEmailResponseDto,
+  })
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(200)
   @Get('confirm-email')
@@ -102,10 +106,16 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Resend confirmation email' })
-  @ApiResponse({ status: 200, description: 'Confirmation email sent', type: ResendConfirmationResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Confirmation email sent',
+    type: ResendConfirmationResponseDto,
+  })
   @HttpCode(200)
   @Post('resend-confirmation')
-  resendConfirmation(@Body() dto: ResendConfirmationDto): Promise<ResendConfirmationResponseDto> {
+  resendConfirmation(
+    @Body() dto: ResendConfirmationDto,
+  ): Promise<ResendConfirmationResponseDto> {
     return this.authService.resendConfirmation(dto.email);
   }
 

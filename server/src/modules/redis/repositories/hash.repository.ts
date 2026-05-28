@@ -34,7 +34,9 @@ export class RedisHashRepository<T> extends BaseRepository {
   async getList(key: CombinedKey) {
     const items = await this.client.hgetall(this.getFullKey(key));
 
-    const itemsList: T[] = Object.values(items).map((item) => JSON.parse(item));
+    const itemsList: T[] = Object.values(items).map(
+      (item) => JSON.parse(item) as T,
+    );
 
     return itemsList;
   }

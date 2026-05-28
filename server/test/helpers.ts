@@ -1,6 +1,12 @@
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 
+type AuthResponseBody = {
+  user: { id: string };
+  accessToken: string;
+  refreshToken: string;
+};
+
 export class RequestService {
   accessToken: string;
 
@@ -17,9 +23,11 @@ export class RequestService {
   }: {
     url: string;
     method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-    body?: any;
+    body?: Record<string, unknown>;
   }) {
-    let baseRequest = request(this.app.getHttpServer())[method](url);
+    let baseRequest = request(
+      this.app.getHttpServer() as Parameters<typeof request>[0],
+    )[method](url);
 
     if (this.accessToken) {
       baseRequest = baseRequest.set(
@@ -56,59 +64,60 @@ export class TestUser {
   }
 
   register() {
-    const request = this.requestService.makeRequest({
+    const req = this.requestService.makeRequest({
       url: '/auth/register',
       method: 'post',
       body: { email: this.email, password: this.password },
     });
 
-    request.then((response) => {
-      this.id = response.body.user.id;
-
-      this.requestService.setAccessToken(response.body.accessToken);
-      this._refreshToken = response.body.refreshToken;
-
+    void req.then((response) => {
+      const body = response.body as AuthResponseBody;
+      this.id = body.user.id;
+      this.requestService.setAccessToken(body.accessToken);
+      this._refreshToken = body.refreshToken;
       return response;
     });
 
-    return request;
+    return req;
   }
 
   login({ password = this.password } = {}) {
-    const request = this.requestService.makeRequest({
+    const req = this.requestService.makeRequest({
       url: '/auth/login',
       method: 'post',
       body: { email: this.email, password },
     });
 
-    request.then((response) => {
+    void req.then((response) => {
       if (response.status !== 200) return;
-
-      this.id = response.body.user.id;
-
-      this.requestService.setAccessToken(response.body.accessToken);
-      this._refreshToken = response.body.refreshToken;
-
+      const body = response.body as AuthResponseBody;
+      this.id = body.user.id;
+      this.requestService.setAccessToken(body.accessToken);
+      this._refreshToken = body.refreshToken;
       return response;
     });
 
-    return request;
+    return req;
   }
 
   refreshToken() {
-    const request = this.requestService.makeRequest({
+    const req = this.requestService.makeRequest({
       url: '/auth/refresh',
       method: 'post',
       body: { refreshToken: this._refreshToken },
     });
 
-    request.then((response) => {
-      this.requestService.setAccessToken(response.body.accessToken);
-      this._refreshToken = response.body.refreshToken;
+    void req.then((response) => {
+      const body = response.body as Pick<
+        AuthResponseBody,
+        'accessToken' | 'refreshToken'
+      >;
+      this.requestService.setAccessToken(body.accessToken);
+      this._refreshToken = body.refreshToken;
       return response;
     });
 
-    return request;
+    return req;
   }
 
   logout() {
@@ -119,7 +128,7 @@ export class TestUser {
   }
 
   createAuction() {
-    const request = this.requestService.makeRequest({
+    const req = this.requestService.makeRequest({
       url: '/auctions',
       method: 'post',
       body: {
@@ -128,11 +137,11 @@ export class TestUser {
       },
     });
 
-    request.then((response) => {
-      this._createdAuctionId = response.body.id;
+    void req.then((response) => {
+      this._createdAuctionId = (response.body as { id: string }).id;
       return response;
     });
 
-    return request;
+    return req;
   }
 }

@@ -11,7 +11,7 @@ type Auction = {
   status: AuctionStatus;
 };
 
-export function useAuctionActions(auction: Auction): Action[] {
+export function getAuctionActions(auction: Auction): Action[] {
   return [
     {
       component: (

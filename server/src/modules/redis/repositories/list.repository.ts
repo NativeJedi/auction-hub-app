@@ -31,7 +31,7 @@ export class RedisListRepository<T> extends BaseRepository {
   async getAll(key: CombinedKey): Promise<T[]> {
     const fullKey = this.getFullKey(key);
     const rawList = await this.client.lrange(fullKey, 0, -1);
-    return rawList.map((item) => JSON.parse(item));
+    return rawList.map((item) => JSON.parse(item) as T);
   }
 
   async clear(key: CombinedKey) {

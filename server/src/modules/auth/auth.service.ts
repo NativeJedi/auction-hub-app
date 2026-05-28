@@ -4,7 +4,7 @@ import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
 import { RedisService } from '../redis/redis.service';
 import { RedisSimpleRepository } from '../redis/repositories/simple.repository';
-import * as bcrypt from 'bcrypt';
+import { compare as bcryptCompare, hash as bcryptHash } from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { TokenService } from './token.service';
 import {
@@ -29,7 +29,10 @@ export class AuthService {
     private readonly emailService: EmailService,
     redis: RedisService,
   ) {
-    this.resendLimits = redis.createSimpleRepository<number>('resend_limits', 3600);
+    this.resendLimits = redis.createSimpleRepository<number>(
+      'resend_limits',
+      3600,
+    );
     this.confirmCodes = redis.createSimpleRepository<string>(
       'confirm_codes',
       CONFIRM_CODE_TTL_SECONDS,
@@ -46,7 +49,8 @@ export class AuthService {
       return null;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const isPasswordValid = await bcryptCompare(password, user.password);
 
     if (!isPasswordValid) {
       return null;
@@ -86,10 +90,12 @@ export class AuthService {
       return { status: 'pending_confirmation' };
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const hashedPassword = await bcryptHash(password, 10);
 
     const user = await this.usersService.create({
       email,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       password: hashedPassword,
     });
 
@@ -124,23 +130,35 @@ export class AuthService {
     const userId = await this.confirmCodes.getDel(code);
 
     if (!userId) {
-      throw new HttpException('INVALID_CONFIRMATION_TOKEN', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'INVALID_CONFIRMATION_TOKEN',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const user = await this.usersService.findById(userId);
 
     if (!user) {
-      throw new HttpException('INVALID_CONFIRMATION_TOKEN', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'INVALID_CONFIRMATION_TOKEN',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     await this.usersService.setEmailVerified(userId);
 
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
-    return { accessToken, refreshToken, user: { id: user.id, email: user.email } };
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: user.id, email: user.email },
+    };
   }
 
-  async resendConfirmation(email: string): Promise<ResendConfirmationResponseDto> {
+  async resendConfirmation(
+    email: string,
+  ): Promise<ResendConfirmationResponseDto> {
     const user = await this.usersService.findByEmail(email);
 
     // M-1: always return email_sent to prevent account-existence enumeration

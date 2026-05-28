@@ -184,12 +184,19 @@ describe('GoogleAuthService', () => {
     it('link path: existing unverified account → linkGoogleId called, resulting user can sign in (emailVerified set atomically)', async () => {
       // AC-5 / ADR-FEAT-008-02 §9: Google login on existing unverified account must atomically
       // set emailVerified in the same UPDATE as the googleId link — handled inside linkGoogleId.
-      const unverifiedUser = { id: 'u-2', email: 'a@b.com', emailVerified: false };
+      const unverifiedUser = {
+        id: 'u-2',
+        email: 'a@b.com',
+        emailVerified: false,
+      };
       usersService.findByGoogleId.mockResolvedValue(null);
       usersService.findByEmail.mockResolvedValue(unverifiedUser);
       nonceRepo.getDel.mockResolvedValue('1');
 
-      const result = await service.signIn({ credential: 'tok', nonce: 'nonce-1' });
+      const result = await service.signIn({
+        credential: 'tok',
+        nonce: 'nonce-1',
+      });
 
       expect(usersService.linkGoogleId).toHaveBeenCalledWith('u-2', 'g-sub-1');
       expect(usersService.create).not.toHaveBeenCalled();
