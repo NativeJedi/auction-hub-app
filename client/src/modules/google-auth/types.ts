@@ -30,6 +30,7 @@ export interface GoogleAccountsId {
 
 export type GoogleAuthCallbacks = {
   onReady: () => void;
+  onLoading: () => void;
   onSuccess: () => void;
   onFatalError: (cause: unknown) => void;
 };

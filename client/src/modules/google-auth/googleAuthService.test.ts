@@ -33,6 +33,7 @@ const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const makeCallbacks = (over: Partial<GoogleAuthCallbacks> = {}): GoogleAuthCallbacks => ({
   onReady: vi.fn(),
+  onLoading: vi.fn(),
   onSuccess: vi.fn(),
   onFatalError: vi.fn(),
   ...over,
