@@ -3,12 +3,17 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuctionStatus } from '@/src/api/dto/auction.dto';
 
-const { mockFetchAuction } = vi.hoisted(() => ({
+const { mockFetchAuction, mockFetchLots } = vi.hoisted(() => ({
   mockFetchAuction: vi.fn(),
+  mockFetchLots: vi.fn(),
 }));
 
 vi.mock('@/src/api/auctions-api/requests/auctions', () => ({
   fetchAuctionByIdServer: mockFetchAuction,
+}));
+
+vi.mock('@/src/api/auctions-api/requests/lots', () => ({
+  fetchLotsServer: mockFetchLots,
 }));
 
 vi.mock('@/app/crm/auctions/[auctionId]/LotsList.table', () => ({
@@ -24,7 +29,7 @@ vi.mock('@/app/crm/auctions/[auctionId]/ResetAuction.button', () => ({
 }));
 
 vi.mock('@/app/crm/auctions/[auctionId]/CreateLot.button', () => ({
-  default: () => null,
+  default: ({ disabled }: { disabled?: boolean }) => <button disabled={disabled}>Add</button>,
 }));
 
 vi.mock('next/link', () => ({
@@ -47,6 +52,7 @@ const params = (auctionId = 'auction-1') => Promise.resolve({ auctionId });
 describe('AuctionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetchLots.mockResolvedValue([]);
   });
 
   it('renders status badge for CREATED status', async () => {
@@ -120,5 +126,21 @@ describe('AuctionPage', () => {
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText('Lots')).toBeInTheDocument();
+  });
+
+  it('shows Add button in header when lots exist', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchLots.mockResolvedValue([{ id: 'lot-1' }]);
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+  });
+
+  it('hides Add button in header when lots list is empty', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchLots.mockResolvedValue([]);
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
   });
 });

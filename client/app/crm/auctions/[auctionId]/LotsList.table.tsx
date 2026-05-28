@@ -1,11 +1,11 @@
 import { DeleteLotButton } from '@/app/crm/auctions/[auctionId]/DeleteLot.button';
 import { Lot, LotStatus } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 import { Badge } from '@/ui-kit/ui/badge';
 import { StatusMap } from '@/src/components/StatusBadge';
 import { Columns, DataTable } from '@/src/modules/tables';
 import ManageLotImagesButton from '@/app/crm/auctions/[auctionId]/ManageLotImages.button';
+import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
 
 const LotBuyerValue = ({ lot }: { lot: Lot }) => {
   if (!lot.buyer) return '-';
@@ -69,18 +69,23 @@ const getColumns = (auctionId: Auction['id'], isLocked?: boolean): Columns<Lot> 
   },
 ];
 
-const LotsList = async ({
-  auctionId,
-  isLocked,
-}: {
+type Props = {
   auctionId: Auction['id'];
+  lots: Lot[];
   isLocked?: boolean;
-}) => {
-  const lots = await fetchLotsServer(auctionId);
+};
 
+const LotsList = ({ auctionId, lots, isLocked }: Props) => {
   const columns = getColumns(auctionId, isLocked);
 
-  return <DataTable data={lots} columns={columns} />;
+  const emptyState = (
+    <>
+      <p className="text-sm text-muted-foreground">No lots yet</p>
+      <CreateLotButton auctionId={auctionId} disabled={isLocked} />
+    </>
+  );
+
+  return <DataTable data={lots} columns={columns} emptyState={emptyState} />;
 };
 
 export default LotsList;

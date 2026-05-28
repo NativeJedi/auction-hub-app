@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { formatISODate } from '@/src/utils/date';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { DeleteAuctionButton } from '@/app/crm/auctions/DeleteAuction.button';
-import { fetchAuctionsServer } from '@/src/api/auctions-api/requests/auctions';
 import AuctionStatusBadge from '@/app/crm/auctions/Auction.status';
+import { CreateAuctionButton } from '@/app/crm/auctions/CreateAuction.button';
 import { Columns, DataTable } from '@/src/modules/tables';
 
 const columns: Columns<Auction> = [
@@ -34,10 +34,19 @@ const columns: Columns<Auction> = [
   },
 ];
 
-const AuctionsList = async () => {
-  const { items } = await fetchAuctionsServer();
+type Props = {
+  items: Auction[];
+};
 
-  return <DataTable data={items} columns={columns} />;
+const emptyState = (
+  <>
+    <p className="text-sm text-muted-foreground">No auctions yet</p>
+    <CreateAuctionButton />
+  </>
+);
+
+const AuctionsList = ({ items }: Props) => {
+  return <DataTable data={items} columns={columns} emptyState={emptyState} />;
 };
 
 export default AuctionsList;

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { createAuction } from '@/src/api/auctions-api-client/requests/auctions';
 import { Button } from '@/ui-kit/ui/button';
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 export const CreateAuctionButton = () => {
@@ -38,7 +37,7 @@ export const CreateAuctionButton = () => {
 
   return (
     <Button loading={loading} onClick={handleCreateClick}>
-      <Plus /> Create
+      Create
     </Button>
   );
 };

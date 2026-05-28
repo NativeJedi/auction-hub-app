@@ -5,9 +5,12 @@ import { Columns } from './columns';
 type DataTableProps<T> = {
   data: T[];
   columns: Columns<T>;
+  emptyState?: React.ReactNode;
 };
 
-export function DataTable<T>({ data, columns }: DataTableProps<T>) {
+const defaultEmptyState = <p className="text-sm text-muted-foreground">No data</p>;
+
+export function DataTable<T>({ data, columns, emptyState }: DataTableProps<T>) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <Table>
@@ -22,15 +25,25 @@ export function DataTable<T>({ data, columns }: DataTableProps<T>) {
         </TableHeader>
 
         <TableBody>
-          {data.map((row, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {columns.map((column, colIndex) => (
-                <TableCell key={colIndex} className={getAlignmentClass(column.align)}>
-                  {column.render(row)}
-                </TableCell>
-              ))}
+          {data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={columns.length}>
+                <div className="flex flex-col items-center gap-3 py-12">
+                  {emptyState ?? defaultEmptyState}
+                </div>
+              </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            data.map((row, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {columns.map((column, colIndex) => (
+                  <TableCell key={colIndex} className={getAlignmentClass(column.align)}>
+                    {column.render(row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
