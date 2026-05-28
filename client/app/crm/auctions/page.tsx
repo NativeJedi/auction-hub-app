@@ -8,7 +8,7 @@ const AuctionsPage = async () => {
   return (
     <>
       <header className="flex flex-row items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Auctions</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Auctions</h1>
         {items.length > 0 && <CreateAuctionButton />}
       </header>
 

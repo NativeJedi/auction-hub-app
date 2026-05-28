@@ -48,13 +48,13 @@ export default function AuctionPageHeader({
             {back.label}
           </Link>
         )}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
             {badge}
           </div>
           {visibleActions.length > 0 && (
-            <div className="flex items-center gap-2 shrink-0 pt-0.5">
+            <div className="flex items-center gap-2 pt-0.5">
               {visibleActions.map((a, i) => (
                 <Fragment key={i}>{a.component}</Fragment>
               ))}
