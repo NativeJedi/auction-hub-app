@@ -1,9 +1,44 @@
-import { describe, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockGet, mockPost } = vi.hoisted(() => ({
+  mockGet: vi.fn(),
+  mockPost: vi.fn(),
+}));
+
+vi.mock('@/src/api/auctions-api-client/api', () => ({
+  auctionsApiClient: { get: mockGet, post: mockPost },
+}));
+
+import { confirmEmail, resendConfirmation } from './auth';
 
 describe('confirmEmail', () => {
-  it.todo('calls GET /auth/confirm-email with the token as a query param and returns { status }');
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls GET /auth/confirm-email with the token as a query param and returns { status }', async () => {
+    // AC#2: client calls the correct endpoint to confirm the email
+    mockGet.mockResolvedValue({ status: 'confirmed' });
+
+    const result = await confirmEmail('my-token');
+
+    expect(mockGet).toHaveBeenCalledWith('/auth/confirm-email', {
+      params: { token: 'my-token' },
+    });
+    expect(result).toEqual({ status: 'confirmed' });
+  });
 });
 
 describe('resendConfirmation', () => {
-  it.todo('calls POST /auth/resend-confirmation with { email } body and returns { status }');
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls POST /auth/resend-confirmation with { email } body and returns { status }', async () => {
+    // AC#4: client calls the correct endpoint to resend the confirmation email
+    mockPost.mockResolvedValue({ status: 'email_sent' });
+
+    const result = await resendConfirmation('user@example.com');
+
+    expect(mockPost).toHaveBeenCalledWith('/auth/resend-confirmation', {
+      email: 'user@example.com',
+    });
+    expect(result).toEqual({ status: 'email_sent' });
+  });
 });

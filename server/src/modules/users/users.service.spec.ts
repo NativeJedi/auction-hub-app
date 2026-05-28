@@ -75,9 +75,20 @@ describe('UsersService', () => {
   });
 
   describe('setEmailVerified', () => {
-    it.todo(
-      'calls repository.update with { emailVerified: true } and the correct userId',
-    );
-    it.todo('propagates a DB error if the repository throws');
+    it('calls repository.update with { emailVerified: true } and the correct userId', async () => {
+      // T-001 DoD / AC-2: single UPDATE, no SELECT round-trip
+      usersRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.setEmailVerified('u-1');
+
+      expect(usersRepo.update).toHaveBeenCalledTimes(1);
+      expect(usersRepo.update).toHaveBeenCalledWith('u-1', { emailVerified: true });
+    });
+
+    it('propagates a DB error if the repository throws', async () => {
+      usersRepo.update.mockRejectedValue(new Error('DB connection lost'));
+
+      await expect(service.setEmailVerified('u-1')).rejects.toThrow('DB connection lost');
+    });
   });
 });

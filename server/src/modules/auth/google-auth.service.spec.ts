@@ -37,6 +37,7 @@ describe('GoogleAuthService', () => {
     findByEmail: jest.Mock;
     linkGoogleId: jest.Mock;
     create: jest.Mock;
+    setEmailVerified: jest.Mock;
   };
   let nonceRepo: NonceRepoMock;
   let verifyIdTokenSpy: jest.SpyInstance;
@@ -48,6 +49,7 @@ describe('GoogleAuthService', () => {
       findByEmail: jest.fn(),
       linkGoogleId: jest.fn().mockResolvedValue(undefined),
       create: jest.fn(),
+      setEmailVerified: jest.fn().mockResolvedValue(undefined),
     };
 
     nonceRepo = {
@@ -179,9 +181,20 @@ describe('GoogleAuthService', () => {
       expect(result.user).toEqual({ id: 'u-3', email: 'a@b.com' });
     });
 
-    it.todo(
-      'link path: existing unverified account → linkGoogleId called, resulting user can sign in (emailVerified set atomically)',
-    );
+    it('link path: existing unverified account → linkGoogleId called, resulting user can sign in (emailVerified set atomically)', async () => {
+      // AC-5 / ADR-FEAT-008-02 §9: Google login on existing unverified account must atomically
+      // set emailVerified in the same UPDATE as the googleId link — handled inside linkGoogleId.
+      const unverifiedUser = { id: 'u-2', email: 'a@b.com', emailVerified: false };
+      usersService.findByGoogleId.mockResolvedValue(null);
+      usersService.findByEmail.mockResolvedValue(unverifiedUser);
+      nonceRepo.getDel.mockResolvedValue('1');
+
+      const result = await service.signIn({ credential: 'tok', nonce: 'nonce-1' });
+
+      expect(usersService.linkGoogleId).toHaveBeenCalledWith('u-2', 'g-sub-1');
+      expect(usersService.create).not.toHaveBeenCalled();
+      expect(result.user).toEqual({ id: 'u-2', email: 'a@b.com' });
+    });
 
     it('rejects with ApiAuthorizationError when payload.email_verified is false', async () => {
       // FR-3 / NFR-2 / AC-3: reject when Google reports email_verified: false
