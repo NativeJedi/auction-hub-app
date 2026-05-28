@@ -1,12 +1,10 @@
-import { BadRequestException, HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
-import { AppConfigService } from '../../config/app-config.service';
 import { RedisService } from '../redis/redis.service';
 import { ApiAuthorizationError } from '../../errors';
 
@@ -23,8 +21,8 @@ describe('AuthService', () => {
     refreshToken: { generate: jest.Mock };
   };
   let emailService: { sendConfirmationEmail: jest.Mock };
-  let jwtService: { sign: jest.Mock; verify: jest.Mock };
   let resendLimits: { get: jest.Mock; set: jest.Mock };
+  let confirmCodes: { get: jest.Mock; set: jest.Mock; getDel: jest.Mock };
   let bcryptCompareSpy: jest.SpyInstance;
   let bcryptHashSpy: jest.SpyInstance;
 
@@ -39,17 +37,20 @@ describe('AuthService', () => {
       accessToken: { generate: jest.fn().mockResolvedValue('access-token') },
       refreshToken: { generate: jest.fn().mockResolvedValue('refresh-token') },
     };
-    resendLimits = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
-    emailService = { sendConfirmationEmail: jest.fn() };
-    jwtService = {
-      sign: jest.fn().mockReturnValue('confirm-token'),
-      verify: jest.fn(),
+    resendLimits = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined) };
+    confirmCodes = {
+      get: jest.fn(),
+      set: jest.fn().mockResolvedValue(undefined),
+      getDel: jest.fn(),
     };
+    emailService = { sendConfirmationEmail: jest.fn() };
 
     const redisService = {
-      createSimpleRepository: jest.fn().mockReturnValue(resendLimits),
+      createSimpleRepository: jest.fn().mockImplementation((namespace: string) => {
+        if (namespace === 'confirm_codes') return confirmCodes;
+        return resendLimits;
+      }),
     };
-    const appConfig = { jwt: { JWT_ACCESS_SECRET: 'test-secret' } };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -57,8 +58,6 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: usersService },
         { provide: TokenService, useValue: tokenService },
         { provide: EmailService, useValue: emailService },
-        { provide: JwtService, useValue: jwtService },
-        { provide: AppConfigService, useValue: appConfig },
         { provide: RedisService, useValue: redisService },
       ],
     }).compile();
@@ -75,13 +74,10 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('sends a confirmation email and returns { status: pending_confirmation }', async () => {
-      // FR-1 / AC-1: registration triggers confirmation email; no tokens issued yet
+    it('stores a confirmation code in Redis, sends a confirmation email, and returns { status: pending_confirmation }', async () => {
+      // FR-1 / AC-1: registration triggers confirmation email via opaque code; no tokens issued yet
       usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({
-        id: 'u-1',
-        email: 'test@example.com',
-      });
+      usersService.create.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
       bcryptHashSpy.mockResolvedValue('hashed-pw' as never);
 
       const result = await service.register({
@@ -89,20 +85,19 @@ describe('AuthService', () => {
         password: 'secret',
       });
 
-      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(
-        'test@example.com',
-        'confirm-token',
-      );
+      expect(confirmCodes.set).toHaveBeenCalledTimes(1);
+      const [code, userId] = confirmCodes.set.mock.calls[0];
+      expect(typeof code).toBe('string');
+      expect(code.length).toBeGreaterThan(0);
+      expect(userId).toBe('u-1');
+      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith('test@example.com', code);
       expect(result).toEqual({ status: 'pending_confirmation' });
     });
 
     it('does NOT call tokenService to generate tokens', async () => {
       // FR-1 / AC-1: user cannot log in before confirming; no tokens at registration
       usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({
-        id: 'u-1',
-        email: 'test@example.com',
-      });
+      usersService.create.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
       bcryptHashSpy.mockResolvedValue('hashed-pw' as never);
 
       await service.register({ email: 'test@example.com', password: 'secret' });
@@ -111,36 +106,30 @@ describe('AuthService', () => {
       expect(tokenService.refreshToken.generate).not.toHaveBeenCalled();
     });
 
-    it('throws BadRequestException when email already exists', async () => {
-      // FR-1: existing email must be rejected before creating a duplicate
+    it('returns pending_confirmation silently when email already exists (M-4 anti-enumeration)', async () => {
+      // M-4: existing email must not reveal account existence via a different response shape
       usersService.findByEmail.mockResolvedValue({
         id: 'u-existing',
         email: 'test@example.com',
       });
 
-      await expect(
-        service.register({ email: 'test@example.com', password: 'secret' }),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      const result = await service.register({ email: 'test@example.com', password: 'secret' });
 
+      expect(result).toEqual({ status: 'pending_confirmation' });
       expect(usersService.create).not.toHaveBeenCalled();
       expect(emailService.sendConfirmationEmail).not.toHaveBeenCalled();
     });
   });
 
   describe('confirmEmail', () => {
-    it('calls setEmailVerified and returns auth tokens on a valid confirmation token', async () => {
-      // AC-2: clicking the link marks the account verified and allows login (auto-login)
-      jwtService.verify.mockReturnValue({
-        sub: 'u-1',
-        purpose: 'email_confirmation',
-      });
-      usersService.findById.mockResolvedValue({
-        id: 'u-1',
-        email: 'test@example.com',
-      });
+    it('burns the confirmation code, calls setEmailVerified, and returns auth tokens', async () => {
+      // AC-2: clicking the link marks the account verified and auto-logs the user in (single-use via getDel)
+      confirmCodes.getDel.mockResolvedValue('u-1');
+      usersService.findById.mockResolvedValue({ id: 'u-1', email: 'test@example.com' });
 
-      const result = await service.confirmEmail('valid-token');
+      const result = await service.confirmEmail('valid-code');
 
+      expect(confirmCodes.getDel).toHaveBeenCalledWith('valid-code');
       expect(usersService.setEmailVerified).toHaveBeenCalledWith('u-1');
       expect(result).toEqual({
         accessToken: 'access-token',
@@ -149,30 +138,24 @@ describe('AuthService', () => {
       });
     });
 
-    it('throws 403 INVALID_CONFIRMATION_TOKEN on expired token', async () => {
-      // FR-3: expired JWT must be rejected with a distinct error code
-      jwtService.verify.mockImplementation(() => {
-        throw new Error('jwt expired');
+    it('throws 403 INVALID_CONFIRMATION_TOKEN when code is not found in Redis (expired or already used)', async () => {
+      // FR-3: expired or already-consumed code must be rejected with a distinct error code
+      confirmCodes.getDel.mockResolvedValue(null);
+
+      await expect(service.confirmEmail('expired-code')).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+        message: 'INVALID_CONFIRMATION_TOKEN',
       });
 
-      await expect(service.confirmEmail('expired-token')).rejects.toMatchObject(
-        {
-          status: HttpStatus.FORBIDDEN,
-          message: 'INVALID_CONFIRMATION_TOKEN',
-        },
-      );
+      expect(usersService.setEmailVerified).not.toHaveBeenCalled();
     });
 
-    it('throws 403 INVALID_CONFIRMATION_TOKEN on token with wrong purpose', async () => {
-      // FR-3: access/refresh tokens must not be usable as confirmation tokens
-      jwtService.verify.mockReturnValue({
-        sub: 'u-1',
-        purpose: 'access_token',
-      });
+    it('throws 403 INVALID_CONFIRMATION_TOKEN when the userId in Redis points to a non-existent user', async () => {
+      // Edge case: code exists but user was deleted between registration and confirmation
+      confirmCodes.getDel.mockResolvedValue('ghost-id');
+      usersService.findById.mockResolvedValue(null);
 
-      await expect(
-        service.confirmEmail('wrong-purpose-token'),
-      ).rejects.toMatchObject({
+      await expect(service.confirmEmail('orphaned-code')).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
         message: 'INVALID_CONFIRMATION_TOKEN',
       });
@@ -182,22 +165,21 @@ describe('AuthService', () => {
   });
 
   describe('resendConfirmation', () => {
-    it('increments Redis counter and sends email on first call', async () => {
+    it('increments Redis counter, stores a new code, and sends email on first call', async () => {
       // FR-4 / AC-4: first resend succeeds; counter incremented from 0 to 1
       usersService.findByEmail.mockResolvedValue({
         id: 'u-1',
         email: 'test@example.com',
         emailVerified: false,
       });
-      resendLimits.get.mockResolvedValue(null); // no prior calls
+      resendLimits.get.mockResolvedValue(null);
 
       const result = await service.resendConfirmation('test@example.com');
 
       expect(resendLimits.set).toHaveBeenCalledWith('test@example.com', 1);
-      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(
-        'test@example.com',
-        'confirm-token',
-      );
+      expect(confirmCodes.set).toHaveBeenCalledTimes(1);
+      const [code] = confirmCodes.set.mock.calls[0];
+      expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith('test@example.com', code);
       expect(result).toEqual({ status: 'email_sent' });
     });
 
@@ -208,7 +190,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         emailVerified: false,
       });
-      resendLimits.get.mockResolvedValue(3); // counter already at limit
+      resendLimits.get.mockResolvedValue(3);
 
       await expect(
         service.resendConfirmation('test@example.com'),
@@ -221,8 +203,8 @@ describe('AuthService', () => {
       expect(emailService.sendConfirmationEmail).not.toHaveBeenCalled();
     });
 
-    it('returns already_verified when user.emailVerified is true', async () => {
-      // FR-4: no-op when account is already confirmed; avoid resending unnecessarily
+    it('returns email_sent silently when account is already verified (M-1 anti-enumeration)', async () => {
+      // M-1: do not reveal whether an account is registered and verified
       usersService.findByEmail.mockResolvedValue({
         id: 'u-1',
         email: 'test@example.com',
@@ -231,12 +213,12 @@ describe('AuthService', () => {
 
       const result = await service.resendConfirmation('test@example.com');
 
-      expect(result).toEqual({ status: 'already_verified' });
+      expect(result).toEqual({ status: 'email_sent' });
       expect(emailService.sendConfirmationEmail).not.toHaveBeenCalled();
     });
 
-    it('returns generic success response when email not found (email enumeration guard)', async () => {
-      // T-002 §7: do not reveal whether an email is registered
+    it('returns email_sent silently when email is not registered (anti-enumeration)', async () => {
+      // M-1: same response shape for unknown email as for known email
       usersService.findByEmail.mockResolvedValue(null);
 
       const result = await service.resendConfirmation('ghost@example.com');

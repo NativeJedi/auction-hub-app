@@ -42,6 +42,23 @@ describe('POST /api/auth/resend-confirmation', () => {
     expect(body).toEqual({ status: 'email_sent' });
   });
 
+  it('returns 400 when email is missing or invalid (L-4 input validation)', async () => {
+    // L-4: BFF must validate the email before forwarding to prevent passing raw untrusted input
+    const res = await POST(makeRequest({ email: 'not-an-email' }));
+    const body = await res.json();
+
+    expect(mockResendConfirmationServer).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(body).toEqual({ message: 'Invalid email' });
+  });
+
+  it('returns 400 when email field is absent', async () => {
+    const res = await POST(makeRequest({}));
+
+    expect(mockResendConfirmationServer).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+  });
+
   it('forwards a 429 RESEND_LIMIT_EXCEEDED error from the server verbatim', async () => {
     // FR-4: rate-limit error must surface to the client so the UI can show the right message
     mockResendConfirmationServer.mockRejectedValue({

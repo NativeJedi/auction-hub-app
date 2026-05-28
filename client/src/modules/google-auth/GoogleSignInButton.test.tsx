@@ -15,7 +15,7 @@ import GoogleSignInButton from './GoogleSignInButton';
 const setHookReturn = (
   over: Partial<{
     error: unknown;
-  }> = {},
+  }> = {}
 ) => {
   mockUseGoogleSignIn.mockReturnValue({
     containerRef: { current: null },

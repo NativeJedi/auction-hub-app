@@ -3,15 +3,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockPush, mockShowToast, mockHandleError, mockRegister, mockLogin, mockResendConfirmation } =
-  vi.hoisted(() => ({
-    mockPush: vi.fn(),
-    mockShowToast: vi.fn(),
-    mockHandleError: vi.fn(),
-    mockRegister: vi.fn(),
-    mockLogin: vi.fn(),
-    mockResendConfirmation: vi.fn(),
-  }));
+const {
+  mockPush,
+  mockShowToast,
+  mockHandleError,
+  mockRegister,
+  mockLogin,
+  mockResendConfirmation,
+} = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockShowToast: vi.fn(),
+  mockHandleError: vi.fn(),
+  mockRegister: vi.fn(),
+  mockLogin: vi.fn(),
+  mockResendConfirmation: vi.fn(),
+}));
 
 // queryParams is mutated per-test to simulate different URL states
 const queryParams: Record<string, string | null> = {};
@@ -70,8 +76,8 @@ describe('AuthPage — register flow', () => {
 
     await waitFor(() =>
       expect(mockPush).toHaveBeenCalledWith(
-        `/crm/auth?type=confirm&pending=${encodeURIComponent('test@example.com')}`,
-      ),
+        `/crm/auth?type=confirm&pending=${encodeURIComponent('test@example.com')}`
+      )
     );
   });
 
@@ -96,9 +102,7 @@ describe('AuthPage — register flow', () => {
 
     await user.click(screen.getByRole('button', { name: /resend/i }));
 
-    await waitFor(() =>
-      expect(mockResendConfirmation).toHaveBeenCalledWith('test@example.com'),
-    );
+    await waitFor(() => expect(mockResendConfirmation).toHaveBeenCalledWith('test@example.com'));
   });
 });
 
@@ -116,8 +120,8 @@ describe('AuthPage — login flow', () => {
 
     await waitFor(() =>
       expect(mockPush).toHaveBeenCalledWith(
-        `/crm/auth?type=confirm&pending=${encodeURIComponent('unverified@example.com')}`,
-      ),
+        `/crm/auth?type=confirm&pending=${encodeURIComponent('unverified@example.com')}`
+      )
     );
   });
 
@@ -133,9 +137,7 @@ describe('AuthPage — login flow', () => {
     await user.click(screen.getByRole('button', { name: /resend/i }));
 
     await waitFor(() =>
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success' }),
-      ),
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }))
     );
   });
 
@@ -155,8 +157,8 @@ describe('AuthPage — login flow', () => {
         expect.objectContaining({
           type: 'error',
           message: expect.stringContaining('Too many requests'),
-        }),
-      ),
+        })
+      )
     );
   });
 });

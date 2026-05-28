@@ -23,7 +23,10 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
 
   const meta = [
     { text: `Created ${formatISODate(auction.createdAt)}` },
-    { text: auction.finishedAt ? `Finished at ${formatISODate(auction.finishedAt)}` : '', isVisible: auction.status === AuctionStatus.FINISHED && !!auction.finishedAt },
+    {
+      text: auction.finishedAt ? `Finished at ${formatISODate(auction.finishedAt)}` : '',
+      isVisible: auction.status === AuctionStatus.FINISHED && !!auction.finishedAt,
+    },
     { text: `ID ${auction.id}` },
   ];
 

@@ -13,7 +13,7 @@ export abstract class RoomEngine<TData> {
 
   protected constructor(
     protected readonly auctionId: string,
-    protected readonly socket: BaseSocket,
+    protected readonly socket: BaseSocket
   ) {
     this.data = this.getInitialData();
   }

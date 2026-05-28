@@ -4,11 +4,7 @@ type Props = React.PropsWithChildren<{
   showControls?: boolean;
   showLogout?: boolean;
 }>;
-export default function HeadedLayout({
-  children,
-  showLogout = true,
-  showControls = true,
-}: Props) {
+export default function HeadedLayout({ children, showLogout = true, showControls = true }: Props) {
   return (
     <div className="flex flex-col min-h-screen">
       <SiteHeader showLogout={showLogout} showControls={showControls} />

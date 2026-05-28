@@ -31,8 +31,7 @@ export function useAuctionActions(auction: Auction): Action[] {
     {
       component: <ResetAuctionButton auctionId={auction.id} />,
       isVisible:
-        auction.status === AuctionStatus.STARTED ||
-        auction.status === AuctionStatus.FINISHED,
+        auction.status === AuctionStatus.STARTED || auction.status === AuctionStatus.FINISHED,
     },
   ];
 }

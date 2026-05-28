@@ -66,6 +66,6 @@ export class ResendConfirmationDto {
 }
 
 export class ResendConfirmationResponseDto {
-  @ApiProperty({ enum: ['email_sent', 'already_verified'] })
-  status: 'email_sent' | 'already_verified';
+  @ApiProperty({ enum: ['email_sent'] })
+  status: 'email_sent';
 }

@@ -29,7 +29,13 @@ const ManageLotImagesButton = ({ lot, auctionId, disabled }: Props) => {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={handleClick} title={`Manage ${lot.name} images`} disabled={disabled}>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleClick}
+      title={`Manage ${lot.name} images`}
+      disabled={disabled}
+    >
       <Images />
     </Button>
   );

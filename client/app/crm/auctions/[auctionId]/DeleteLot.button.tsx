@@ -47,7 +47,13 @@ export const DeleteLotButton = ({ lot, auctionId, disabled }: Props) => {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={handleDelete} title={`Delete ${lot.name}`} disabled={disabled}>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleDelete}
+      title={`Delete ${lot.name}`}
+      disabled={disabled}
+    >
       <Trash2 />
     </Button>
   );

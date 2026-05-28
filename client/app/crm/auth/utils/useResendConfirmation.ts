@@ -17,7 +17,7 @@ export const useResendConfirmation = () => {
           message: is429Error(error)
             ? 'Too many requests — please wait before trying again.'
             : 'Failed to resend the confirmation email.',
-        }),
+        })
       )
       .finally(() => setIsLoading(false));
   };

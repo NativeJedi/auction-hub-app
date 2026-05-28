@@ -44,10 +44,7 @@ export function PublicRoomProvider({ auctionId, children }: PublicRoomProviderPr
     return () => engine.destroy();
   }, [engine]);
 
-  const subscribe = useCallback(
-    (notify: () => void) => engine.subscribe(notify),
-    [engine]
-  );
+  const subscribe = useCallback((notify: () => void) => engine.subscribe(notify), [engine]);
 
   const getSnapshot = useCallback(() => engine.getState(), [engine]);
 

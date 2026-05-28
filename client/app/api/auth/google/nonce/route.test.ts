@@ -11,8 +11,7 @@ vi.mock('@/src/api/auctions-api/requests/auth', () => ({
 
 import { GET } from './route';
 
-const makeRequest = () =>
-  new Request('http://localhost/api/auth/google/nonce', { method: 'GET' });
+const makeRequest = () => new Request('http://localhost/api/auth/google/nonce', { method: 'GET' });
 
 describe('GET /api/auth/google/nonce', () => {
   beforeEach(() => {

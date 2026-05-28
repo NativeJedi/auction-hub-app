@@ -26,9 +26,9 @@ vi.mock('@/src/services/session', () => ({
 import { GET } from './route';
 import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
 
-const makeRequest = (token?: string) => {
-  const url = token
-    ? `http://localhost/api/auth/confirm-email?token=${token}`
+const makeRequest = (code?: string) => {
+  const url = code
+    ? `http://localhost/api/auth/confirm-email?code=${code}`
     : 'http://localhost/api/auth/confirm-email';
   return new Request(url, { method: 'GET' });
 };
@@ -39,7 +39,7 @@ describe('GET /api/auth/confirm-email', () => {
     mockSessionCreate.mockResolvedValue({ id: 'sess-1' });
   });
 
-  it('forwards token query param to confirmEmailServer and creates a session + sets cookie on success', async () => {
+  it('forwards code query param to confirmEmailServer and creates a session + sets cookie on success', async () => {
     // AC#2: BFF verifies the email, auto-logs the user in by creating a session
     mockConfirmEmailServer.mockResolvedValue({
       accessToken: 'access-token',
@@ -47,10 +47,10 @@ describe('GET /api/auth/confirm-email', () => {
       user: { id: 'u-1', email: 'a@b.com' },
     });
 
-    const res = await GET(makeRequest('valid-token'));
+    const res = await GET(makeRequest('valid-code'));
     const body = await res.json();
 
-    expect(mockConfirmEmailServer).toHaveBeenCalledWith('valid-token');
+    expect(mockConfirmEmailServer).toHaveBeenCalledWith('valid-code');
     expect(mockSessionCreate).toHaveBeenCalledWith({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
@@ -65,23 +65,23 @@ describe('GET /api/auth/confirm-email', () => {
   });
 
   it('forwards a 403 INVALID_CONFIRMATION_TOKEN error from the server verbatim', async () => {
-    // FR-3: expired or invalid token must surface the correct status to the client
+    // FR-3: expired or already-used code must surface the correct status to the client
     mockConfirmEmailServer.mockRejectedValue({
       response: { status: 403, data: { message: 'INVALID_CONFIRMATION_TOKEN' } },
     });
 
-    const res = await GET(makeRequest('expired-token'));
+    const res = await GET(makeRequest('expired-code'));
     const body = await res.json();
 
     expect(res.status).toBe(403);
     expect(body).toEqual({ message: 'INVALID_CONFIRMATION_TOKEN' });
   });
 
-  it('returns 500 when token is absent and confirmEmailServer throws a non-response error', async () => {
+  it('returns 500 when code is absent and confirmEmailServer throws a non-response error', async () => {
     // withNextErrorResponse wraps unknown errors as 500
     mockConfirmEmailServer.mockRejectedValue(new Error('unexpected failure'));
 
-    const res = await GET(makeRequest()); // no token → '' passed to confirmEmailServer
+    const res = await GET(makeRequest()); // no code → '' passed to confirmEmailServer
     const body = await res.json();
 
     expect(mockConfirmEmailServer).toHaveBeenCalledWith('');

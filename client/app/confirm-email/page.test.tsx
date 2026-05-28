@@ -32,7 +32,7 @@ describe('ConfirmEmailPage', () => {
 
   it('renders the loading spinner on mount', () => {
     // The component always shows a spinner while the confirmation request is in-flight
-    mockUseQueryParam.mockReturnValue('some-token');
+    mockUseQueryParam.mockReturnValue('some-code');
     mockConfirmEmail.mockReturnValue(new Promise(() => {})); // never resolves
 
     const { container } = render(<ConfirmEmailPage />);
@@ -40,8 +40,8 @@ describe('ConfirmEmailPage', () => {
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('calls confirmEmail with the token from the URL query param', async () => {
-    // AC#2: page extracts the token from ?token= and forwards it to the API
+  it('calls confirmEmail with the code from the URL query param', async () => {
+    // AC#2: page extracts the code from ?code= and forwards it to the API
     mockUseQueryParam.mockReturnValue('abc123');
     mockConfirmEmail.mockResolvedValue({
       accessToken: 'at',
@@ -56,7 +56,7 @@ describe('ConfirmEmailPage', () => {
 
   it('redirects to /crm/auctions when confirmEmail resolves (auto-login after confirmation)', async () => {
     // AC#2: successful confirmation auto-logs the user in and lands them on the CRM
-    mockUseQueryParam.mockReturnValue('valid-token');
+    mockUseQueryParam.mockReturnValue('valid-code');
     mockConfirmEmail.mockResolvedValue({
       accessToken: 'at',
       refreshToken: 'rt',
@@ -70,9 +70,9 @@ describe('ConfirmEmailPage', () => {
   });
 
   it('shows an error toast and redirects to /crm/auth when confirmEmail rejects', async () => {
-    // FR-3: expired or invalid token must surface a clear error and redirect to login
-    mockUseQueryParam.mockReturnValue('expired-token');
-    mockConfirmEmail.mockRejectedValue(new Error('token expired'));
+    // FR-3: expired or already-used code must surface a clear error and redirect to login
+    mockUseQueryParam.mockReturnValue('expired-code');
+    mockConfirmEmail.mockRejectedValue(new Error('code expired'));
 
     render(<ConfirmEmailPage />);
 
@@ -85,8 +85,8 @@ describe('ConfirmEmailPage', () => {
     });
   });
 
-  it('shows an error toast and redirects to /crm/auth when token is missing from the URL', async () => {
-    // FR-3: a confirmation link with no token must be rejected immediately
+  it('shows an error toast and redirects to /crm/auth when code is missing from the URL', async () => {
+    // FR-3: a confirmation link with no code must be rejected immediately
     mockUseQueryParam.mockReturnValue(null);
 
     render(<ConfirmEmailPage />);

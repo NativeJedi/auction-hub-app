@@ -73,7 +73,7 @@ describe('GoogleAuthService', () => {
         client_id: 'test-client-id',
         nonce: 'n-1',
         callback: expect.any(Function),
-      }),
+      })
     );
     expect(fakeGis.renderButton).toHaveBeenCalledWith(container, expect.any(Object));
     expect(fakeGis.prompt).toHaveBeenCalledTimes(1);
@@ -130,9 +130,7 @@ describe('GoogleAuthService', () => {
 
     expect(mockGetGoogleNonce).toHaveBeenCalledTimes(2);
     expect(fakeGis.initialize).toHaveBeenCalledTimes(2);
-    expect(fakeGis.initialize.mock.calls[1][0]).toEqual(
-      expect.objectContaining({ nonce: 'n-2' }),
-    );
+    expect(fakeGis.initialize.mock.calls[1][0]).toEqual(expect.objectContaining({ nonce: 'n-2' }));
     expect(fakeGis.renderButton).toHaveBeenCalledTimes(2);
     expect(fakeGis.prompt).toHaveBeenCalledTimes(2);
     expect(callbacks.onFatalError).not.toHaveBeenCalled();
@@ -194,7 +192,7 @@ describe('GoogleAuthService', () => {
     mockGetGoogleNonce.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveNonce = resolve;
-      }),
+      })
     );
 
     const callbacks = makeCallbacks();
@@ -220,7 +218,7 @@ describe('GoogleAuthService', () => {
     mockGoogleAuth.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveAuth = resolve;
-      }),
+      })
     );
 
     const callbacks = makeCallbacks();
@@ -237,5 +235,4 @@ describe('GoogleAuthService', () => {
     expect(callbacks.onSuccess).not.toHaveBeenCalled();
     expect(callbacks.onFatalError).not.toHaveBeenCalled();
   });
-
 });

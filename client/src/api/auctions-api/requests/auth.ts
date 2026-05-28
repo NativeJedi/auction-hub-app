@@ -16,9 +16,9 @@ export const logoutServer = () => auctionsAPI.post('/auth/logout');
 export const registerServer = (dto: AuthDto) =>
   auctionsAPI.post<RegisterResponseDto>('/auth/register', dto, { skipAuth: true });
 
-export const confirmEmailServer = (token: string) =>
+export const confirmEmailServer = (code: string) =>
   auctionsAPI.get<ConfirmEmailResponseDto>('/auth/confirm-email', {
-    params: { token },
+    params: { code },
     skipAuth: true,
   });
 

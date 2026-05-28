@@ -18,10 +18,7 @@ export const isObjectWithProperties = <T extends object>(
 export const isString = (value: unknown): value is string => typeof value === 'string';
 
 /** Narrows `obj` to `Record<K, unknown>`, giving typed access to `obj[key]` without casts. */
-export const hasProperty = <K extends string>(
-  obj: unknown,
-  key: K
-): obj is Record<K, unknown> =>
+export const hasProperty = <K extends string>(obj: unknown, key: K): obj is Record<K, unknown> =>
   isObject(obj) && key in obj;
 
 /**

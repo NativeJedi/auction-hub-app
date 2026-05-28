@@ -35,7 +35,7 @@ const { ServiceMock, serviceInstances } = vi.hoisted(() => {
   return {
     ServiceMock: FakeService as unknown as new (
       container: HTMLElement,
-      callbacks: ServiceCallbacks,
+      callbacks: ServiceCallbacks
     ) => unknown,
     serviceInstances: instances,
   };

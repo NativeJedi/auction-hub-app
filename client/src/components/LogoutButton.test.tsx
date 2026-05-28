@@ -60,8 +60,8 @@ describe('LogoutButton', () => {
 
     await waitFor(() =>
       expect(mockConfirmModalShow).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Log out', description: expect.any(String) }),
-      ),
+        expect.objectContaining({ title: 'Log out', description: expect.any(String) })
+      )
     );
   });
 
@@ -112,16 +112,18 @@ describe('LogoutButton', () => {
   it('button shows loading state while logout is in flight', async () => {
     const user = userEvent.setup();
     let resolveLogout!: () => void;
-    mockLogout.mockReturnValue(new Promise<void>((resolve) => { resolveLogout = resolve; }));
+    mockLogout.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveLogout = resolve;
+      })
+    );
     mockConfirmModalShow.mockResolvedValue({ result: 'submitted', data: undefined });
     render(<LogoutButton />);
 
     await user.click(screen.getByRole('button', { name: /log out/i }));
 
     // Button renders "Loading..." text and is disabled while isPending=true
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /loading/i })).toBeDisabled(),
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /loading/i })).toBeDisabled());
 
     resolveLogout();
   });
@@ -147,9 +149,7 @@ describe('LogoutButton', () => {
     await user.click(screen.getByRole('button', { name: /log out/i }));
 
     await waitFor(() =>
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' }),
-      ),
+      expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
     );
   });
 
@@ -162,7 +162,7 @@ describe('LogoutButton', () => {
     await user.click(screen.getByRole('button', { name: /log out/i }));
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /log out/i })).not.toBeDisabled(),
+      expect(screen.getByRole('button', { name: /log out/i })).not.toBeDisabled()
     );
   });
 });

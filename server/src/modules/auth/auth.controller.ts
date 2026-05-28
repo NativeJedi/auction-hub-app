@@ -8,7 +8,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard, AuthorizedRequest } from './auth.guard';
@@ -94,11 +94,11 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Confirm email address' })
   @ApiResponse({ status: 200, description: 'Email confirmed', type: ConfirmEmailResponseDto })
-  @SkipThrottle()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(200)
   @Get('confirm-email')
-  confirmEmail(@Query('token') token: string): Promise<ConfirmEmailResponseDto> {
-    return this.authService.confirmEmail(token);
+  confirmEmail(@Query('code') code: string): Promise<ConfirmEmailResponseDto> {
+    return this.authService.confirmEmail(code);
   }
 
   @ApiOperation({ summary: 'Resend confirmation email' })

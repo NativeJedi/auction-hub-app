@@ -29,7 +29,9 @@ describe('MemberRoomEngine', () => {
     const engine = new MemberRoomEngine('auction-1', stubSocket, mockApi);
     await engine.confirmInvite('invite-token-abc');
 
-    expect(mockApi.confirmRoomInvite).toHaveBeenCalledWith('auction-1', { token: 'invite-token-abc' });
+    expect(mockApi.confirmRoomInvite).toHaveBeenCalledWith('auction-1', {
+      token: 'invite-token-abc',
+    });
     expect(setRoomTokenSpy).toHaveBeenCalledWith('auction-1', 'member-token');
   });
 });

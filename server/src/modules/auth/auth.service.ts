@@ -1,13 +1,7 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
-import { AppConfigService } from '../../config/app-config.service';
 import { RedisService } from '../redis/redis.service';
 import { RedisSimpleRepository } from '../redis/repositories/simple.repository';
 import * as bcrypt from 'bcrypt';
@@ -22,23 +16,23 @@ import {
 } from './dto/auth.dto';
 import { ApiAuthorizationError } from '../../errors';
 
-type ConfirmationPayload = { sub: string; purpose: string };
+const CONFIRM_CODE_TTL_SECONDS = 86400; // 24 h
 
 @Injectable()
 export class AuthService {
   private readonly resendLimits: RedisSimpleRepository<number>;
+  private readonly confirmCodes: RedisSimpleRepository<string>;
 
   constructor(
     private readonly usersService: UsersService,
     private readonly tokenService: TokenService,
     private readonly emailService: EmailService,
-    private readonly jwtService: JwtService,
-    private readonly appConfig: AppConfigService,
     redis: RedisService,
   ) {
-    this.resendLimits = redis.createSimpleRepository<number>(
-      'resend_limits',
-      3600,
+    this.resendLimits = redis.createSimpleRepository<number>('resend_limits', 3600);
+    this.confirmCodes = redis.createSimpleRepository<string>(
+      'confirm_codes',
+      CONFIRM_CODE_TTL_SECONDS,
     );
   }
 
@@ -82,20 +76,14 @@ export class AuthService {
     };
   };
 
-  private signConfirmationToken(userId: string): string {
-    return this.jwtService.sign(
-      { sub: userId, purpose: 'email_confirmation' },
-      { secret: this.appConfig.jwt.JWT_ACCESS_SECRET, expiresIn: '86400' },
-    );
-  }
-
   async register(createAuthDto: CreateAuthDto): Promise<RegisterResponseDto> {
     const { email, password } = createAuthDto;
 
     const existedUser = await this.usersService.findByEmail(email);
 
+    // M-4: silently return success for existing emails to prevent enumeration
     if (existedUser) {
-      throw new BadRequestException('User already exists');
+      return { status: 'pending_confirmation' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -105,8 +93,9 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const token = this.signConfirmationToken(user.id);
-    await this.emailService.sendConfirmationEmail(user.email, token);
+    const code = randomUUID();
+    await this.confirmCodes.set(code, user.id);
+    await this.emailService.sendConfirmationEmail(user.email, code);
 
     return { status: 'pending_confirmation' };
   }
@@ -131,43 +120,32 @@ export class AuthService {
     };
   }
 
-  async confirmEmail(token: string): Promise<ConfirmEmailResponseDto> {
-    try {
-      const payload = this.jwtService.verify<ConfirmationPayload>(token, {
-        secret: this.appConfig.jwt.JWT_ACCESS_SECRET,
-      });
+  async confirmEmail(code: string): Promise<ConfirmEmailResponseDto> {
+    const userId = await this.confirmCodes.getDel(code);
 
-      if (payload.purpose !== 'email_confirmation') {
-        throw new HttpException(
-          'INVALID_CONFIRMATION_TOKEN',
-          HttpStatus.FORBIDDEN,
-        );
-      }
-
-      await this.usersService.setEmailVerified(payload.sub);
-
-      const user = await this.usersService.findById(payload.sub);
-      const { accessToken, refreshToken } = await this.generateTokens(user!);
-
-      return { accessToken, refreshToken, user: { id: user!.id, email: user!.email } };
-    } catch (e) {
-      if (e instanceof HttpException) throw e;
-      throw new HttpException(
-        'INVALID_CONFIRMATION_TOKEN',
-        HttpStatus.FORBIDDEN,
-      );
+    if (!userId) {
+      throw new HttpException('INVALID_CONFIRMATION_TOKEN', HttpStatus.FORBIDDEN);
     }
+
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new HttpException('INVALID_CONFIRMATION_TOKEN', HttpStatus.FORBIDDEN);
+    }
+
+    await this.usersService.setEmailVerified(userId);
+
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+
+    return { accessToken, refreshToken, user: { id: user.id, email: user.email } };
   }
 
   async resendConfirmation(email: string): Promise<ResendConfirmationResponseDto> {
     const user = await this.usersService.findByEmail(email);
 
-    if (!user) {
+    // M-1: always return email_sent to prevent account-existence enumeration
+    if (!user || user.emailVerified) {
       return { status: 'email_sent' };
-    }
-
-    if (user.emailVerified) {
-      return { status: 'already_verified' };
     }
 
     const count = (await this.resendLimits.get(email)) ?? 0;
@@ -181,8 +159,9 @@ export class AuthService {
 
     await this.resendLimits.set(email, count + 1);
 
-    const token = this.signConfirmationToken(user.id);
-    await this.emailService.sendConfirmationEmail(email, token);
+    const code = randomUUID();
+    await this.confirmCodes.set(code, user.id);
+    await this.emailService.sendConfirmationEmail(email, code);
 
     return { status: 'email_sent' };
   }

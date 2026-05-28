@@ -15,6 +15,7 @@ export class EmailService {
       host: EMAIL_HOST,
       port: EMAIL_PORT,
       secure: false,
+      requireTLS: true, // L-2: refuse connections that don't offer STARTTLS/TLS
       auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASSWORD,
@@ -22,8 +23,8 @@ export class EmailService {
     });
   }
 
-  async sendConfirmationEmail(to: string, token: string): Promise<void> {
-    const url = `${this.appConfig.urls.CLIENT_URL}/confirm-email?token=${token}`;
+  async sendConfirmationEmail(to: string, code: string): Promise<void> {
+    const url = `${this.appConfig.urls.CLIENT_URL}/confirm-email?code=${code}`;
     await this.sendEmail(
       to,
       'Confirm your email — Auction Hub',

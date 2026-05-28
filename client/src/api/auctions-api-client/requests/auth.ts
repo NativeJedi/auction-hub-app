@@ -21,8 +21,8 @@ export const getGoogleNonce = () => auctionsApiClient.get<{ nonce: string }>('/a
 export const googleAuth = (body: GoogleAuthDto) =>
   auctionsApiClient.post<AuthResponse>('/auth/google', body);
 
-export const confirmEmail = (token: string) =>
-  auctionsApiClient.get<{ status: string }>('/auth/confirm-email', { params: { token } });
+export const confirmEmail = (code: string) =>
+  auctionsApiClient.get<{ status: string }>('/auth/confirm-email', { params: { code } });
 
 export const resendConfirmation = (email: string) =>
   auctionsApiClient.post<{ status: string }>('/auth/resend-confirmation', { email });

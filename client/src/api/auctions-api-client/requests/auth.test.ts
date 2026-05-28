@@ -14,14 +14,14 @@ import { confirmEmail, resendConfirmation } from './auth';
 describe('confirmEmail', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('calls GET /auth/confirm-email with the token as a query param and returns { status }', async () => {
-    // AC#2: client calls the correct endpoint to confirm the email
+  it('calls GET /auth/confirm-email with the code as a query param and returns { status }', async () => {
+    // AC#2: client calls the correct endpoint with the opaque confirmation code
     mockGet.mockResolvedValue({ status: 'confirmed' });
 
-    const result = await confirmEmail('my-token');
+    const result = await confirmEmail('my-code');
 
     expect(mockGet).toHaveBeenCalledWith('/auth/confirm-email', {
-      params: { token: 'my-token' },
+      params: { code: 'my-code' },
     });
     expect(result).toEqual({ status: 'confirmed' });
   });

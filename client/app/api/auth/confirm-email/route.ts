@@ -5,8 +5,8 @@ import { sessionStorage } from '@/src/services/session';
 import { SESSION_COOKIE_NAME, SESSION_COOKIE_SETTINGS } from '@/src/services/session/constants';
 
 const confirmEmail = async (req: Request) => {
-  const token = new URL(req.url).searchParams.get('token') ?? '';
-  const { accessToken, refreshToken, user } = await confirmEmailServer(token);
+  const code = new URL(req.url).searchParams.get('code') ?? '';
+  const { accessToken, refreshToken, user } = await confirmEmailServer(code);
 
   const response = NextResponse.json({ user });
   const { id } = await sessionStorage.create({ accessToken, refreshToken });

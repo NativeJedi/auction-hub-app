@@ -10,16 +10,16 @@ import { Loader2 } from 'lucide-react';
 export default function ConfirmEmailPage() {
   const router = useRouter();
   const { showToast } = useNotification();
-  const token = useQueryParam('token');
+  const code = useQueryParam('code');
 
   useEffect(() => {
-    if (token === null) {
+    if (code === null) {
       showToast({ type: 'error', message: 'Confirmation link is invalid.' });
       router.push('/crm/auth');
       return;
     }
 
-    confirmEmail(token)
+    confirmEmail(code)
       .then(() => router.push('/crm/auctions'))
       .catch(() => {
         showToast({
