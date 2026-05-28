@@ -86,16 +86,8 @@ export class AuthService {
     const existedUser = await this.usersService.findByEmail(email);
 
     if (existedUser) {
-      if (existedUser.emailVerified) {
-        throw new HttpException(
-          { message: 'This email is already registered', error: 'Conflict' },
-          HttpStatus.CONFLICT,
-        );
-      }
-
-      // Unverified account: re-send the code so a failed first delivery
-      // (SMTP error, mobile timeout) is recoverable without the explicit Resend flow.
-      await this.sendConfirmationCode(existedUser.id, existedUser.email);
+      // M-4 anti-enumeration: silently return pending_confirmation
+      // without revealing whether the email exists or is already verified
       return { status: 'pending_confirmation' };
     }
 
