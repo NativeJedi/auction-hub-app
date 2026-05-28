@@ -40,7 +40,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   return (
     <NotificationContext.Provider value={{ toasts, showToast, dismissToast }}>
       {children}
-      <div className="fixed top-5 right-5 flex flex-col gap-3 z-50">
+      <div className="fixed top-[60px] left-4 right-4 flex flex-col gap-3 z-[200] sm:top-5 sm:left-auto sm:right-5 sm:w-auto">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDismiss={() => dismissToast(t.id)} />
         ))}
@@ -84,6 +84,8 @@ export const useErrorNotification = () => {
           message: isString(error.message) ? error.message : 'Unknown error',
           type: 'error',
         });
+
+        return;
       }
 
       throw error;

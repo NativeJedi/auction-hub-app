@@ -8,7 +8,7 @@ type Props = {
 
 const SiteHeader = ({ showLogout, showControls }: Props) => {
   return (
-    <header className="sticky top-0 z-50 h-[52px] border-b bg-background flex items-center justify-between px-6">
+    <header className="h-[52px] border-b bg-background flex items-center justify-between px-4 sm:px-6">
       <span className="font-semibold">AuctionHub</span>
       {showControls && (
         <div className="flex items-center gap-2">

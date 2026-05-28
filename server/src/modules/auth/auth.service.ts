@@ -85,8 +85,9 @@ export class AuthService {
 
     const existedUser = await this.usersService.findByEmail(email);
 
-    // M-4: silently return success for existing emails to prevent enumeration
     if (existedUser) {
+      // M-4 anti-enumeration: silently return pending_confirmation
+      // without revealing whether the email exists or is already verified
       return { status: 'pending_confirmation' };
     }
 
@@ -99,11 +100,15 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const code = randomUUID();
-    await this.confirmCodes.set(code, user.id);
-    await this.emailService.sendConfirmationEmail(user.email, code);
+    await this.sendConfirmationCode(user.id, user.email);
 
     return { status: 'pending_confirmation' };
+  }
+
+  private async sendConfirmationCode(userId: string, email: string): Promise<void> {
+    const code = randomUUID();
+    await this.confirmCodes.set(code, userId);
+    await this.emailService.sendConfirmationEmail(email, code);
   }
 
   async login({ email, password }: LoginAuthDto) {
@@ -177,9 +182,7 @@ export class AuthService {
 
     await this.resendLimits.set(email, count + 1);
 
-    const code = randomUUID();
-    await this.confirmCodes.set(code, user.id);
-    await this.emailService.sendConfirmationEmail(email, code);
+    await this.sendConfirmationCode(user.id, email);
 
     return { status: 'email_sent' };
   }

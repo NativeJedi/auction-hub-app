@@ -17,6 +17,7 @@ const columns: Columns<Auction> = [
   },
   {
     header: 'Description',
+    className: 'hidden sm:table-cell',
     render: (auction) => auction.description,
   },
   {
@@ -25,6 +26,7 @@ const columns: Columns<Auction> = [
   },
   {
     header: 'Created At',
+    className: 'hidden md:table-cell',
     render: (auction) => formatISODate(auction.createdAt),
   },
   {

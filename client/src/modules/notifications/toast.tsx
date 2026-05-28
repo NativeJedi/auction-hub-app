@@ -31,7 +31,7 @@ export const ToastItem = ({ toast, onDismiss }: { toast: Toast; onDismiss: () =>
   };
 
   return (
-    <div className="flex items-start gap-3 p-4 min-w-[280px] max-w-[340px] bg-card border rounded-lg shadow-md animate-in fade-in">
+    <div className="flex items-start gap-3 p-4 w-full bg-card border rounded-lg shadow-md animate-in fade-in sm:min-w-[280px] sm:max-w-[340px]">
       <div>{icon[toast.type]}</div>
 
       <div className="flex-1">

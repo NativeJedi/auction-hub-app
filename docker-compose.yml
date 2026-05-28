@@ -168,7 +168,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      HOSTNAME: ${HOSTNAME:-localhost}
+      HOSTNAME: 0.0.0.0
       CHOKIDAR_USEPOLLING: true
       API_URL: http://api-dev:3000/api/v1
       REDIS_URL: redis://redis:6379
@@ -178,6 +178,8 @@ services:
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      CLIENT_URL: ${CLIENT_URL}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
     ports:
       - "3001:3001"
@@ -197,7 +199,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      HOSTNAME: ${HOSTNAME:-localhost}
+      HOSTNAME: 0.0.0.0
       API_URL: http://api-prod:3000/api/v1
       REDIS_URL: redis://redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
@@ -206,6 +208,7 @@ services:
       JWT_ROOM_MEMBER_TOKEN_SECRET: ${JWT_ROOM_MEMBER_TOKEN_SECRET}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
     ports:
       - "3001:3001"

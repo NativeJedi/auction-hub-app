@@ -7,14 +7,14 @@ import { useErrorNotification } from '@/src/modules/notifications/NotifcationCon
 import { Plus } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
 import { lotImagesModal } from '@/app/crm/auctions/[auctionId]/LotImages.modal';
-import { useState } from 'react';
+import { PropsWithChildren, useState } from 'react';
 
-type Props = {
+type Props = PropsWithChildren<{
   auctionId: Auction['id'];
   disabled?: boolean;
-};
+}>;
 
-const CreateLotButton = ({ auctionId, disabled }: Props) => {
+const CreateLotButton = ({ auctionId, disabled, children }: Props) => {
   const router = useRouter();
   const handleError = useErrorNotification();
 
@@ -42,7 +42,11 @@ const CreateLotButton = ({ auctionId, disabled }: Props) => {
 
   return (
     <Button className="min-w-[100px]" onClick={handleCreateClick} disabled={disabled}>
-      <Plus /> Add
+      {children || (
+        <>
+          <Plus /> Add
+        </>
+      )}
     </Button>
   );
 };

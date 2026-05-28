@@ -21,7 +21,7 @@ vi.mock('@/app/crm/auctions/[auctionId]/LotsList.table', () => ({
 }));
 
 vi.mock('@/app/crm/auctions/[auctionId]/StartAuction.button', () => ({
-  default: () => null,
+  default: () => <button>Start</button>,
 }));
 
 vi.mock('@/app/crm/auctions/[auctionId]/ResetAuction.button', () => ({
@@ -142,5 +142,21 @@ describe('AuctionPage', () => {
     render(await AuctionPage({ params: params() }));
 
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Start button when status is CREATED and lots exist', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchLots.mockResolvedValue([{ id: 'lot-1' }]);
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+  });
+
+  it('hides Start button when status is CREATED but no lots', async () => {
+    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchLots.mockResolvedValue([]);
+    render(await AuctionPage({ params: params() }));
+
+    expect(screen.queryByRole('button', { name: /start/i })).not.toBeInTheDocument();
   });
 });

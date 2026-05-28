@@ -16,7 +16,13 @@ const options = Object.values(Currency).map((currency) => ({
 const fields: FormField[] = [
   { name: 'name', type: 'text', label: 'Name', placeholder: 'Lot name' },
   { name: 'description', type: 'text', label: 'Description', placeholder: 'Lot description"' },
-  { name: 'startPrice', type: 'number', label: 'Start Price', placeholder: 'Start Price' },
+  {
+    name: 'startPrice',
+    type: 'number',
+    label: 'Start Price',
+    placeholder: 'Start Price',
+    step: 500,
+  },
   { name: 'currency', type: 'select', label: 'Currency', options },
 ];
 

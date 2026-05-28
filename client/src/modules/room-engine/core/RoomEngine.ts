@@ -3,7 +3,7 @@ import { Lifecycle } from './types';
 
 export abstract class RoomEngine<TData> {
   // Lifecycle fields — owned and mutated exclusively by the base class
-  private lifecycle: Lifecycle = { isLoading: false, error: null };
+  private lifecycle: Lifecycle = { isLoading: true, error: null };
 
   // Domain data — owned and mutated exclusively by subclasses
   protected data: TData;

@@ -35,6 +35,7 @@ const getColumns = (auctionId: Auction['id'], isLocked?: boolean): Columns<Lot> 
   },
   {
     header: 'Description',
+    className: 'hidden lg:table-cell',
     render: (lot) => lot.description,
   },
   {
@@ -43,18 +44,22 @@ const getColumns = (auctionId: Auction['id'], isLocked?: boolean): Columns<Lot> 
   },
   {
     header: 'Currency',
+    className: 'hidden md:table-cell',
     render: (lot) => lot.currency,
   },
   {
     header: 'Starting Price',
+    className: 'hidden sm:table-cell',
     render: (lot) => lot.startPrice,
   },
   {
     header: 'Sold Price',
+    className: 'hidden sm:table-cell',
     render: (lot) => lot.soldPrice ?? '-',
   },
   {
     header: 'Buyer',
+    className: 'hidden md:table-cell',
     render: (lot) => <LotBuyerValue lot={lot} />,
   },
   {
@@ -81,7 +86,9 @@ const LotsList = ({ auctionId, lots, isLocked }: Props) => {
   const emptyState = (
     <>
       <p className="text-sm text-muted-foreground">No lots yet</p>
-      <CreateLotButton auctionId={auctionId} disabled={isLocked} />
+      <CreateLotButton auctionId={auctionId} disabled={isLocked}>
+        Create
+      </CreateLotButton>
     </>
   );
 

@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const storageUrl = new URL(process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:9000');
+const clientUrl = new URL(process.env.CLIENT_URL ?? 'http://localhost:3001');
+const serverOrigin = `${clientUrl.protocol}//${clientUrl.hostname}:3000`;
+const wsServerOrigin = `ws://${clientUrl.hostname}:3000`;
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -14,7 +17,7 @@ const cspDirectives = [
   `style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style`,
   `img-src 'self' data: blob: ${storageUrl.origin} https://*.amazonaws.com https://*.googleusercontent.com`,
   `font-src 'self' data:`,
-  `connect-src 'self' https://accounts.google.com/gsi/`,
+  `connect-src 'self' https://accounts.google.com/gsi/ ${storageUrl.origin} ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
   `frame-src https://accounts.google.com/`,
   `frame-ancestors 'self'`,
   `object-src 'none'`,

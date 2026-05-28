@@ -25,9 +25,9 @@ export const CreateAuctionButton = () => {
     try {
       setLoading(true);
 
-      await createAuction({ name, description });
+      const auction = await createAuction({ name, description });
 
-      router.refresh();
+      router.push(`/crm/auctions/${auction.id}`);
     } catch (error: unknown) {
       handleError(error);
     } finally {

@@ -24,7 +24,7 @@ const AuctionPage = async ({ params }: LotsPageProps) => {
 
   const isLocked = auction.status !== AuctionStatus.CREATED;
 
-  const actions = getAuctionActions(auction);
+  const actions = getAuctionActions(auction, lots.length > 0);
 
   const meta = [
     { text: `Created ${formatISODate(auction.createdAt)}` },
