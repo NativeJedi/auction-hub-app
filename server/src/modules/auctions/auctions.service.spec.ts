@@ -4,7 +4,7 @@ import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { AuctionsService } from './auctions.service';
 import { Auction, AuctionStatus } from './entities/auction.entity';
 import { UsersService } from '../users/users.service';
-import { Lot, LotStatus } from '../lots/entities/lots.entity';
+import { LotStatus } from '../lots/entities/lots.entity';
 import { Buyer } from '../buyers/entities/buyer.entity';
 import { Currency } from '../../types/currency';
 import { RoomRepository } from '../room/room.repository';
@@ -39,9 +39,16 @@ const makeUnsoldLot = (overrides: Record<string, unknown> = {}): any => ({
 
 describe('AuctionsService', () => {
   let service: AuctionsService;
-  let auctionRepo: any;
+  let auctionRepo: {
+    findOne: jest.Mock;
+    save: jest.Mock;
+    findAndCount: jest.Mock;
+    delete: jest.Mock;
+    update: jest.Mock;
+    preload: jest.Mock;
+  };
   let dataSource: { transaction: jest.Mock };
-  let usersService: any;
+  let usersService: { findById: jest.Mock };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -80,7 +87,13 @@ describe('AuctionsService', () => {
   });
 
   describe('resetAuction', () => {
-    let manager: Record<string, any>;
+    let manager: {
+      findOne: jest.Mock;
+      find: jest.Mock;
+      createQueryBuilder: jest.Mock;
+      delete: jest.Mock;
+      update: jest.Mock;
+    };
 
     beforeEach(() => {
       manager = {
@@ -95,7 +108,9 @@ describe('AuctionsService', () => {
         delete: jest.fn().mockResolvedValue({}),
         update: jest.fn().mockResolvedValue({}),
       };
-      dataSource.transaction.mockImplementation((cb: any) => cb(manager));
+      dataSource.transaction.mockImplementation(
+        (cb: (m: typeof manager) => Promise<unknown>) => cb(manager),
+      );
     });
 
     it('calls DataSource.transaction', async () => {

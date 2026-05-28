@@ -86,6 +86,7 @@ export class GoogleAuthService {
   private handleCredential =
     (nonce: string) =>
     async (response: GoogleCredentialResponse): Promise<void> => {
+      this.notify('onLoading');
       try {
         await googleAuth({ credential: response.credential, nonce });
         this.notify('onSuccess');

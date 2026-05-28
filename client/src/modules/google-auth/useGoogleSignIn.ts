@@ -8,12 +8,14 @@ const DASHBOARD_ROUTE = '/crm/auctions';
 
 type SignInState = {
   containerRef: RefObject<HTMLDivElement | null>;
+  isLoading: boolean;
   error: unknown;
 };
 
 export const useGoogleSignIn = (): SignInState => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
@@ -22,8 +24,12 @@ export const useGoogleSignIn = (): SignInState => {
 
     const service = new GoogleAuthService(container, {
       onReady: () => {},
+      onLoading: () => setIsLoading(true),
       onSuccess: () => router.push(DASHBOARD_ROUTE),
-      onFatalError: setError,
+      onFatalError: (cause) => {
+        setIsLoading(false);
+        setError(cause);
+      },
     });
 
     void service.init();
@@ -31,5 +37,5 @@ export const useGoogleSignIn = (): SignInState => {
     return () => service.stopInit();
   }, []);
 
-  return { containerRef, error };
+  return { containerRef, isLoading, error };
 };

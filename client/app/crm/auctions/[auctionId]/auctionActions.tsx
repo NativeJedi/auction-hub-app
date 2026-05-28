@@ -11,7 +11,7 @@ type Auction = {
   status: AuctionStatus;
 };
 
-export function useAuctionActions(auction: Auction): Action[] {
+export function getAuctionActions(auction: Auction): Action[] {
   return [
     {
       component: (
@@ -31,8 +31,7 @@ export function useAuctionActions(auction: Auction): Action[] {
     {
       component: <ResetAuctionButton auctionId={auction.id} />,
       isVisible:
-        auction.status === AuctionStatus.STARTED ||
-        auction.status === AuctionStatus.FINISHED,
+        auction.status === AuctionStatus.STARTED || auction.status === AuctionStatus.FINISHED,
     },
   ];
 }

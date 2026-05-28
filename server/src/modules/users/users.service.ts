@@ -36,10 +36,19 @@ export class UsersService {
   }
 
   // No-op when userId does not exist (TypeORM update returns affected=0); callers guard upstream.
+  // Always sets emailVerified: true — Google has independently confirmed ownership (email_verified assertion in signIn).
   async linkGoogleId(
     userId: User['id'],
     googleId: NonNullable<User['googleId']>,
   ) {
-    await this.usersRepository.update({ id: userId }, { googleId });
+    await this.usersRepository.update(
+      { id: userId },
+      { googleId, emailVerified: true },
+    );
+  }
+
+  // No-op when userId does not exist (TypeORM update returns affected=0); callers guard upstream.
+  async setEmailVerified(userId: User['id']): Promise<void> {
+    await this.usersRepository.update(userId, { emailVerified: true });
   }
 }

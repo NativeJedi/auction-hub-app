@@ -2,7 +2,11 @@ import { cookies } from 'next/headers';
 import { redis } from '../redis';
 import { randomUUID } from 'crypto';
 import { AppServerConfig } from '@/config/server';
-import { SESSION_TTL, SESSION_EXPIRATION_GAP, SESSION_COOKIE_NAME } from '@/src/services/session/constants';
+import {
+  SESSION_TTL,
+  SESSION_EXPIRATION_GAP,
+  SESSION_COOKIE_NAME,
+} from '@/src/services/session/constants';
 import { refreshTokenServer } from '@/src/api/auctions-api/requests/auth';
 
 type SessionData = {
@@ -103,10 +107,4 @@ class SessionStorage {
 
 const sessionStorage = new SessionStorage();
 
-async function getSession(): Promise<Session | null> {
-  const sessionId = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
-  if (!sessionId) return null;
-  return (await sessionStorage.getValidSession(sessionId)) ?? null;
-}
-
-export { sessionStorage, getSession };
+export { sessionStorage };

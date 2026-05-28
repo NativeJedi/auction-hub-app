@@ -18,20 +18,30 @@ npm run dev          # Start full stack with Docker Compose
 npm run prod         # Production build
 npm run test:e2e     # E2E tests
 npm run migration:generate  # Generate TypeORM migration
+npm run lint         # ESLint (client + server)
+npm run format       # Prettier (client + server)
+npm run test         # Unit tests (client + server)
+npm run typecheck    # TypeScript check (client + server)
 ```
 
 ### Client (`cd client`)
 ```bash
 npm run dev          # Next.js dev server with Turbopack (port 3001)
 npm run build        # Production build
-npm run lint         # ESLint
+npm run lint         # ESLint (next lint)
+npm run format       # Prettier
+npm run test         # Vitest unit tests (run mode)
+npm run typecheck    # tsc --noEmit --project tsconfig.test.json
 ```
 
 ### Server (`cd server`)
 ```bash
 npm run start:dev    # NestJS watch mode (port 3000)
 npm run build        # Compile TypeScript
+npm run lint         # ESLint
+npm run format       # Prettier
 npm run test         # Jest unit tests
+npm run typecheck    # tsc --noEmit
 npm run test:e2e     # E2E tests (Testcontainers)
 npm run migration:run   # Run pending migrations
 ```

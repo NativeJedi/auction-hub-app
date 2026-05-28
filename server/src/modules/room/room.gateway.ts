@@ -52,7 +52,7 @@ export class RoomGateway implements OnModuleDestroy {
     this.sub = client.duplicate();
 
     this.sub.on('message', (_, e) => {
-      const event: PublishEvent = JSON.parse(e);
+      const event = JSON.parse(e) as PublishEvent;
 
       this.server.to(event.room).emit(event.ev, event.data);
     });
@@ -97,14 +97,11 @@ export class RoomGateway implements OnModuleDestroy {
 
     const { sub: id, ...otherProps } = payload;
 
-    client.data.user = {
-      id,
-      ...otherProps,
-    };
+    (client.data as Record<string, unknown>).user = { id, ...otherProps };
   }
 
   private readonly publishEvent = (event: PublishEvent) => {
-    this.pub.publish(event.room, JSON.stringify(event));
+    void this.pub.publish(event.room, JSON.stringify(event));
   };
 
   publishRoomEvent(roomId: string, ev: string, data: unknown) {
@@ -161,8 +158,10 @@ export class RoomGateway implements OnModuleDestroy {
       } else {
         this.publishRoomEvent(user.auctionId, 'newLot', result.lot);
       }
-    } catch (e) {
-      client.emit('error', { message: e.message });
+    } catch (e: unknown) {
+      client.emit('error', {
+        message: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
@@ -179,8 +178,10 @@ export class RoomGateway implements OnModuleDestroy {
 
       // TODO: hide email for members channel
       this.publishRoomEvent(user.auctionId, 'newBid', newBid);
-    } catch (e) {
-      client.emit('error', { message: e.message });
+    } catch (e: unknown) {
+      client.emit('error', {
+        message: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 

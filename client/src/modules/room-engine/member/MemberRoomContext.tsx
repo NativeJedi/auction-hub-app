@@ -45,10 +45,7 @@ export function MemberRoomProvider({ auctionId, children }: MemberRoomProviderPr
     return () => engine.destroy();
   }, [engine]);
 
-  const subscribe = useCallback(
-    (notify: () => void) => engine.subscribe(notify),
-    [engine]
-  );
+  const subscribe = useCallback((notify: () => void) => engine.subscribe(notify), [engine]);
 
   const getSnapshot = useCallback(() => engine.getState(), [engine]);
 

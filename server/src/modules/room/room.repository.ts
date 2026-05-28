@@ -16,7 +16,6 @@ import { CreateBidDto } from './dto/bid.dto';
 import { RedisListRepository } from '../redis/repositories/list.repository';
 import { RoomLot } from './entities/room-lot.entity';
 import { Bid } from './entities/bid.entity';
-import { Lot } from '../lots/entities/lots.entity';
 
 @Injectable()
 export class RoomRepository {

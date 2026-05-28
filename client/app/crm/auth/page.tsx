@@ -1,148 +1,62 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useNotification } from '@/src/modules/notifications/NotifcationContext';
-import FormChangeViewButton from '@/app/crm/auth/FormChangeViewButton';
-import { ApiError } from 'next/dist/server/api-utils';
-import { login, register } from '@/src/api/auctions-api-client/requests/auth';
-import { FormBuilder, FormField } from '@/src/modules/forms';
-import { z } from 'zod';
-import FormLayout from '@/src/layouts/FormLayout';
 import HeadedLayout from '@/src/layouts/HeadedLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { GoogleSignInButton } from '@/src/modules/google-auth';
+import { useQueryParam } from '@/src/utils/url';
+import LoginForm from '@/app/crm/auth/components/LoginForm';
+import RegisterForm from '@/app/crm/auth/components/RegisterForm';
+import CheckEmailForm from '@/app/crm/auth/components/CheckEmailForm';
 
-type FormProps = {
-  onChangeView: () => void;
-  onSubmit: () => void;
-  onError: (error: ApiError) => void;
+type AuthView = 'login' | 'register' | 'confirm';
+
+type FormView = {
+  title: string;
+  Component: React.ComponentType;
 };
 
-type FormValues = {
-  email: string;
-  password: string;
-};
-
-const validationSchema = z.object({
-  email: z.string().email('Incorrect email'),
-  password: z.string().min(8, 'Minimum 8 characters'),
-});
-
-const EmailField: FormField = {
-  name: 'email',
-  type: 'email',
-  label: 'Email',
-  placeholder: 'you@example.com',
-  autoComplete: 'email',
-};
-const PasswordField: FormField = {
-  name: 'password',
-  type: 'password',
-  label: 'Password',
-  placeholder: '••••••••',
-  autoComplete: 'new-password',
-};
-
-const fields: FormField[] = [EmailField, PasswordField];
-
-const loginFields: FormField[] = [
-  EmailField,
-  {
-    ...PasswordField,
-    autoComplete: 'current-password',
+const FORM_VIEW_CONFIG: Record<AuthView, FormView> = {
+  login: {
+    title: 'Login',
+    Component: LoginForm,
   },
-];
+  register: {
+    title: 'Register',
+    Component: RegisterForm,
+  },
+  confirm: {
+    title: 'Check your inbox',
+    Component: CheckEmailForm,
+  },
+};
 
-function LoginForm({ onChangeView, onSubmit, onError }: FormProps) {
-  const handleSubmit = (values: FormValues) => {
-    return login(values)
-      .then(() => {
-        onSubmit();
-      })
-      .catch(onError);
-  };
+const getFormView = (param: string | null): FormView => {
+  if (!param) return FORM_VIEW_CONFIG.login;
 
-  return (
-    <FormLayout
-      title="Login"
-      footer={
-        <FormChangeViewButton label="Don't have an account?" onClick={onChangeView}>
-          Register
-        </FormChangeViewButton>
-      }
-    >
-      <GoogleSignInButton />
-      <FormBuilder<FormValues>
-        schema={validationSchema}
-        fields={loginFields}
-        onSubmit={handleSubmit}
-        submitLabel="Login"
-      />
-    </FormLayout>
-  );
-}
+  const formView = FORM_VIEW_CONFIG[param as AuthView];
 
-function RegisterForm({ onChangeView, onSubmit, onError }: FormProps) {
-  const handleSubmit = async (values: FormValues) => {
-    register(values)
-      .then(() => {
-        onSubmit();
-      })
-      .catch(onError);
-  };
+  if (!formView) return FORM_VIEW_CONFIG.login;
 
-  return (
-    <FormLayout
-      title="Register"
-      footer={
-        <FormChangeViewButton label="Already have an account?" onClick={onChangeView}>
-          Login
-        </FormChangeViewButton>
-      }
-    >
-      <GoogleSignInButton />
-      <FormBuilder<FormValues>
-        schema={validationSchema}
-        fields={fields}
-        onSubmit={handleSubmit}
-        submitLabel="Register"
-      />
-    </FormLayout>
-  );
-}
+  return formView;
+};
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
-  const router = useRouter();
-  const { showToast } = useNotification();
+  const type = useQueryParam('type');
 
-  const handleChangeView = () => setIsLogin(!isLogin);
-  const handleSuccessSubmit = () => router.push('/crm/auctions');
-
-  const handleError = (error: ApiError) => {
-    showToast({
-      type: 'error',
-      title: 'Authorization error',
-      message: error.message || 'Authorization failed',
-    });
-  };
+  const FormView = getFormView(type);
 
   return (
     <HeadedLayout showLogout={false}>
       <div className="flex items-center justify-center bg-base-200 transition-colors flex-1">
-        {isLogin ? (
-          <LoginForm
-            onChangeView={handleChangeView}
-            onSubmit={handleSuccessSubmit}
-            onError={handleError}
-          />
-        ) : (
-          <RegisterForm
-            onChangeView={handleChangeView}
-            onSubmit={handleSuccessSubmit}
-            onError={handleError}
-          />
-        )}
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">{FormView.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {type !== 'confirm' && <GoogleSignInButton />}
+            <FormView.Component />
+          </CardContent>
+        </Card>
       </div>
     </HeadedLayout>
   );

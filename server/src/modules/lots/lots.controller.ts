@@ -10,7 +10,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { LotsService } from './lots.service';
-import { AuctionsService } from '../auctions/auctions.service';
 import {
   AddLotImagesDto,
   CreateLotsDto,

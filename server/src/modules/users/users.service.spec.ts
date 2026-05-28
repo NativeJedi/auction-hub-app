@@ -51,8 +51,8 @@ describe('UsersService', () => {
   });
 
   describe('linkGoogleId', () => {
-    it('sets googleId on the target user via repository.update', async () => {
-      // T-001 DoD: linkGoogleId attaches Google to an existing user (FR-5)
+    it('sets googleId and emailVerified atomically via repository.update', async () => {
+      // T-003 FR-5 / AC-5: Google has confirmed ownership; both fields must land in one write
       usersRepo.update.mockResolvedValue({ affected: 1 });
 
       await service.linkGoogleId('u-1', 'g-1');
@@ -60,15 +60,39 @@ describe('UsersService', () => {
       expect(usersRepo.update).toHaveBeenCalledTimes(1);
       expect(usersRepo.update).toHaveBeenCalledWith(
         { id: 'u-1' },
-        { googleId: 'g-1' },
+        { googleId: 'g-1', emailVerified: true },
       );
     });
 
     it('is a no-op (does not throw) when the target user does not exist', async () => {
-      // T-001 §7 Notes: TypeORM update returns affected=0 cleanly; callers guard upstream
+      // TypeORM update returns affected=0 cleanly; callers guard upstream
       usersRepo.update.mockResolvedValue({ affected: 0 });
 
-      await expect(service.linkGoogleId('missing', 'g-1')).resolves.toBeUndefined();
+      await expect(
+        service.linkGoogleId('missing', 'g-1'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('setEmailVerified', () => {
+    it('calls repository.update with { emailVerified: true } and the correct userId', async () => {
+      // T-001 DoD / AC-2: single UPDATE, no SELECT round-trip
+      usersRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.setEmailVerified('u-1');
+
+      expect(usersRepo.update).toHaveBeenCalledTimes(1);
+      expect(usersRepo.update).toHaveBeenCalledWith('u-1', {
+        emailVerified: true,
+      });
+    });
+
+    it('propagates a DB error if the repository throws', async () => {
+      usersRepo.update.mockRejectedValue(new Error('DB connection lost'));
+
+      await expect(service.setEmailVerified('u-1')).rejects.toThrow(
+        'DB connection lost',
+      );
     });
   });
 });

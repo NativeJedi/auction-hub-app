@@ -4,9 +4,11 @@ import {
   Get,
   HttpCode,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard, AuthorizedRequest } from './auth.guard';
@@ -17,10 +19,15 @@ import {
   LoginAuthDto,
   AuthResponseDto,
   RefreshResponseDto,
+  RegisterResponseDto,
+  ConfirmEmailResponseDto,
+  ResendConfirmationDto,
+  ResendConfirmationResponseDto,
 } from './dto/auth.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 
 @ApiBearerAuth('access-token')
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -31,11 +38,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Register new user' })
   @ApiResponse({
     status: 201,
-    description: 'User registered successfully',
-    type: AuthResponseDto,
+    description: 'Registration initiated; confirmation email sent',
+    type: RegisterResponseDto,
   })
   @Post('register')
-  register(@Body() createAuthDto: CreateAuthDto): Promise<AuthResponseDto> {
+  register(@Body() createAuthDto: CreateAuthDto): Promise<RegisterResponseDto> {
     return this.authService.register(createAuthDto);
   }
 
@@ -83,6 +90,33 @@ export class AuthController {
   @Post('google')
   googleAuth(@Body() dto: GoogleAuthDto): Promise<AuthResponseDto> {
     return this.googleAuthService.signIn(dto);
+  }
+
+  @ApiOperation({ summary: 'Confirm email address' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email confirmed',
+    type: ConfirmEmailResponseDto,
+  })
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(200)
+  @Get('confirm-email')
+  confirmEmail(@Query('code') code: string): Promise<ConfirmEmailResponseDto> {
+    return this.authService.confirmEmail(code);
+  }
+
+  @ApiOperation({ summary: 'Resend confirmation email' })
+  @ApiResponse({
+    status: 200,
+    description: 'Confirmation email sent',
+    type: ResendConfirmationResponseDto,
+  })
+  @HttpCode(200)
+  @Post('resend-confirmation')
+  resendConfirmation(
+    @Body() dto: ResendConfirmationDto,
+  ): Promise<ResendConfirmationResponseDto> {
+    return this.authService.resendConfirmation(dto.email);
   }
 
   @ApiOperation({ summary: 'Logout user' })

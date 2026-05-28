@@ -61,7 +61,7 @@ export const useErrorNotification = () => {
   const { showToast } = useNotification();
 
   return useCallback(
-    (error: unknown) => {
+    (error: unknown, title?: string) => {
       if (
         isObjectWithProperty(error, 'data') &&
         isObjectWithProperties<{

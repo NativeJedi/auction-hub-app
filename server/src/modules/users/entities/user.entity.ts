@@ -15,6 +15,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   googleId: string | null;
 
+  @Column({ default: false })
+  emailVerified: boolean;
+
   @OneToMany(() => Auction, (auction) => auction.owner)
   auctions?: Auction[];
 }

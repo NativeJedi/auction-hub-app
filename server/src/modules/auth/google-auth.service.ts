@@ -106,6 +106,9 @@ export class GoogleAuthService {
   ): Promise<User> {
     const byGoogleId = await this.usersService.findByGoogleId(payload.sub);
     if (byGoogleId) {
+      if (!byGoogleId.emailVerified) {
+        await this.usersService.setEmailVerified(byGoogleId.id);
+      }
       return byGoogleId;
     }
 
@@ -119,6 +122,7 @@ export class GoogleAuthService {
       email: payload.email,
       googleId: payload.sub,
       password: null,
+      emailVerified: true,
     });
   }
 

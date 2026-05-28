@@ -66,7 +66,10 @@ describe('ResetAuctionButton', () => {
     const user = userEvent.setup();
     let resolveReset!: () => void;
     mockResetAuction.mockImplementation(
-      () => new Promise<void>((resolve) => { resolveReset = resolve; }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveReset = resolve;
+        })
     );
     mockConfirmModal.show.mockResolvedValue({ result: 'submitted', data: undefined });
 

@@ -55,7 +55,7 @@ const BidController = () => {
       {isWinning && (
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-success flex-shrink-0" />
-          <span className="text-xs font-medium text-success">You're winning</span>
+          <span className="text-xs font-medium text-success">You&apos;re winning</span>
           <span className="ml-auto text-xs font-medium text-success">
             {leadingAmount.toLocaleString()} {lotCurrency}
           </span>

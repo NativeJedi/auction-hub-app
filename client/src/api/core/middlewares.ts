@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-function withNextErrorResponse(handler: (req: Request, options?: any) => Promise<Response>) {
-  return async (req: Request, options?: any) => {
+function withNextErrorResponse(handler: (req: Request, options?: any) => Promise<NextResponse>) {
+  return async (req: Request, options?: any): Promise<NextResponse> => {
     try {
       return await handler(req, options);
     } catch (error: any) {

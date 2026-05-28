@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { StartedTestContainer } from 'testcontainers';
@@ -62,7 +63,7 @@ describe('App E2E', () => {
     type TestCase = {
       route: string;
       method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-      body?: any;
+      body?: Record<string, unknown>;
     };
 
     const TEST_CASES: TestCase[] = [
@@ -102,12 +103,12 @@ describe('App E2E', () => {
 
     let requestService: RequestService;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       requestService = new RequestService(app);
     });
 
     TEST_CASES.forEach(({ route, body, method }) => {
-      test(`${[route]} should return 401 if not authenticated`, async () => {
+      test(`${route} should return 401 if not authenticated`, async () => {
         await requestService
           .makeRequest({
             url: route,
@@ -123,7 +124,7 @@ describe('App E2E', () => {
   describe('Auth', () => {
     let testUser: TestUser;
 
-    beforeAll(async () => {
+    beforeAll(() => {
       testUser = new TestUser(app, {
         email: 'test@example.com',
         password: 'password123',
@@ -211,7 +212,7 @@ describe('App E2E', () => {
       });
     });
 
-    let createdAuction: any;
+    let createdAuction: { id: string; [key: string]: unknown };
 
     test('[/auctions] POST should create new auction', async () => {
       const TEST_AUCTION = {
@@ -226,7 +227,7 @@ describe('App E2E', () => {
         })
         .expect(201);
 
-      createdAuction = response.body;
+      createdAuction = response.body as typeof createdAuction;
 
       expect(response.body).toMatchObject({
         id: expect.any(String),
@@ -281,7 +282,7 @@ describe('App E2E', () => {
   describe('Lots', () => {
     let testUser: TestUser;
 
-    let createdLot: any;
+    let createdLot: { id: string; [key: string]: unknown };
 
     beforeAll(async () => {
       testUser = new TestUser(app, {
@@ -322,7 +323,7 @@ describe('App E2E', () => {
         })
         .expect(201);
 
-      [createdLot] = response.body;
+      [createdLot] = response.body as [typeof createdLot];
 
       expect(createdLot).toMatchObject({
         id: expect.any(String),

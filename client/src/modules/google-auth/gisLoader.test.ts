@@ -16,18 +16,14 @@ const clearWindowGoogle = () => {
 };
 
 const fireLoadOnLastScript = () => {
-  const scripts = document.querySelectorAll<HTMLScriptElement>(
-    `script[src="${GIS_SCRIPT_SRC}"]`,
-  );
+  const scripts = document.querySelectorAll<HTMLScriptElement>(`script[src="${GIS_SCRIPT_SRC}"]`);
   const last = scripts[scripts.length - 1];
   if (!last) throw new Error('expected a GIS <script> tag in the document');
   last.dispatchEvent(new Event('load'));
 };
 
 const fireErrorOnLastScript = () => {
-  const scripts = document.querySelectorAll<HTMLScriptElement>(
-    `script[src="${GIS_SCRIPT_SRC}"]`,
-  );
+  const scripts = document.querySelectorAll<HTMLScriptElement>(`script[src="${GIS_SCRIPT_SRC}"]`);
   const last = scripts[scripts.length - 1];
   if (!last) throw new Error('expected a GIS <script> tag in the document');
   last.dispatchEvent(new Event('error'));
@@ -86,9 +82,7 @@ describe('loadGisScript', () => {
 
     try {
       const { loadGisScript } = await import('./gisLoader');
-      await expect(loadGisScript()).rejects.toThrow(
-        'GIS can only be loaded in the browser',
-      );
+      await expect(loadGisScript()).rejects.toThrow('GIS can only be loaded in the browser');
     } finally {
       globalThis.window = originalWindow;
     }

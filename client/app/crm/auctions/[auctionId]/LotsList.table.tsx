@@ -69,7 +69,13 @@ const getColumns = (auctionId: Auction['id'], isLocked?: boolean): Columns<Lot> 
   },
 ];
 
-const LotsList = async ({ auctionId, isLocked }: { auctionId: Auction['id']; isLocked?: boolean }) => {
+const LotsList = async ({
+  auctionId,
+  isLocked,
+}: {
+  auctionId: Auction['id'];
+  isLocked?: boolean;
+}) => {
   const lots = await fetchLotsServer(auctionId);
 
   const columns = getColumns(auctionId, isLocked);

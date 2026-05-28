@@ -1,5 +1,10 @@
 import type BaseSocket from '@/src/sockets/base-socket';
-import type { PublicBidInfo, RoomInfoResponseDto, RoomLot, SendInviteDto } from '@/src/api/dto/room.dto';
+import type {
+  PublicBidInfo,
+  RoomInfoResponseDto,
+  RoomLot,
+  SendInviteDto,
+} from '@/src/api/dto/room.dto';
 import { fetchRoomInfo, sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import { RoomEngine } from '../core/RoomEngine';
 import type { PublicRoomData } from './types';
@@ -15,7 +20,7 @@ export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
   constructor(
     auctionId: string,
     socket: BaseSocket,
-    private readonly api: PublicRoomApi = defaultApi,
+    private readonly api: PublicRoomApi = defaultApi
   ) {
     super(auctionId, socket);
   }

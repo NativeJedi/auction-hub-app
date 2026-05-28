@@ -18,8 +18,18 @@ const makeLot = (overrides: Record<string, unknown> = {}): any => ({
 
 describe('LotsService', () => {
   let service: LotsService;
-  let lotsRepo: any;
-  let auctionsService: any;
+  let lotsRepo: {
+    find: jest.Mock;
+    findOne: jest.Mock;
+    save: jest.Mock;
+    delete: jest.Mock;
+    update: jest.Mock;
+  };
+  let auctionsService: {
+    findOne: jest.Mock;
+    findEditableOne: jest.Mock;
+    checkEditableStatus: jest.Mock;
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

@@ -64,7 +64,10 @@ export default function AuctionPageHeader({
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
         {meta && (
           <p className="text-xs text-muted-foreground">
-            {meta.filter((m) => m.isVisible !== false).map((m) => m.text).join(' · ')}
+            {meta
+              .filter((m) => m.isVisible !== false)
+              .map((m) => m.text)
+              .join(' · ')}
           </p>
         )}
       </div>

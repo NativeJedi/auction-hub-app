@@ -20,13 +20,13 @@ export class RedisQueueRepository<T> extends BaseRepository {
   async pop(key: CombinedKey): Promise<T | null> {
     const stringValue = await this.client.lpop(this.getFullKey(key));
 
-    return stringValue ? JSON.parse(stringValue) : null;
+    return stringValue ? (JSON.parse(stringValue) as T) : null;
   }
 
   async getAll(key: CombinedKey): Promise<T[]> {
     const stringValues = await this.client.lrange(this.getFullKey(key), 0, -1);
 
-    const values: T[] = stringValues.map((string) => JSON.parse(string));
+    const values: T[] = stringValues.map((string) => JSON.parse(string) as T);
 
     return values;
   }
