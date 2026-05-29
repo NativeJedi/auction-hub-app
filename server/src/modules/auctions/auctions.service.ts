@@ -21,6 +21,8 @@ import {
   QueryPaginationDto,
 } from '../pagination/pagination.dto';
 
+export const MAX_AUCTIONS_PER_OWNER = 100;
+
 @Injectable()
 export class AuctionsService {
   constructor(
@@ -46,6 +48,16 @@ export class AuctionsService {
     ownerId: User['id'],
   ): Promise<AuctionDto> {
     const owner = await this.findOwner(ownerId);
+
+    const auctionsCount = await this.auctionsRepository.count({
+      where: { owner: { id: owner.id } },
+    });
+
+    if (auctionsCount >= MAX_AUCTIONS_PER_OWNER) {
+      throw new BadRequestException(
+        `You cannot create more than ${MAX_AUCTIONS_PER_OWNER} auctions`,
+      );
+    }
 
     const auction = {
       name,

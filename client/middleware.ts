@@ -6,6 +6,12 @@ const publicRoutes = ['/crm/auth', '/room', '/results', '/confirm-email'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  // The landing page owns `/` and is reachable by everyone. The slice-based
+  // publicRoutes check below uses `path.includes`, so a '/' slice would match
+  // every path — the root must be an exact match instead (ADR-FEAT-009-01 §7).
+  if (path === '/') return NextResponse.next();
+
   const isPublicRoute = publicRoutes.some((routeSlice) => path.includes(routeSlice));
 
   if (isPublicRoute) return NextResponse.next();

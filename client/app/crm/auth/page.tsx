@@ -46,7 +46,7 @@ export default function AuthPage() {
   const FormView = getFormView(type);
 
   return (
-    <HeadedLayout showLogout={false}>
+    <HeadedLayout showLogout={false} logoHref="/">
       <div className="flex items-center justify-center bg-base-200 transition-colors flex-1">
         <Card className="w-full max-w-md">
           <CardHeader>

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
-import { AuctionsService } from './auctions.service';
+import { AuctionsService, MAX_AUCTIONS_PER_OWNER } from './auctions.service';
 import { Auction, AuctionStatus } from './entities/auction.entity';
 import { UsersService } from '../users/users.service';
 import { LotStatus } from '../lots/entities/lots.entity';
@@ -42,6 +42,7 @@ describe('AuctionsService', () => {
   let auctionRepo: {
     findOne: jest.Mock;
     save: jest.Mock;
+    count: jest.Mock;
     findAndCount: jest.Mock;
     delete: jest.Mock;
     update: jest.Mock;
@@ -63,6 +64,7 @@ describe('AuctionsService', () => {
           useValue: {
             findOne: jest.fn(),
             save: jest.fn(),
+            count: jest.fn(),
             findAndCount: jest.fn(),
             delete: jest.fn(),
             update: jest.fn(),
@@ -84,6 +86,33 @@ describe('AuctionsService', () => {
     auctionRepo = module.get(getRepositoryToken(Auction));
     dataSource = module.get(getDataSourceToken());
     usersService = module.get(UsersService);
+  });
+
+  describe('create', () => {
+    it('throws BadRequestException when owner already has the max number of auctions', async () => {
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.count.mockResolvedValue(MAX_AUCTIONS_PER_OWNER);
+
+      await expect(
+        service.create({ name: 'New' }, 'user-1'),
+      ).rejects.toThrow(BadRequestException);
+      expect(auctionRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('saves and returns the auction without owner when under the limit', async () => {
+      usersService.findById.mockResolvedValue({ id: 'user-1' });
+      auctionRepo.count.mockResolvedValue(MAX_AUCTIONS_PER_OWNER - 1);
+      auctionRepo.save.mockResolvedValue({
+        id: 'auction-1',
+        name: 'New',
+        owner: { id: 'user-1' },
+      });
+
+      const result = await service.create({ name: 'New' }, 'user-1');
+
+      expect(result.name).toBe('New');
+      expect(result).not.toHaveProperty('owner');
+    });
   });
 
   describe('resetAuction', () => {
