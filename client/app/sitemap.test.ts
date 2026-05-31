@@ -1,7 +1,19 @@
-import { describe, it } from 'vitest';
+// @vitest-environment node
+import { describe, expect, it } from 'vitest';
+import sitemap from './sitemap';
 
-// Scaffold — filled in by sdlc-tests.
-// sitemap() is a pure function returning a MetadataRoute.Sitemap array.
 describe('sitemap', () => {
-  it.todo('returns an entry for the landing root "/"');
+  it('returns an entry for the landing root "/"', () => {
+    const entries = sitemap();
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].url).toMatch(/\/$/);
+    expect(entries[0].priority).toBe(1);
+  });
+
+  it('marks the landing entry with a lastModified date', () => {
+    const entries = sitemap();
+
+    expect(entries[0].lastModified).toBeInstanceOf(Date);
+  });
 });
