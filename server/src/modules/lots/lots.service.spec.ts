@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { LotsService } from './lots.service';
+import { LotsService, MAX_LOTS_PER_AUCTION } from './lots.service';
 import { Lot } from './entities/lots.entity';
 import { LotImage } from './entities/lot-image.entity';
 import { AuctionsService } from '../auctions/auctions.service';
@@ -24,6 +24,7 @@ describe('LotsService', () => {
     save: jest.Mock;
     delete: jest.Mock;
     update: jest.Mock;
+    count: jest.Mock;
   };
   let auctionsService: {
     findOne: jest.Mock;
@@ -43,6 +44,7 @@ describe('LotsService', () => {
             save: jest.fn(),
             delete: jest.fn(),
             update: jest.fn(),
+            count: jest.fn().mockResolvedValue(0),
           },
         },
         {
@@ -104,6 +106,19 @@ describe('LotsService', () => {
         'auction-1',
       );
       expect(result[0].name).toBe('Lot 1');
+    });
+
+    it('throws BadRequestException when new lots exceed the per-auction limit', async () => {
+      auctionsService.findEditableOne.mockResolvedValue({ id: 'auction-1' });
+      lotsRepo.count.mockResolvedValue(MAX_LOTS_PER_AUCTION - 1);
+
+      await expect(
+        service.createLots('user-1', 'auction-1', [
+          { name: 'Lot 1' } as any,
+          { name: 'Lot 2' } as any,
+        ]),
+      ).rejects.toThrow(BadRequestException);
+      expect(lotsRepo.save).not.toHaveBeenCalled();
     });
   });
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -22,6 +23,8 @@ import { StorageService } from '../storage/storage.service';
 import { LotImage } from './entities/lot-image.entity';
 
 const getS3KeyPrefix = (lotId: Lot['id']) => `lots/${lotId}`;
+
+export const MAX_LOTS_PER_AUCTION = 50;
 
 @Injectable()
 export class LotsService {
@@ -60,11 +63,20 @@ export class LotsService {
     auctionId: Auction['id'],
     lots: CreateLotDto[],
   ) {
-    // TODO: limit lots creation count
     const auction = await this.auctionsService.findEditableOne(
       userId,
       auctionId,
     );
+
+    const existingLotsCount = await this.lotsRepository.count({
+      where: { auction: { id: auctionId } },
+    });
+
+    if (existingLotsCount + lots.length > MAX_LOTS_PER_AUCTION) {
+      throw new BadRequestException(
+        `An auction cannot have more than ${MAX_LOTS_PER_AUCTION} lots`,
+      );
+    }
 
     const createdLots = lots.map((lot) => ({
       ...lot,

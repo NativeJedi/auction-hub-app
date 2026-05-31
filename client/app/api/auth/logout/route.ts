@@ -3,7 +3,7 @@ import { withNextErrorResponse } from '@/src/api/core/middlewares';
 import { sessionStorage } from '@/src/services/session';
 import { logoutServer } from '@/src/api/auctions-api/requests/auth';
 import { cookies } from 'next/headers';
-import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
+import { SESSION_COOKIE_NAME, SESSION_COOKIE_SETTINGS } from '@/src/services/session/constants';
 import { UnauthorizedError } from '@/src/utils/errors';
 
 const logout = async () => {
@@ -18,6 +18,10 @@ const logout = async () => {
   const result = await logoutServer();
 
   const response = NextResponse.json(result);
+
+  // Mirror login's cookie settings (path/httpOnly/sameSite) with maxAge 0 so the
+  // browser drops the cookie — otherwise the landing keeps reading it as authenticated.
+  response.cookies.set(SESSION_COOKIE_NAME, '', { ...SESSION_COOKIE_SETTINGS, maxAge: 0 });
 
   await sessionStorage.delete(sessionId.value);
 

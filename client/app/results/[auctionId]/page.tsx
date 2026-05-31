@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import { fetchAuctionResultsServer } from '@/src/api/auctions-api/requests/auctions';
 import { formatISODate } from '@/src/utils/date';
 import AuctionPageHeader from '@/src/components/AuctionPageHeader';
 import ResultsStats from './components/ResultsStats';
 import LotResultsTable from './components/LotResultsTable';
 import HeadedLayout from '@/src/layouts/HeadedLayout';
+
+// Per-auction results are not public search content — keep them out of the index.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 type ResultsPageProps = {
   params: Promise<{ auctionId: string }>;
@@ -17,7 +23,7 @@ const AuctionResultsPage = async ({ params, searchParams }: ResultsPageProps) =>
   const isAdmin = role === 'admin';
 
   return (
-    <HeadedLayout showControls={isAdmin}>
+    <HeadedLayout showControls={isAdmin} logoHref={isAdmin ? '/crm/auctions' : '/'}>
       <AuctionPageHeader
         back={
           isAdmin ? { href: `/crm/auctions/${auctionId}`, label: 'Back to auction' } : undefined
