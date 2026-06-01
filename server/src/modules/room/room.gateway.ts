@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
 import { RoomService } from './room.service';
 import { BidDto, CreateBidDto } from './dto/bid.dto';
-import { Injectable, OnModuleDestroy, UseGuards } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, UseFilters, UseGuards } from '@nestjs/common';
 import { WSRoomRolesGuard } from './guards/ws-roles.guard';
 import {
   RoomAuthorizedMember,
@@ -20,6 +20,7 @@ import {
   RoomRole,
 } from './entities/room.entity';
 import { RoomRoles, RoomSockerUser } from './guards/decorators';
+import { WsExceptionFilter } from './filters/ws-exception.filter';
 
 type PublishEvent = {
   room: string;
@@ -28,6 +29,7 @@ type PublishEvent = {
 };
 
 @Injectable()
+@UseFilters(WsExceptionFilter)
 @WebSocketGateway({
   cors: true,
   namespace: '/ws/room',

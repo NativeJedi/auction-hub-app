@@ -1,4 +1,5 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class BidDto {
   @ApiProperty({
@@ -25,6 +26,8 @@ export class BidDto {
   })
   email: string;
 
+  @IsNumber()
+  @IsPositive()
   @ApiProperty({
     description: 'Amount of the bid placed by the member',
     example: 150,
@@ -33,6 +36,8 @@ export class BidDto {
 }
 
 export class CreateBidDto extends PickType(BidDto, ['amount']) {
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({
     description: 'ID of the lot the bid is placed on',
     example: 'lot_123e4567-e89b-12d3-a456-426614174000',
