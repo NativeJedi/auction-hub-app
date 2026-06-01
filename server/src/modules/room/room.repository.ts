@@ -138,9 +138,7 @@ export class RoomRepository {
   ): Promise<Bid | undefined> {
     const activeLotBids = await this.getActiveLotBids(roomId);
 
-    return activeLotBids.length
-      ? activeLotBids[activeLotBids.length - 1]
-      : activeLotBids[0];
+    return activeLotBids.length ? activeLotBids[0] : undefined;
   }
 
   async getActiveLotId(roomId: Room['auctionId']): Promise<string | undefined> {

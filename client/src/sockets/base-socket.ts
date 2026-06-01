@@ -32,7 +32,9 @@ class BaseSocket {
   }
 
   disconnect() {
-    this.socket?.disconnect?.();
+    const socket = this.socket;
+    this.socket = null;
+    socket?.disconnect?.();
   }
 
   onEvent<T = void>(event: string, callback: (data: T) => void) {
