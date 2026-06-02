@@ -105,6 +105,7 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
     });
 
     this.socket.onEvent<PublicBidInfo>('newBid', (bid) => {
+      if (this.data.bids.some((b) => b.id === bid.id)) return;
       this.setState({
         bids: sortBidsByAmountDesc([bid, ...this.data.bids]),
         bidIncrement: 0,

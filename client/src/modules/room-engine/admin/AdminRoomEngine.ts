@@ -72,6 +72,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
     });
 
     this.socket.onEvent<RoomBid>('newBid', (bid) => {
+      if (this.data.bids.some((b) => b.id === bid.id)) return;
       this.setState({ bids: sortBidsByAmountDesc([bid, ...this.data.bids]) });
     });
 

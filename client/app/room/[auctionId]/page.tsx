@@ -13,7 +13,7 @@ import { usePublicRoom } from '@/src/modules/room-engine/public/hooks/usePublicR
 const useInviteUrl = () => {
   const auctionId = useAuctionId();
 
-  if (!window) return '';
+  if (typeof window === 'undefined') return '';
 
   return `${window.location.origin}/room/${auctionId}/invite`;
 };
