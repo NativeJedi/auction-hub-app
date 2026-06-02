@@ -31,23 +31,32 @@ describe('CreateBidDto', () => {
   });
 
   it('rejects a non-numeric amount (string)', async () => {
-    const errors = await validatePayload({ ...validPayload, amount: 'one hundred' });
+    const errors = await validatePayload({
+      ...validPayload,
+      amount: 'one hundred',
+    });
 
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('amount');
   });
 
   it('rejects a missing amount', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { amount: _a, ...withoutAmount } = validPayload;
-    const errors = await validatePayload(withoutAmount as Record<string, unknown>);
+    const errors = await validatePayload(
+      withoutAmount as Record<string, unknown>,
+    );
 
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => e.property === 'amount')).toBe(true);
   });
 
   it('rejects a missing lotId', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { lotId: _l, ...withoutLotId } = validPayload;
-    const errors = await validatePayload(withoutLotId as Record<string, unknown>);
+    const errors = await validatePayload(
+      withoutLotId as Record<string, unknown>,
+    );
 
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => e.property === 'lotId')).toBe(true);

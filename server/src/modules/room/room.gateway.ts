@@ -10,8 +10,13 @@ import {
 import { Server, Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
 import { RoomService } from './room.service';
-import { BidDto, CreateBidDto } from './dto/bid.dto';
-import { Injectable, OnModuleDestroy, UseFilters, UseGuards } from '@nestjs/common';
+import { CreateBidDto, PublicBidDto } from './dto/bid.dto';
+import {
+  Injectable,
+  OnModuleDestroy,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import { WSRoomRolesGuard } from './guards/ws-roles.guard';
 import {
   RoomAuthorizedMember,
@@ -176,10 +181,14 @@ export class RoomGateway implements OnModuleDestroy {
     @RoomSockerUser() user: RoomAuthorizedMember,
   ) {
     try {
-      const newBid: BidDto = await this.roomService.placeBid(user, bid);
-
-      // TODO: hide email for members channel
-      this.publishRoomEvent(user.auctionId, 'newBid', newBid);
+      const newBid = await this.roomService.placeBid(user, bid);
+      const publicBid: PublicBidDto = {
+        id: newBid.id,
+        userId: newBid.userId,
+        name: newBid.name,
+        amount: newBid.amount,
+      };
+      this.publishRoomEvent(user.auctionId, 'newBid', publicBid);
     } catch (e: unknown) {
       client.emit('error', {
         message: e instanceof Error ? e.message : String(e),

@@ -1,5 +1,5 @@
 import type BaseSocket from '@/src/sockets/base-socket';
-import type { Room, RoomBid, RoomInvite, RoomLot, RoomMember } from '@/src/api/dto/room.dto';
+import type { PublicBidInfo, Room, RoomInvite, RoomLot, RoomMember } from '@/src/api/dto/room.dto';
 import {
   startAuction,
   fetchAdminRoomInfo,
@@ -71,7 +71,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
       this.onFinishedCallback?.();
     });
 
-    this.socket.onEvent<RoomBid>('newBid', (bid) => {
+    this.socket.onEvent<PublicBidInfo>('newBid', (bid) => {
       if (this.data.bids.some((b) => b.id === bid.id)) return;
       this.setState({ bids: sortBidsByAmountDesc([bid, ...this.data.bids]) });
     });

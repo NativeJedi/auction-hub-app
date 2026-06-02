@@ -1,4 +1,4 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class BidDto {
@@ -35,6 +35,8 @@ export class BidDto {
   })
   amount: number;
 }
+
+export class PublicBidDto extends OmitType(BidDto, ['email']) {}
 
 export class CreateBidDto extends PickType(BidDto, ['amount']) {
   @IsString()
