@@ -34,4 +34,64 @@ describe('MemberRoomEngine', () => {
     });
     expect(setRoomTokenSpy).toHaveBeenCalledWith('auction-1', 'member-token');
   });
+
+  describe('placeBid', () => {
+    const mockApi = { fetchRoomInfo: vi.fn(), confirmRoomInvite: vi.fn() };
+
+    it('emits placeBid with the absolute amount (leadingAmount + bidIncrement) and the active lotId', () => {
+      const engine = new MemberRoomEngine('auction-1', stubSocket, mockApi);
+      (engine as any).setState({
+        bids: [{ id: 'b1', userId: 'u1', name: 'A', email: 'a@e', amount: 1000 }],
+        activeLot: { id: 'lot-1', startPrice: 100 },
+        bidIncrement: 500,
+      });
+
+      engine.placeBid();
+
+      expect(stubSocket.emitEvent).toHaveBeenCalledWith('placeBid', {
+        amount: 1500,
+        lotId: 'lot-1',
+      });
+    });
+
+    it('uses the active lot startPrice as the baseline when no leading bid exists', () => {
+      const engine = new MemberRoomEngine('auction-1', stubSocket, mockApi);
+      (engine as any).setState({
+        bids: [],
+        activeLot: { id: 'lot-1', startPrice: 100 },
+        bidIncrement: 50,
+      });
+
+      engine.placeBid();
+
+      expect(stubSocket.emitEvent).toHaveBeenCalledWith('placeBid', {
+        amount: 150,
+        lotId: 'lot-1',
+      });
+    });
+  });
+
+  describe('newBid event', () => {
+    it('keeps the bids list sorted by amount descending after a new bid arrives', () => {
+      const engine = new MemberRoomEngine('auction-1', stubSocket, {
+        fetchRoomInfo: vi.fn(),
+        confirmRoomInvite: vi.fn(),
+      });
+      (engine as any).registerSocketEvents();
+      (engine as any).setState({
+        bids: [
+          { id: 'b1', amount: 1000 },
+          { id: 'b2', amount: 500 },
+        ],
+      });
+
+      const onEventMock = stubSocket.onEvent as unknown as ReturnType<typeof vi.fn>;
+      const newBidCall = onEventMock.mock.calls.find((call) => call[0] === 'newBid');
+      const newBidHandler = newBidCall![1] as (bid: unknown) => void;
+
+      newBidHandler({ id: 'b3', amount: 700 });
+
+      expect(engine.getState().bids.map((b) => b.amount)).toEqual([1000, 700, 500]);
+    });
+  });
 });

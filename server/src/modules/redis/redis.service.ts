@@ -5,6 +5,7 @@ import { RedisSimpleRepository } from './repositories/simple.repository';
 import { RedisQueueRepository } from './repositories/queue.repository';
 import { RedisHashRepository } from './repositories/hash.repository';
 import { RedisListRepository } from './repositories/list.repository';
+import { RedisSortedSetRepository } from './repositories/sorted-set.repository';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -48,6 +49,13 @@ export class RedisService implements OnModuleDestroy {
     ttlSeconds: number,
   ): RedisListRepository<T> {
     return new RedisListRepository<T>(this.client, key, ttlSeconds);
+  }
+
+  createSortedSetRepository<T>(
+    key: string,
+    ttlSeconds: number,
+  ): RedisSortedSetRepository<T> {
+    return new RedisSortedSetRepository<T>(this.client, key, ttlSeconds);
   }
 
   getClient() {

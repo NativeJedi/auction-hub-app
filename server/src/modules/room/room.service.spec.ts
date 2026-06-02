@@ -396,6 +396,11 @@ describe('RoomService', () => {
           push: jest.fn(),
           clear: jest.fn(),
         }),
+        createSortedSetRepository: jest.fn().mockReturnValue({
+          add: jest.fn(),
+          getAllDesc: jest.fn(),
+          clear: jest.fn(),
+        }),
       } as unknown as RedisService;
       repo = new RoomRepository(mockAppConfig, mockRedisService);
     });

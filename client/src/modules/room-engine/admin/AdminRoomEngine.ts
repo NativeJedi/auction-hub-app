@@ -8,6 +8,7 @@ import {
 } from '@/src/api/auctions-api-client/requests/room';
 import { AdminRoomData } from './types';
 import { RoomEngine } from '../core/RoomEngine';
+import { sortBidsByAmountDesc } from '../core/sortBids';
 
 export interface AdminRoomApi {
   fetchAdminRoomInfo: typeof fetchAdminRoomInfo;
@@ -71,7 +72,7 @@ export class AdminRoomEngine extends RoomEngine<AdminRoomData> {
     });
 
     this.socket.onEvent<RoomBid>('newBid', (bid) => {
-      this.setState({ bids: [bid, ...this.data.bids] });
+      this.setState({ bids: sortBidsByAmountDesc([bid, ...this.data.bids]) });
     });
 
     this.socket.onEvent<RoomLot>('newLot', (lot) => {

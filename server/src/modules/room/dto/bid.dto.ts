@@ -29,7 +29,8 @@ export class BidDto {
   @IsNumber()
   @IsPositive()
   @ApiProperty({
-    description: 'Amount of the bid placed by the member',
+    description:
+      'Absolute price the member is bidding (the full target amount, not an increment over the current bid)',
     example: 150,
   })
   amount: number;

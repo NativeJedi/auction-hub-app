@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateInviteDto } from './dto/invite.dto';
 import { CreateBidDto } from './dto/bid.dto';
 import { RedisListRepository } from '../redis/repositories/list.repository';
+import { RedisSortedSetRepository } from '../redis/repositories/sorted-set.repository';
 import { RoomLot } from './entities/room-lot.entity';
 import { Bid } from './entities/bid.entity';
 
@@ -29,7 +30,7 @@ export class RoomRepository {
 
   private readonly activeLotId: RedisSimpleRepository<string>;
 
-  private readonly bids: RedisListRepository<Bid>;
+  private readonly bids: RedisSortedSetRepository<Bid>;
 
   constructor(
     private readonly appConfig: AppConfigService,
@@ -59,7 +60,7 @@ export class RoomRepository {
       ttl,
     );
 
-    this.bids = this.redisService.createListRepository<Bid>('bids', ttl);
+    this.bids = this.redisService.createSortedSetRepository<Bid>('bids', ttl);
   }
 
   private getRoomKey(roomId: string) {
@@ -84,7 +85,20 @@ export class RoomRepository {
 
     const roomKey = this.getRoomKey(room.auctionId);
 
-    await this.rooms.set(roomKey, room);
+    // Atomic create: NX prevents a duplicate "start" from overwriting a live room.
+    const created = await this.redisService
+      .getClient()
+      .set(
+        this.rooms.getFullKey(roomKey),
+        JSON.stringify(room),
+        'EX',
+        this.appConfig.jwt.JWT_ROOM_TTL,
+        'NX',
+      );
+
+    if (created === null) {
+      throw new ConflictException('Room already exists');
+    }
 
     await this.setActiveLot(room.auctionId, lots[0].id);
 
@@ -167,7 +181,7 @@ export class RoomRepository {
   ): Promise<Bid[]> {
     const roomKey = this.getBidsKey(roomId, lotId);
 
-    return this.bids.getAll(roomKey);
+    return this.bids.getAllDesc(roomKey);
   }
 
   async getRoomInfo(roomId: Room['auctionId']) {
@@ -325,19 +339,22 @@ export class RoomRepository {
       throw new ConflictException('Active lot is changed');
     }
 
-    const currentBid = await this.getLotCurrentBid(roomId, activeLot.id);
-
+    // `bid.amount` is the absolute price the bidder committed to. It is stored
+    // as-is, scored by amount in a sorted set: ZADD is atomic (no lost bids)
+    // and the collection stays ordered, so the highest bid is always the top.
     const newBid: Bid = {
       id: uuidv4(),
       userId: member.id,
       name: member.name,
       email: member.email,
-      amount: currentBid
-        ? currentBid.amount + bid.amount
-        : bid.amount + activeLot.startPrice,
+      amount: bid.amount,
     };
 
-    await this.bids.push(this.getBidsKey(roomId, activeLot.id), newBid);
+    await this.bids.add(
+      this.getBidsKey(roomId, activeLot.id),
+      newBid,
+      newBid.amount,
+    );
 
     return newBid;
   }
