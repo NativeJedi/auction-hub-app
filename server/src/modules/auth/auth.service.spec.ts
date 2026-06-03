@@ -20,7 +20,7 @@ describe('AuthService', () => {
     accessToken: { generate: jest.Mock };
     refreshToken: { generate: jest.Mock };
   };
-  let emailService: { sendConfirmationEmail: jest.Mock };
+  let emailService: { sendConfirmationEmail: jest.Mock; sendAlreadyRegisteredEmail: jest.Mock };
   let resendLimits: { get: jest.Mock; set: jest.Mock };
   let confirmCodes: { get: jest.Mock; set: jest.Mock; getDel: jest.Mock };
   let bcryptCompareSpy: jest.SpyInstance;
@@ -46,7 +46,10 @@ describe('AuthService', () => {
       set: jest.fn().mockResolvedValue(undefined),
       getDel: jest.fn(),
     };
-    emailService = { sendConfirmationEmail: jest.fn() };
+    emailService = {
+      sendConfirmationEmail: jest.fn(),
+      sendAlreadyRegisteredEmail: jest.fn().mockResolvedValue(undefined),
+    };
 
     const redisService = {
       createSimpleRepository: jest
@@ -124,12 +127,14 @@ describe('AuthService', () => {
       expect(tokenService.refreshToken.generate).not.toHaveBeenCalled();
     });
 
-    it('returns pending_confirmation silently when email already exists (M-4 anti-enumeration)', async () => {
-      // M-4: existing email must not reveal account existence via a different response shape
+    it('equalizes timing with bcrypt, notifies the owner, and returns pending_confirmation when email already exists (M-4 anti-enumeration)', async () => {
+      // M-4: response shape is identical to the new-user path; timing is equalized via bcrypt;
+      // the legitimate owner receives an email so they know to log in instead
       usersService.findByEmail.mockResolvedValue({
         id: 'u-existing',
         email: 'test@example.com',
       });
+      bcryptHashSpy.mockResolvedValue('hashed-pw' as never);
 
       const result = await service.register({
         email: 'test@example.com',
@@ -139,6 +144,8 @@ describe('AuthService', () => {
       expect(result).toEqual({ status: 'pending_confirmation' });
       expect(usersService.create).not.toHaveBeenCalled();
       expect(emailService.sendConfirmationEmail).not.toHaveBeenCalled();
+      expect(bcryptHashSpy).toHaveBeenCalledWith('secret', 10);
+      expect(emailService.sendAlreadyRegisteredEmail).toHaveBeenCalledWith('test@example.com');
     });
   });
 
