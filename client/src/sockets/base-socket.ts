@@ -16,7 +16,6 @@ class BaseSocket {
 
       this.socket.once('connect', () => {
         console.log('Socket connected');
-        this.emitEvent('join');
         resolve();
       });
 

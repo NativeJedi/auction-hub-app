@@ -1,8 +1,8 @@
-import { Redis } from 'ioredis';
-import { RedisService } from '../redis/redis.service';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -11,12 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
 import { RoomService } from './room.service';
 import { CreateBidDto, PublicBidDto } from './dto/bid.dto';
-import {
-  Injectable,
-  OnModuleDestroy,
-  UseFilters,
-  UseGuards,
-} from '@nestjs/common';
+import { Injectable, UseFilters, UseGuards } from '@nestjs/common';
 import { WSRoomRolesGuard } from './guards/ws-roles.guard';
 import {
   RoomAuthorizedMember,
@@ -27,41 +22,32 @@ import {
 import { RoomRoles, RoomSockerUser } from './guards/decorators';
 import { WsExceptionFilter } from './filters/ws-exception.filter';
 
-type PublishEvent = {
-  room: string;
-  ev: string;
-  data: unknown;
-};
-
 @Injectable()
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway({
-  cors: true,
+  cors: process.env.NODE_ENV !== 'production',
   namespace: '/ws/room',
 })
-export class RoomGateway implements OnModuleDestroy {
-  private readonly pub: Redis;
-  private readonly sub: Redis;
-
-  private subscribedRooms = new Set<string>();
-
+export class RoomGateway implements OnGatewayInit, OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
   constructor(
-    private readonly redisService: RedisService,
     private readonly tokenService: TokenService,
     private readonly roomService: RoomService,
-  ) {
-    const client = this.redisService.getClient();
+  ) {}
 
-    this.pub = client.duplicate();
-    this.sub = client.duplicate();
+  afterInit(server: Server) {
+    server.use((socket, next) => {
+      const token = socket.handshake.auth.token as string | undefined;
+      if (!token) return next(new Error('Unauthorized'));
 
-    this.sub.on('message', (_, e) => {
-      const event = JSON.parse(e) as PublishEvent;
+      const result = this.tokenService.roomMemberToken.validate(token);
+      if (!result.payload) return next(new Error('Unauthorized'));
 
-      this.server.to(event.room).emit(event.ev, event.data);
+      const { sub: id, ...rest } = result.payload;
+      (socket.data as Record<string, unknown>).user = { id, ...rest };
+      next();
     });
   }
 
@@ -74,51 +60,18 @@ export class RoomGateway implements OnModuleDestroy {
   }
 
   async handleConnection(client: Socket) {
-    const token = client.handshake.auth.token as string;
+    const user = (client.data as { user: RoomAuthorizedUser }).user;
 
-    if (!token) {
-      client.disconnect(true);
-      return;
+    await client.join(this.getRoomKey(user.auctionId));
+
+    // Personal channel is admin-only: only the owner receives newInvite and newMember events
+    if (user.role === RoomRole.ADMIN) {
+      await client.join(this.getUserRoomKey(user.auctionId, user.id));
     }
-
-    const result = this.tokenService.roomMemberToken.validate(token);
-
-    if (!result.payload) {
-      client.disconnect(true);
-      return;
-    }
-
-    const { payload } = result;
-
-    if (!this.subscribedRooms.has(payload.auctionId)) {
-      await this.sub.subscribe(this.getRoomKey(payload.auctionId));
-      this.subscribedRooms.add(payload.auctionId);
-    }
-
-    if (!this.subscribedRooms.has(payload.sub)) {
-      await this.sub.subscribe(
-        this.getUserRoomKey(payload.auctionId, payload.sub),
-      );
-      this.subscribedRooms.add(payload.sub);
-    }
-
-    const { sub: id, ...otherProps } = payload;
-
-    (client.data as Record<string, unknown>).user = { id, ...otherProps };
   }
 
-  private readonly publishEvent = (event: PublishEvent) => {
-    void this.pub.publish(event.room, JSON.stringify(event));
-  };
-
   publishRoomEvent(roomId: string, ev: string, data: unknown) {
-    const roomEvent: PublishEvent = {
-      room: this.getRoomKey(roomId),
-      ev,
-      data,
-    };
-
-    this.publishEvent(roomEvent);
+    this.server.to(this.getRoomKey(roomId)).emit(ev, data);
   }
 
   publishRoomUserEvent(
@@ -127,27 +80,7 @@ export class RoomGateway implements OnModuleDestroy {
     ev: string,
     data: unknown,
   ) {
-    const roomEvent: PublishEvent = {
-      room: this.getUserRoomKey(roomId, userId),
-      ev,
-      data,
-    };
-
-    this.publishEvent(roomEvent);
-  }
-
-  @SubscribeMessage('join')
-  async handleJoin(
-    @ConnectedSocket() client: Socket,
-    @RoomSockerUser() user: RoomAuthorizedUser,
-  ) {
-    if (!user) {
-      client.disconnect(true);
-      return;
-    }
-
-    await client.join(this.getRoomKey(user.auctionId));
-    await client.join(this.getUserRoomKey(user.auctionId, user.id));
+    this.server.to(this.getUserRoomKey(roomId, userId)).emit(ev, data);
   }
 
   @UseGuards(WSRoomRolesGuard)
@@ -194,10 +127,5 @@ export class RoomGateway implements OnModuleDestroy {
         message: e instanceof Error ? e.message : String(e),
       });
     }
-  }
-
-  onModuleDestroy() {
-    this.sub?.disconnect?.();
-    this.pub?.disconnect?.();
   }
 }
