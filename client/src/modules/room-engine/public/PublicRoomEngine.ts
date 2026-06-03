@@ -7,6 +7,7 @@ import type {
 } from '@/src/api/dto/room.dto';
 import { fetchRoomInfo, sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
 import { RoomEngine } from '../core/RoomEngine';
+import { sortBidsByAmountDesc } from '../core/sortBids';
 import type { PublicRoomData } from './types';
 
 export interface PublicRoomApi {
@@ -62,7 +63,8 @@ export class PublicRoomEngine extends RoomEngine<PublicRoomData> {
     });
 
     this.socket.onEvent<PublicBidInfo>('newBid', (bid) => {
-      this.setState({ bids: [bid, ...this.data.bids] });
+      if (this.data.bids.some((b) => b.id === bid.id)) return;
+      this.setState({ bids: sortBidsByAmountDesc([bid, ...this.data.bids]) });
     });
 
     this.socket.onEvent<RoomLot>('newLot', (lot) => {

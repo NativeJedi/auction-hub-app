@@ -105,7 +105,10 @@ export class AuthService {
     return { status: 'pending_confirmation' };
   }
 
-  private async sendConfirmationCode(userId: string, email: string): Promise<void> {
+  private async sendConfirmationCode(
+    userId: string,
+    email: string,
+  ): Promise<void> {
     const code = randomUUID();
     await this.confirmCodes.set(code, userId);
     await this.emailService.sendConfirmationEmail(email, code);

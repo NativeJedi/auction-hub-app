@@ -10,6 +10,7 @@ export abstract class RoomEngine<TData> {
 
   private listeners = new Set<(s: TData & Lifecycle) => void>();
   private cachedState: (TData & Lifecycle) | null = null;
+  private socketEventsRegistered = false;
 
   protected constructor(
     protected readonly auctionId: string,
@@ -71,7 +72,10 @@ export abstract class RoomEngine<TData> {
 
       await this.socket.connect(token ?? '');
 
-      this.registerSocketEvents();
+      if (!this.socketEventsRegistered) {
+        this.registerSocketEvents();
+        this.socketEventsRegistered = true;
+      }
 
       this.setLifecycle({ isLoading: false });
     } catch (e) {
@@ -83,6 +87,7 @@ export abstract class RoomEngine<TData> {
   }
 
   destroy(): void {
+    this.socketEventsRegistered = false;
     this.socket.disconnect();
     this.listeners.clear();
   }

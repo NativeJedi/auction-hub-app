@@ -16,7 +16,6 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   const [loading, setLoading] = useState(false);
 
   const handleStartAuction = async () => {
-    setLoading(true);
     const { result } = await confirmModal.show({
       title: 'Start Auction?',
       description: "If auction starts, you won't be able to edit it anymore.",
@@ -25,6 +24,8 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
     if (result === 'closed') return;
 
     try {
+      setLoading(true);
+
       const room = await AdminRoomEngine.startAuction(auctionId);
 
       router.push(`/room/${room.auctionId}/admin`);

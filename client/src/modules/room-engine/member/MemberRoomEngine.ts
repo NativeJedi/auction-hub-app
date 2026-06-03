@@ -7,6 +7,7 @@ import type {
 } from '@/src/api/dto/room.dto';
 import { confirmRoomInvite, fetchRoomInfo } from '@/src/api/auctions-api-client/requests/room';
 import { RoomEngine } from '../core/RoomEngine';
+import { sortBidsByAmountDesc } from '../core/sortBids';
 import { MemberRoomData } from './types';
 
 export interface MemberRoomApi {
@@ -104,8 +105,9 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
     });
 
     this.socket.onEvent<PublicBidInfo>('newBid', (bid) => {
+      if (this.data.bids.some((b) => b.id === bid.id)) return;
       this.setState({
-        bids: [bid, ...this.data.bids],
+        bids: sortBidsByAmountDesc([bid, ...this.data.bids]),
         bidIncrement: 0,
       });
     });
@@ -140,8 +142,11 @@ export class MemberRoomEngine extends RoomEngine<MemberRoomData> {
   }
 
   placeBid(): void {
+    // Send the absolute price the bidder committed to (current leading + their
+    // chosen increment). The server stores it as-is, so a shifting baseline can
+    // never inflate the bidder's commitment.
     this.socket.emitEvent('placeBid', {
-      amount: this.data.bidIncrement,
+      amount: this.leadingAmount + this.data.bidIncrement,
       lotId: this.data.activeLot?.id,
     });
   }

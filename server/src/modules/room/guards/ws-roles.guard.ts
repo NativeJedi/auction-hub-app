@@ -21,13 +21,7 @@ export class WSRoomRolesGuard implements CanActivate {
     const client: Socket = context.switchToWs().getClient();
     const user = (client.data as { user?: RoomAuthorizedUser }).user;
 
-    if (!user) {
-      client.emit('error', { message: 'User not authorized' });
-      client.disconnect(true);
-      return false;
-    }
-
-    if (!requiredRoles.includes(user.role)) {
+    if (!requiredRoles.includes(user!.role)) {
       client.emit('error', 'You are not authorized for this action');
       client.disconnect(true);
       return false;

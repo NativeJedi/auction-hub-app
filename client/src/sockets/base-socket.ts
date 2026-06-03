@@ -16,7 +16,6 @@ class BaseSocket {
 
       this.socket.once('connect', () => {
         console.log('Socket connected');
-        this.emitEvent('join');
         resolve();
       });
 
@@ -32,7 +31,9 @@ class BaseSocket {
   }
 
   disconnect() {
-    this.socket?.disconnect?.();
+    const socket = this.socket;
+    this.socket = null;
+    socket?.disconnect?.();
   }
 
   onEvent<T = void>(event: string, callback: (data: T) => void) {

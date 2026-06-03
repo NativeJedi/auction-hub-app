@@ -93,9 +93,9 @@ describe('AuctionsService', () => {
       usersService.findById.mockResolvedValue({ id: 'user-1' });
       auctionRepo.count.mockResolvedValue(MAX_AUCTIONS_PER_OWNER);
 
-      await expect(
-        service.create({ name: 'New' }, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.create({ name: 'New' }, 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
       expect(auctionRepo.save).not.toHaveBeenCalled();
     });
 
