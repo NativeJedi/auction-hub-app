@@ -10,7 +10,7 @@ class BaseSocket {
 
     return new Promise((resolve, reject) => {
       this.socket = io(this.SOCKET_URL, {
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         auth: { token },
       });
 
@@ -25,7 +25,6 @@ class BaseSocket {
 
       this.socket.on('disconnect', () => {
         console.log('Socket disconnected');
-        this.socket = null;
       });
     });
   }
@@ -34,6 +33,15 @@ class BaseSocket {
     const socket = this.socket;
     this.socket = null;
     socket?.disconnect?.();
+  }
+
+  get isConnected(): boolean {
+    return this.socket?.connected ?? false;
+  }
+
+  onReconnect(callback: () => void): void {
+    if (!this.socket) throw new Error('Socket is not connected');
+    this.socket.io.on('reconnect', callback);
   }
 
   onEvent<T = void>(event: string, callback: (data: T) => void) {
