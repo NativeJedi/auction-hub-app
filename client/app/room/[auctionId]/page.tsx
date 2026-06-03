@@ -1,6 +1,7 @@
 'use client';
 
 import QRCode from 'react-qr-code';
+import { useEffect, useState } from 'react';
 import RoomHeader from './components/RoomHeader';
 import CurrentLot from './components/CurrentLot';
 import RoomCard from './components/RoomCard';
@@ -12,10 +13,13 @@ import { usePublicRoom } from '@/src/modules/room-engine/public/hooks/usePublicR
 
 const useInviteUrl = () => {
   const auctionId = useAuctionId();
+  const [url, setUrl] = useState('');
 
-  if (typeof window === 'undefined') return '';
+  useEffect(() => {
+    setUrl(`${window.location.origin}/room/${auctionId}/invite`);
+  }, [auctionId]);
 
-  return `${window.location.origin}/room/${auctionId}/invite`;
+  return url;
 };
 
 const RoomDisplayPage = () => {
@@ -32,8 +36,10 @@ const RoomDisplayPage = () => {
 
         <div className="flex flex-col gap-3 md:grid md:grid-rows-2 md:min-h-0">
           <RoomCard title="Join auction">
-            <div className="h-40 md:h-auto md:flex-1 md:min-h-0 w-full bg-muted rounded-md flex items-center justify-center">
-              <QRCode value={inviteUrl} size={140} fgColor="currentColor" bgColor="transparent" />
+            <div className="h-40 md:h-auto md:flex-1 md:min-h-0 w-full bg-white rounded-md flex items-center justify-center">
+              {inviteUrl && (
+                <QRCode value={inviteUrl} size={140} fgColor="#000000" bgColor="#ffffff" />
+              )}
             </div>
             <p className="text-sm font-medium text-center">Scan to join</p>
           </RoomCard>

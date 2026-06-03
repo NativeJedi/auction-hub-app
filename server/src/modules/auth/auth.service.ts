@@ -86,8 +86,15 @@ export class AuthService {
     const existedUser = await this.usersService.findByEmail(email);
 
     if (existedUser) {
-      // M-4 anti-enumeration: silently return pending_confirmation
-      // without revealing whether the email exists or is already verified
+      // M-4 anti-enumeration: run bcryptHash in parallel to equalize timing,
+      // then notify the owner so they know to log in instead
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const timingHash: Promise<unknown> = bcryptHash(password, 10);
+      await Promise.all([
+        timingHash,
+        this.emailService.sendAlreadyRegisteredEmail(email),
+      ]);
       return { status: 'pending_confirmation' };
     }
 

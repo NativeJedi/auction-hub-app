@@ -25,7 +25,7 @@ export type Session = SessionData & {
  * */
 declare global {
   // eslint-disable-next-line no-var
-  var sessionRefreshingPromise: Promise<Session> | undefined;
+  var sessionRefreshingPromise: Promise<Session | undefined> | undefined;
 }
 
 class SessionStorage {
@@ -95,6 +95,10 @@ class SessionStorage {
           const updatedSession = await this.update(id, data);
 
           return updatedSession;
+        })
+        .catch((e) => {
+          console.error(e);
+          return undefined;
         })
         .finally(() => {
           global.sessionRefreshingPromise = undefined;

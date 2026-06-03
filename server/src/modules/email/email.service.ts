@@ -23,6 +23,15 @@ export class EmailService {
     });
   }
 
+  async sendAlreadyRegisteredEmail(to: string): Promise<void> {
+    const loginUrl = `${this.appConfig.urls.CLIENT_URL}/login`;
+    await this.sendEmail(
+      to,
+      'Registration attempt — Auction Hub',
+      `Someone tried to register using your email address.\n\nIf this was you, sign in instead:\n\n${loginUrl}\n\nIf this wasn't you, you can safely ignore this message.`,
+    );
+  }
+
   async sendConfirmationEmail(to: string, code: string): Promise<void> {
     const url = `${this.appConfig.urls.CLIENT_URL}/confirm-email?code=${code}`;
     await this.sendEmail(

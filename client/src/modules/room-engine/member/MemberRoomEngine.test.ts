@@ -93,5 +93,23 @@ describe('MemberRoomEngine', () => {
 
       expect(engine.getState().bids.map((b) => b.amount)).toEqual([1000, 700, 500]);
     });
+
+    it('ignores a duplicate newBid (same id) to prevent double-counting after a reconnect', () => {
+      const engine = new MemberRoomEngine('auction-1', stubSocket, {
+        fetchRoomInfo: vi.fn(),
+        confirmRoomInvite: vi.fn(),
+      });
+      (engine as any).registerSocketEvents();
+
+      const onEventMock = stubSocket.onEvent as unknown as ReturnType<typeof vi.fn>;
+      const newBidCall = onEventMock.mock.calls.find((call) => call[0] === 'newBid');
+      const newBidHandler = newBidCall![1] as (bid: unknown) => void;
+
+      const bid = { id: 'b1', userId: 'u1', name: 'Alice', amount: 1000 };
+      newBidHandler(bid);
+      newBidHandler(bid); // duplicate — same id, must be ignored
+
+      expect(engine.getState().bids).toHaveLength(1);
+    });
   });
 });

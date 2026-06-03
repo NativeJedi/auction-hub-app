@@ -63,6 +63,12 @@ export abstract class RoomEngine<TData> {
     return () => this.listeners.delete(listener);
   }
 
+  private readonly handleVisibilityChange = (): void => {
+    if (document.visibilityState === 'visible' && !this.socket.isConnected) {
+      void this.handleReconnect();
+    }
+  };
+
   async connect(): Promise<void> {
     this.setLifecycle({ isLoading: true, error: null });
     try {
@@ -74,6 +80,8 @@ export abstract class RoomEngine<TData> {
 
       if (!this.socketEventsRegistered) {
         this.registerSocketEvents();
+        this.socket.onReconnect(() => void this.handleReconnect());
+        document.addEventListener('visibilitychange', this.handleVisibilityChange);
         this.socketEventsRegistered = true;
       }
 
@@ -86,8 +94,20 @@ export abstract class RoomEngine<TData> {
     }
   }
 
+  private async handleReconnect(): Promise<void> {
+    this.setLifecycle({ isLoading: true, error: null });
+    try {
+      const data = await this.fetchInitialData();
+      this.setState(data);
+      this.setLifecycle({ isLoading: false });
+    } catch (e) {
+      this.setLifecycle({ isLoading: false, error: `Failed to resync: ${(e as Error).message}` });
+    }
+  }
+
   destroy(): void {
     this.socketEventsRegistered = false;
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.socket.disconnect();
     this.listeners.clear();
   }
@@ -101,7 +121,9 @@ export abstract class RoomEngine<TData> {
   }
 
   static clearAllRoomTokens(): void {
-    localStorage.clear();
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('room:'))
+      .forEach((key) => localStorage.removeItem(key));
   }
 
   // Common socket events shared across all roles
