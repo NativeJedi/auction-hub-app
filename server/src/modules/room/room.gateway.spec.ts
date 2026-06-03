@@ -1,18 +1,11 @@
 import { RoomGateway } from './room.gateway';
 import { RoomRole } from './entities/room.entity';
+import { CreateBidDto } from './dto/bid.dto';
 import type { TokenService } from '../auth/token.service';
 import type { RoomService } from './room.service';
 import type { Server, Socket } from 'socket.io';
 
-type MockServer = {
-  use: jest.Mock;
-  to: jest.Mock;
-};
-
-type SocketMiddleware = (
-  socket: Socket,
-  next: (err?: Error) => void,
-) => void;
+type SocketMiddleware = (socket: Socket, next: (err?: Error) => void) => void;
 
 const buildGateway = () => {
   const validate = jest.fn();
@@ -29,16 +22,23 @@ const buildGateway = () => {
   return { gateway, validate, placeBid, placeNextLot };
 };
 
+const buildServerWithEmit = () => {
+  const emit = jest.fn();
+  const to = jest.fn(() => ({ emit }));
+  const server = { to } as unknown as Server;
+  return { server, to, emit };
+};
+
 describe('RoomGateway', () => {
   describe('afterInit auth middleware', () => {
     const installMiddleware = () => {
       const { gateway, validate } = buildGateway();
-      const server = { use: jest.fn() } as unknown as Server;
+      const use = jest.fn<void, [SocketMiddleware]>();
+      const server = { use } as unknown as Server;
 
       gateway.afterInit(server);
 
-      const middleware = (server.use as jest.Mock).mock
-        .calls[0][0] as SocketMiddleware;
+      const middleware = use.mock.calls[0][0];
 
       return { validate, middleware };
     };
@@ -86,7 +86,8 @@ describe('RoomGateway', () => {
 
       middleware(socket, next);
 
-      expect(socket.data.user).toEqual({
+      const socketData = socket.data as { user: unknown };
+      expect(socketData.user).toEqual({
         id: 'user-1',
         email: 'buyer@example.com',
         name: 'Alice',
@@ -153,17 +154,14 @@ describe('RoomGateway', () => {
         amount: 100,
         email: 'buyer@example.com',
       });
-      const emit = jest.fn();
-      gateway.server = { to: jest.fn(() => ({ emit })) } as unknown as Server;
+      const { server, to, emit } = buildServerWithEmit();
+      gateway.server = server;
       const client = { emit: jest.fn() } as unknown as Socket;
 
-      await gateway.handleBid(
-        { lotId: 'lot-1', amount: 100 } as any,
-        client,
-        buildMember(),
-      );
+      const bid: CreateBidDto = { lotId: 'lot-1', amount: 100 };
+      await gateway.handleBid(bid, client, buildMember());
 
-      expect(gateway.server.to).toHaveBeenCalledWith('room:auction-1');
+      expect(to).toHaveBeenCalledWith('room:auction-1');
       expect(emit).toHaveBeenCalledWith('newBid', {
         id: 'bid-1',
         userId: 'member-1',
@@ -175,17 +173,13 @@ describe('RoomGateway', () => {
     it('emits an error to the client when the service throws', async () => {
       const { gateway, placeBid } = buildGateway();
       placeBid.mockRejectedValue(new Error('bid too low'));
-      gateway.server = {
-        to: jest.fn(() => ({ emit: jest.fn() })),
-      } as unknown as Server;
+      const { server } = buildServerWithEmit();
+      gateway.server = server;
       const clientEmit = jest.fn();
       const client = { emit: clientEmit } as unknown as Socket;
 
-      await gateway.handleBid(
-        { lotId: 'lot-1', amount: 1 } as any,
-        client,
-        buildMember(),
-      );
+      const bid: CreateBidDto = { lotId: 'lot-1', amount: 1 };
+      await gateway.handleBid(bid, client, buildMember());
 
       expect(clientEmit).toHaveBeenCalledWith('error', {
         message: 'bid too low',
@@ -205,21 +199,21 @@ describe('RoomGateway', () => {
       const { gateway, placeNextLot } = buildGateway();
       const lot = { id: 'lot-2' };
       placeNextLot.mockResolvedValue({ autoFinished: false, lot });
-      const emit = jest.fn();
-      gateway.server = { to: jest.fn(() => ({ emit })) } as unknown as Server;
+      const { server, to, emit } = buildServerWithEmit();
+      gateway.server = server;
       const client = { emit: jest.fn() } as unknown as Socket;
 
       await gateway.handlePlaceLot(client, buildOwner());
 
-      expect(gateway.server.to).toHaveBeenCalledWith('room:auction-1');
+      expect(to).toHaveBeenCalledWith('room:auction-1');
       expect(emit).toHaveBeenCalledWith('newLot', lot);
     });
 
     it('broadcasts auctionFinished when the auction auto-finishes', async () => {
       const { gateway, placeNextLot } = buildGateway();
       placeNextLot.mockResolvedValue({ autoFinished: true });
-      const emit = jest.fn();
-      gateway.server = { to: jest.fn(() => ({ emit })) } as unknown as Server;
+      const { server, emit } = buildServerWithEmit();
+      gateway.server = server;
       const client = { emit: jest.fn() } as unknown as Socket;
 
       await gateway.handlePlaceLot(client, buildOwner());
