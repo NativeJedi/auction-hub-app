@@ -88,8 +88,11 @@ export class AuthService {
     if (existedUser) {
       // M-4 anti-enumeration: run bcryptHash in parallel to equalize timing,
       // then notify the owner so they know to log in instead
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const timingHash: Promise<unknown> = bcryptHash(password, 10);
       await Promise.all([
-        bcryptHash(password, 10),
+        timingHash,
         this.emailService.sendAlreadyRegisteredEmail(email),
       ]);
       return { status: 'pending_confirmation' };

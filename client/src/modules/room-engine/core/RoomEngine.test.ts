@@ -9,14 +9,19 @@ interface TestData {
 }
 
 class TestEngine extends RoomEngine<TestData> {
-  readonly fetchMock = vi.fn<[], Promise<Partial<TestData>>>().mockResolvedValue({ value: 42 });
+  readonly fetchMock = vi.fn().mockResolvedValue({ value: 42 } satisfies Partial<TestData>);
+
+  // Expose the protected constructor so tests can instantiate directly
+  constructor(auctionId: string, socket: BaseSocket) {
+    super(auctionId, socket);
+  }
 
   protected getInitialData(): TestData {
     return { value: 0 };
   }
 
   protected fetchInitialData(): Promise<Partial<TestData>> {
-    return this.fetchMock();
+    return this.fetchMock() as Promise<Partial<TestData>>;
   }
 }
 

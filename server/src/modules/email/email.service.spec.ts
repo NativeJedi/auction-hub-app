@@ -55,18 +55,18 @@ describe('EmailService', () => {
     it('includes the login URL and a sign-in nudge in the body', async () => {
       await service.sendAlreadyRegisteredEmail('user@example.com');
 
-      const { text } = sendMailMock.mock.calls[0][0] as { text: string };
+      const [[mailOptions]] = sendMailMock.mock.calls as [[{ text: string }]];
 
-      expect(text).toContain('https://app.example.com/login');
-      expect(text).toContain('sign in instead');
+      expect(mailOptions.text).toContain('https://app.example.com/login');
+      expect(mailOptions.text).toContain('sign in instead');
     });
 
     it('reassures the recipient they can ignore the email if it was not them', async () => {
       await service.sendAlreadyRegisteredEmail('user@example.com');
 
-      const { text } = sendMailMock.mock.calls[0][0] as { text: string };
+      const [[mailOptions]] = sendMailMock.mock.calls as [[{ text: string }]];
 
-      expect(text).toContain('safely ignore');
+      expect(mailOptions.text).toContain('safely ignore');
     });
   });
 });
