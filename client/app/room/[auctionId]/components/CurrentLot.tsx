@@ -1,10 +1,4 @@
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/ui-kit/ui/carousel';
+import dynamic from 'next/dynamic';
 import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { RoomLot } from '@/src/api/dto/room.dto';
 import { ImageOff } from 'lucide-react';
@@ -16,6 +10,13 @@ type Props = {
   className?: string;
   isLoading?: boolean;
 };
+
+const LotCarousel = dynamic(() => import('./LotCarousel'), {
+  ssr: false,
+  loading: () => (
+    <Skeleton className="w-full aspect-video md:aspect-auto md:flex-1 md:min-h-0 rounded-md flex-shrink-0" />
+  ),
+});
 
 const CurrentLotSkeleton = () => (
   <>
@@ -51,30 +52,10 @@ const LotContent = ({ isLoading, lot }: Pick<Props, 'lot' | 'isLoading'>) => {
 
   return (
     <>
-      {lot!.images.length === 0 ? (
+      {lot.images.length === 0 ? (
         <ImagePlaceholder />
       ) : (
-        <div className="relative overflow-hidden rounded-md flex-shrink-0 aspect-video md:aspect-auto md:flex-1 md:min-h-0">
-          <Carousel className="w-full h-full [&>div]:h-full">
-            <CarouselContent className="-ml-0 h-full">
-              {lot.images.map((img) => (
-                <CarouselItem key={img.id} className="pl-0 h-full">
-                  <img
-                    src={img.url}
-                    alt={lot.name}
-                    className="w-full h-full block object-contain"
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            {lot.images.length > 1 && (
-              <>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </>
-            )}
-          </Carousel>
-        </div>
+        <LotCarousel images={lot.images} name={lot.name} />
       )}
 
       <p className="text-sm font-medium flex-shrink-0">{lot.name}</p>

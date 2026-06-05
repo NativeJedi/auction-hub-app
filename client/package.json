@@ -9,26 +9,27 @@
     "lint": "next lint",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit --project tsconfig.test.json"
+    "typecheck": "tsc --noEmit --project tsconfig.test.json",
+    "analyze": "API_URL=http://localhost:3000 REDIS_URL=redis://localhost:6379 JWT_ACCESS_TTL=900 JWT_REFRESH_TTL=604800 ANALYZE=true next build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cookie": "^1.0.2",
-    "daisyui": "^5.1.13",
     "embla-carousel-react": "^8.6.0",
     "ioredis": "^5.8.2",
     "lucide-react": "^0.563.0",
     "next": "^15.5.9",
     "next-themes": "^0.4.6",
-    "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.71.2",
@@ -39,6 +40,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.7",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

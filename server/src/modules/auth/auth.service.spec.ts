@@ -20,7 +20,10 @@ describe('AuthService', () => {
     accessToken: { generate: jest.Mock };
     refreshToken: { generate: jest.Mock };
   };
-  let emailService: { sendConfirmationEmail: jest.Mock; sendAlreadyRegisteredEmail: jest.Mock };
+  let emailService: {
+    sendConfirmationEmail: jest.Mock;
+    sendAlreadyRegisteredEmail: jest.Mock;
+  };
   let resendLimits: { get: jest.Mock; set: jest.Mock };
   let confirmCodes: { get: jest.Mock; set: jest.Mock; getDel: jest.Mock };
   let bcryptCompareSpy: jest.SpyInstance;
@@ -145,7 +148,9 @@ describe('AuthService', () => {
       expect(usersService.create).not.toHaveBeenCalled();
       expect(emailService.sendConfirmationEmail).not.toHaveBeenCalled();
       expect(bcryptHashSpy).toHaveBeenCalledWith('secret', 10);
-      expect(emailService.sendAlreadyRegisteredEmail).toHaveBeenCalledWith('test@example.com');
+      expect(emailService.sendAlreadyRegisteredEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
     });
   });
 
