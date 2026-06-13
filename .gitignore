@@ -1,5 +1,6 @@
 .idea
 .DS_Store
 .env
+.env.prod
 .claude
 node_modules

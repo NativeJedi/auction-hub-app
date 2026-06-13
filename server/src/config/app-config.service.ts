@@ -68,6 +68,10 @@ export class AppConfigService {
       STORAGE_ENDPOINT: this.config.get<string>('STORAGE_ENDPOINT')!,
       STORAGE_REGION: this.config.get<string>('STORAGE_REGION')!,
       STORAGE_PUBLIC_URL: this.config.get<string>('STORAGE_PUBLIC_URL')!,
+      STORAGE_UPLOAD_URL: this.config.get<string>('STORAGE_UPLOAD_URL'),
+      STORAGE_FORCE_PATH_STYLE: this.config.get<string>(
+        'STORAGE_FORCE_PATH_STYLE',
+      ),
     };
   }
 

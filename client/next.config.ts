@@ -15,9 +15,12 @@ const cspDirectives = [
   `default-src 'self'`,
   `script-src 'self' 'unsafe-inline' ${isProd ? '' : "'unsafe-eval'"} https://accounts.google.com/gsi/client`,
   `style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style`,
-  `img-src 'self' data: blob: ${storageUrl.origin} https://*.amazonaws.com https://*.googleusercontent.com`,
+  `img-src 'self' data: blob: ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net https://*.googleusercontent.com`,
   `font-src 'self' data:`,
-  `connect-src 'self' https://accounts.google.com/gsi/ ${storageUrl.origin} ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
+  // connect-src must allow presigned PUT uploads (S3: bucket.s3.<region>.amazonaws.com)
+  // and reads/fetches via CloudFront. Wildcards are used because the exact bucket /
+  // distribution host isn't known at build time (headers() is computed during next build).
+  `connect-src 'self' https://accounts.google.com/gsi/ ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
   `frame-src https://accounts.google.com/`,
   `frame-ancestors 'self'`,
   `object-src 'none'`,

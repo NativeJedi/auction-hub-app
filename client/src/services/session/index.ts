@@ -1,12 +1,8 @@
 import { cookies } from 'next/headers';
-import { redis } from '../redis';
+import { getRedis } from '../redis';
 import { randomUUID } from 'crypto';
-import { AppServerConfig } from '@/config/server';
-import {
-  SESSION_TTL,
-  SESSION_EXPIRATION_GAP,
-  SESSION_COOKIE_NAME,
-} from '@/src/services/session/constants';
+import { getServerConfig } from '@/config/server';
+import { getSessionTtl, getSessionExpirationGap } from '@/src/services/session/constants';
 import { refreshTokenServer } from '@/src/api/auctions-api/requests/auth';
 
 type SessionData = {
@@ -34,24 +30,24 @@ class SessionStorage {
   }
 
   get accessTokenExpiresAt() {
-    return Date.now() + AppServerConfig.JWT_ACCESS_TTL * 1000;
+    return Date.now() + getServerConfig().JWT_ACCESS_TTL * 1000;
   }
 
   private readonly isExpired = (expiresAt: Session['accessTokenExpiresAt']) =>
-    Date.now() >= expiresAt - SESSION_EXPIRATION_GAP;
+    Date.now() >= expiresAt - getSessionExpirationGap();
 
   async create(data: SessionData) {
     const id = randomUUID();
 
     const session: Session = { id, ...data, accessTokenExpiresAt: this.accessTokenExpiresAt };
 
-    await redis.set(this.getSessionKey(id), JSON.stringify(session), 'EX', SESSION_TTL);
+    await getRedis().set(this.getSessionKey(id), JSON.stringify(session), 'EX', getSessionTtl());
 
     return session;
   }
 
   async get(id: Session['id']): Promise<Session | null> {
-    const raw = await redis.get(this.getSessionKey(id));
+    const raw = await getRedis().get(this.getSessionKey(id));
 
     if (!raw) return null;
 
@@ -61,7 +57,7 @@ class SessionStorage {
   }
 
   async update(id: Session['id'], data: SessionData) {
-    await redis.del(this.getSessionKey(id));
+    await getRedis().del(this.getSessionKey(id));
 
     const sessionData = {
       id,
@@ -69,13 +65,18 @@ class SessionStorage {
       accessTokenExpiresAt: this.accessTokenExpiresAt,
     };
 
-    await redis.set(this.getSessionKey(id), JSON.stringify(sessionData), 'EX', SESSION_TTL);
+    await getRedis().set(
+      this.getSessionKey(id),
+      JSON.stringify(sessionData),
+      'EX',
+      getSessionTtl()
+    );
 
     return sessionData;
   }
 
   async delete(id: Session['id']) {
-    await redis.del(this.getSessionKey(id));
+    await getRedis().del(this.getSessionKey(id));
   }
 
   async getValidSession(id: Session['id']) {

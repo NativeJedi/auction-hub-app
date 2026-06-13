@@ -32,6 +32,8 @@ const loadTestConfig = ({
     STORAGE_ENDPOINT: '',
     STORAGE_REGION: '',
     STORAGE_PUBLIC_URL: '',
+    STORAGE_UPLOAD_URL: '',
+    STORAGE_FORCE_PATH_STYLE: '',
     GOOGLE_CLIENT_ID: '',
   };
 

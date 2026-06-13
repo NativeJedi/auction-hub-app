@@ -7,12 +7,12 @@ const { mockGoogleAuthServer, mockSessionCreate } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/config/server', () => ({
-  AppServerConfig: {
+  getServerConfig: () => ({
     API_URL: 'http://test',
     REDIS_URL: 'redis://test',
     JWT_ACCESS_TTL: 300,
     JWT_REFRESH_TTL: 3600,
-  },
+  }),
 }));
 
 vi.mock('@/src/api/auctions-api/requests/auth', () => ({

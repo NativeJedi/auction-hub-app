@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import HeadedLayout from '@/src/layouts/HeadedLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { GoogleSignInButton } from '@/src/modules/google-auth';
@@ -40,22 +41,34 @@ const getFormView = (param: string | null): FormView => {
   return formView;
 };
 
-export default function AuthPage() {
+// The only part that depends on the `type` search param. Isolating it keeps the
+// page shell (layout + Card) static; only this island is deferred to the client.
+function AuthForms() {
   const type = useQueryParam('type');
 
   const FormView = getFormView(type);
 
   return (
+    <>
+      <CardHeader>
+        <CardTitle className="text-center">{FormView.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {type !== 'confirm' && <GoogleSignInButton />}
+        <FormView.Component />
+      </CardContent>
+    </>
+  );
+}
+
+export default function AuthPage() {
+  return (
     <HeadedLayout showLogout={false} logoHref="/">
       <div className="flex items-center justify-center bg-base-200 transition-colors flex-1">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">{FormView.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {type !== 'confirm' && <GoogleSignInButton />}
-            <FormView.Component />
-          </CardContent>
+          <Suspense>
+            <AuthForms />
+          </Suspense>
         </Card>
       </div>
     </HeadedLayout>

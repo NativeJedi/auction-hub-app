@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useAuctionId } from '@/app/room/[auctionId]/hooks';
@@ -32,4 +32,12 @@ const ConfirmInvite = () => {
   return null;
 };
 
-export default ConfirmInvite;
+export default function ConfirmInvitePage() {
+  // useQueryParam (useSearchParams) must sit inside a Suspense boundary so
+  // next build's prerender doesn't bail on this route.
+  return (
+    <Suspense>
+      <ConfirmInvite />
+    </Suspense>
+  );
+}
