@@ -50,6 +50,12 @@ const envSchema = z.object({
   STORAGE_ENDPOINT: z.string().min(1),
   STORAGE_REGION: z.string().min(1),
   STORAGE_PUBLIC_URL: z.string().min(1),
+  // Browser-reachable endpoint for presigned PUT uploads.
+  // MinIO: same host as STORAGE_PUBLIC_URL. S3: the bucket's S3 endpoint
+  // (uploads go to S3 directly, NOT through the CloudFront public URL).
+  STORAGE_UPLOAD_URL: z.string().min(1).optional(),
+  // 'true' for MinIO (path-style), 'false' for AWS S3 (virtual-hosted). Defaults to true.
+  STORAGE_FORCE_PATH_STYLE: z.string().optional(),
 
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().min(1),
 });
@@ -99,6 +105,8 @@ interface AppConfigInterface {
   STORAGE_ENDPOINT: string;
   STORAGE_REGION: string;
   STORAGE_PUBLIC_URL: string;
+  STORAGE_UPLOAD_URL?: string;
+  STORAGE_FORCE_PATH_STYLE?: string;
 
   // google oauth
   GOOGLE_CLIENT_ID: string;
@@ -133,6 +141,8 @@ const AppConfig: AppConfigInterface = {
   STORAGE_ENDPOINT: env.STORAGE_ENDPOINT,
   STORAGE_REGION: env.STORAGE_REGION,
   STORAGE_PUBLIC_URL: env.STORAGE_PUBLIC_URL,
+  STORAGE_UPLOAD_URL: env.STORAGE_UPLOAD_URL,
+  STORAGE_FORCE_PATH_STYLE: env.STORAGE_FORCE_PATH_STYLE,
 
   GOOGLE_CLIENT_ID: env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
 };

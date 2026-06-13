@@ -1,13 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useQueryParam } from '@/src/utils/url';
 import { confirmEmail } from '@/src/api/auctions-api-client/requests/auth';
 import { Loader2 } from 'lucide-react';
 
-export default function ConfirmEmailPage() {
+function Spinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
+function ConfirmEmailContent() {
   const router = useRouter();
   const { showToast } = useNotification();
   const code = useQueryParam('code');
@@ -30,9 +38,15 @@ export default function ConfirmEmailPage() {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  return <Spinner />;
+}
+
+export default function ConfirmEmailPage() {
+  // useQueryParam relies on useSearchParams, which must sit inside a Suspense
+  // boundary so static prerendering (next build) doesn't bail on this page.
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
+    <Suspense fallback={<Spinner />}>
+      <ConfirmEmailContent />
+    </Suspense>
   );
 }

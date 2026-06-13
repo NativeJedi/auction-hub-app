@@ -9,12 +9,12 @@ const { mockCookieGet } = vi.hoisted(() => ({
 // constants.ts (imported transitively via middleware.ts) pulls in config/server,
 // which parses process.env at module load. Mock it like the sibling route tests do.
 vi.mock('@/config/server', () => ({
-  AppServerConfig: {
+  getServerConfig: () => ({
     API_URL: 'http://test',
     REDIS_URL: 'redis://test',
     JWT_ACCESS_TTL: 300,
     JWT_REFRESH_TTL: 3600,
-  },
+  }),
 }));
 
 vi.mock('next/headers', () => ({

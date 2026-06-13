@@ -15,6 +15,7 @@ services:
   db:
     image: postgres:16
     container_name: auction-postgres
+    profiles: [ "dev", "migration" ]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -23,6 +24,25 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 2s
+      retries: 10
+
+  # Separate prod database with its own volume, so dev (synchronize) and prod
+  # (migrations) never share storage. Host port 5434 avoids clashing with dev's 5433.
+  db-prod:
+    image: postgres:16
+    container_name: auction-postgres-prod
+    profiles: [ "prod" ]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 2s
@@ -93,6 +113,8 @@ services:
       STORAGE_BUCKET: ${STORAGE_BUCKET}
       STORAGE_REGION: ${STORAGE_REGION}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
+      STORAGE_UPLOAD_URL: ${STORAGE_UPLOAD_URL}
+      STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_HOST: ${EMAIL_HOST}
@@ -131,6 +153,8 @@ services:
       STORAGE_BUCKET: ${STORAGE_BUCKET}
       STORAGE_REGION: ${STORAGE_REGION}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
+      STORAGE_UPLOAD_URL: ${STORAGE_UPLOAD_URL}
+      STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       EMAIL_HOST: ${EMAIL_HOST}
@@ -141,7 +165,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      db-prod:
         condition: service_healthy
 
   migration:
@@ -194,7 +218,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        API_URL: http://api-prod:3000/api/v1
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
     container_name: auction-client-prod
     profiles: [ "prod" ]
     environment:
@@ -220,4 +245,5 @@ services:
 volumes:
   redis-data:
   pgdata:
+  pgdata-prod:
   minio-data:

@@ -21,30 +21,40 @@ export class StorageService {
       STORAGE_ACCESS_KEY,
       STORAGE_SECRET_KEY,
       STORAGE_PUBLIC_URL,
+      STORAGE_UPLOAD_URL,
       STORAGE_BUCKET,
+      STORAGE_FORCE_PATH_STYLE,
     } = this.appConfig.storageSettings;
 
     this.bucket = STORAGE_BUCKET;
+    // Read/serve base URL (CloudFront in prod, public MinIO host in dev).
     this.publicUrl = STORAGE_PUBLIC_URL;
+
+    // MinIO needs path-style; AWS S3 uses virtual-hosted. Default true unless set to 'false'.
+    const forcePathStyle = STORAGE_FORCE_PATH_STYLE !== 'false';
+
+    // Browser-reachable endpoint the presigned PUT is signed against.
+    // For MinIO this equals the public URL; for S3 it must be the S3 endpoint
+    // (uploads go straight to S3, not through CloudFront), so the signature host matches.
+    const uploadEndpoint = STORAGE_UPLOAD_URL || STORAGE_PUBLIC_URL;
+
+    const credentials = {
+      accessKeyId: STORAGE_ACCESS_KEY,
+      secretAccessKey: STORAGE_SECRET_KEY,
+    };
 
     this.s3 = new S3Client({
       endpoint: STORAGE_ENDPOINT,
       region: STORAGE_REGION,
-      credentials: {
-        accessKeyId: STORAGE_ACCESS_KEY,
-        secretAccessKey: STORAGE_SECRET_KEY,
-      },
-      forcePathStyle: true,
+      credentials,
+      forcePathStyle,
     });
 
     this.s3ForPresign = new S3Client({
-      endpoint: STORAGE_PUBLIC_URL,
+      endpoint: uploadEndpoint,
       region: STORAGE_REGION,
-      credentials: {
-        accessKeyId: STORAGE_ACCESS_KEY,
-        secretAccessKey: STORAGE_SECRET_KEY,
-      },
-      forcePathStyle: true,
+      credentials,
+      forcePathStyle,
     });
   }
 

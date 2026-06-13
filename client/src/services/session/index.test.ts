@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/headers', () => ({ cookies: vi.fn() }));
 vi.mock('@/config/server', () => ({
-  AppServerConfig: { JWT_ACCESS_TTL: 900, REDIS_URL: 'redis://localhost:6379' },
+  getServerConfig: () => ({
+    API_URL: 'http://test',
+    REDIS_URL: 'redis://localhost:6379',
+    JWT_ACCESS_TTL: 900,
+    JWT_REFRESH_TTL: 172800,
+  }),
 }));
 
 const { mockRedisGet, mockRefreshToken } = vi.hoisted(() => ({
@@ -11,7 +16,7 @@ const { mockRedisGet, mockRefreshToken } = vi.hoisted(() => ({
 }));
 
 vi.mock('../redis', () => ({
-  redis: { get: mockRedisGet, set: vi.fn(), del: vi.fn() },
+  getRedis: () => ({ get: mockRedisGet, set: vi.fn(), del: vi.fn() }),
 }));
 
 vi.mock('@/src/api/auctions-api/requests/auth', () => ({

@@ -8,8 +8,14 @@ RUN npm install
 
 COPY . .
 
-ARG API_URL
-ENV API_URL=$API_URL
+# Build-time env — only NEXT_PUBLIC_* values, which Next inlines into the
+# browser bundle at build time. All server-only env (API_URL, REDIS_URL,
+# JWT secrets/TTLs, STORAGE_*) is read lazily at runtime from the container
+# environment and is NOT needed during `next build`.
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 RUN npm run build
 

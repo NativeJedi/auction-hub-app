@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "docker compose --profile dev up --build",
-    "prod": "docker compose --profile prod up --build",
+    "prod": "docker compose --env-file .env.prod --profile prod up --build",
     "test:e2e": "cd server && npm install && npm run test:e2e",
     "migration:generate": "docker compose --profile migration run --rm migration",
     "lint": "npm run lint --prefix client && npm run lint --prefix server",

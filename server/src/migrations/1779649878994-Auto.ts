@@ -4,6 +4,10 @@ export class Auto1779649878994 implements MigrationInterface {
   name = 'Auto1779649878994';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // uuid_generate_v4() comes from the uuid-ossp extension. In dev it's created
+    // implicitly by synchronize:true; on a fresh prod DB it must be created here,
+    // otherwise the DEFAULT uuid_generate_v4() below fails ("function does not exist").
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.query(
       `CREATE TABLE "buyer" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "email" character varying(255) NOT NULL, CONSTRAINT "PK_0480fc3c7289846a31b8e1bc503" PRIMARY KEY ("id"))`,
     );
