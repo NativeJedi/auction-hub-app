@@ -38,10 +38,16 @@ export class StorageService {
     // (uploads go straight to S3, not through CloudFront), so the signature host matches.
     const uploadEndpoint = STORAGE_UPLOAD_URL || STORAGE_PUBLIC_URL;
 
-    const credentials = {
-      accessKeyId: STORAGE_ACCESS_KEY,
-      secretAccessKey: STORAGE_SECRET_KEY,
-    };
+    // When keys are provided (dev/MinIO), use them explicitly.
+    // When omitted (prod on EC2), leave undefined so the AWS SDK resolves
+    // credentials from the default provider chain — i.e. the instance IAM role.
+    const credentials =
+      STORAGE_ACCESS_KEY && STORAGE_SECRET_KEY
+        ? {
+            accessKeyId: STORAGE_ACCESS_KEY,
+            secretAccessKey: STORAGE_SECRET_KEY,
+          }
+        : undefined;
 
     this.s3 = new S3Client({
       endpoint: STORAGE_ENDPOINT,

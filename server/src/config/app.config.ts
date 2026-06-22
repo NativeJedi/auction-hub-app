@@ -44,8 +44,11 @@ const envSchema = z.object({
   EMAIL_USER: z.string().min(1),
   EMAIL_PASSWORD: z.string().min(1),
 
-  STORAGE_ACCESS_KEY: z.string().min(1),
-  STORAGE_SECRET_KEY: z.string().min(1),
+  // Optional: when omitted, the AWS SDK falls back to the default credential
+  // provider chain (EC2 instance IAM role via IMDS). Set explicitly only for
+  // local/dev (MinIO) or non-role environments.
+  STORAGE_ACCESS_KEY: z.string().min(1).optional(),
+  STORAGE_SECRET_KEY: z.string().min(1).optional(),
   STORAGE_BUCKET: z.string().min(1),
   STORAGE_ENDPOINT: z.string().min(1),
   STORAGE_REGION: z.string().min(1),
@@ -99,8 +102,8 @@ interface AppConfigInterface {
   EMAIL_PASSWORD: string;
 
   // storage settings
-  STORAGE_ACCESS_KEY: string;
-  STORAGE_SECRET_KEY: string;
+  STORAGE_ACCESS_KEY?: string;
+  STORAGE_SECRET_KEY?: string;
   STORAGE_BUCKET: string;
   STORAGE_ENDPOINT: string;
   STORAGE_REGION: string;
