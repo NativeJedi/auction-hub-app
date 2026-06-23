@@ -2,14 +2,14 @@
 
 Working checklist to get the app live on a single EC2 instance. Step through one item at a time.
 
-**Fixed decisions:** access via **AWS SSM** (port 22 stays closed), reverse proxy is **nginx + Certbot**, lot images served via **CloudFront + OAC**, app stack runs from `docker-compose.prod.yml` (no profiles).
+**Fixed decisions:** access via **AWS SSM** (port 22 stays closed), reverse proxy is **nginx + Certbot**, lot images served via **CloudFront + OAC**, prod stack runs from the default `docker-compose.yml` + `.env` (dev lives in `docker-compose.dev.yml` + `.env.dev`; no profiles).
 
 ---
 
 ## ✅ Done
 
 - [x] Account security: root MFA, IAM user, AWS Budgets
-- [x] Prod compose: `docker-compose.prod.yml` split out from dev (no profiles)
+- [x] Prod compose is the default `docker-compose.yml` (`name: auction-hub-prod`); dev is `docker-compose.dev.yml` (`name: auction-hub-dev`) — separate Compose projects, separate volumes
 - [x] Prod Dockerfiles for client and server
 - [x] S3 bucket for lot images (private, CORS, lifecycle)
 
@@ -40,16 +40,19 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] **Rotate the AWS access key** from the old `.env.prod` (old IAM key deleted)
 - [x] Move app S3 access to the **instance IAM role** (code: keys optional → SDK uses instance role; `auction-hub-ec2-ssm` got inline S3 policy; keys removed from `.env.prod`)
 - [ ] **Set up a real SMTP server** (replace Mailtrap sandbox `sandbox.smtp.mailtrap.io` — it only captures, never delivers). Pick a provider (Mailtrap Production / AWS SES / Postmark / etc.), fill `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USER` / `EMAIL_PASSWORD`, verify a real invite email is delivered
-- [ ] Fill real values in `.env.prod` (domain in `CLIENT_DOMAIN`, SMTP, etc.)
+- [ ] Fill real values in `.env` (domain in `CLIENT_DOMAIN`, SMTP, etc.)
 - [ ] Verify: no `<...>` placeholders left
 
-## 4. First manual deploy
+## 4. First manual deploy ✅
 
-- [ ] Get code onto the server (`git clone`)
-- [ ] Place `.env.prod` on the server (NOT via git)
-- [ ] `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build`
-- [ ] Verify: `docker compose ps` — all services healthy
-- [ ] Verify: reach api/client temporarily (by IP or an SSM port-forward)
+- [x] Get code onto the server (`git clone` over HTTPS)
+- [x] Place `.env` on the server (NOT via git)
+- [x] `docker compose up -d --build` (default `docker-compose.yml` + auto-loaded `.env`)
+- [x] Verify: `docker compose ps` — all services healthy/Up
+- [x] Verify: reach api/client via `curl localhost` on the server
+- Notes: prod uses instance IAM role for S3 (no keys); had to `down -v` once
+  because pgdata kept the old DB password (postgres ignores POSTGRES_PASSWORD
+  on an already-initialized volume). api/client have no healthcheck → show `Up`.
 
 ## 5. Domain
 
@@ -59,7 +62,7 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 
 ## 6. nginx + HTTPS
 
-- [ ] Add an **nginx** service to `docker-compose.prod.yml` (ports 80/443)
+- [ ] Add an **nginx** service to `docker-compose.yml` (ports 80/443)
 - [ ] Remove `ports:` from `api` and `client` (keep them on the internal network)
 - [ ] Write `nginx.conf`: `/api` + `/ws/room` → `api:3000` (with WebSocket upgrade), everything else → `client:3001`
 - [ ] Bring nginx up on **80**, serve the ACME challenge
