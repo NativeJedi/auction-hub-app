@@ -51,8 +51,8 @@ services:
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
       STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
-      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
-      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      # No STORAGE_ACCESS_KEY/SECRET_KEY: prod uses the EC2 instance IAM role.
+      # (Passing them here as empty strings would fail Zod's .min(1) and crash boot.)
       STORAGE_BUCKET: ${STORAGE_BUCKET}
       STORAGE_REGION: ${STORAGE_REGION}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
