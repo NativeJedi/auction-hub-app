@@ -8,7 +8,8 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
+import { ProxyThrottlerGuard } from './proxy-throttler.guard';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard, AuthorizedRequest } from './auth.guard';
@@ -27,7 +28,7 @@ import {
 import { GoogleAuthDto } from './dto/google-auth.dto';
 
 @ApiBearerAuth('access-token')
-@UseGuards(ThrottlerGuard)
+@UseGuards(ProxyThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(

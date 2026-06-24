@@ -13,6 +13,7 @@ export class StorageService {
   private readonly s3ForPresign: S3Client;
   private readonly bucket: string;
   private readonly publicUrl: string;
+  private readonly forcePathStyle: boolean;
 
   constructor(private readonly appConfig: AppConfigService) {
     const {
@@ -32,6 +33,7 @@ export class StorageService {
 
     // MinIO needs path-style; AWS S3 uses virtual-hosted. Default true unless set to 'false'.
     const forcePathStyle = STORAGE_FORCE_PATH_STYLE !== 'false';
+    this.forcePathStyle = forcePathStyle;
 
     // Browser-reachable endpoint the presigned PUT is signed against.
     // For MinIO this equals the public URL; for S3 it must be the S3 endpoint
@@ -89,7 +91,12 @@ export class StorageService {
   }
 
   getPublicUrl(s3Key: string): string {
-    return `${this.publicUrl}/${this.bucket}/${s3Key}`;
+    // Path-style (MinIO dev): the bucket is part of the URL path.
+    // CloudFront / virtual-hosted (S3 prod): the origin already IS the bucket,
+    // so the path is just the object key.
+    return this.forcePathStyle
+      ? `${this.publicUrl}/${this.bucket}/${s3Key}`
+      : `${this.publicUrl}/${s3Key}`;
   }
 
   async deleteObject(s3Key: string): Promise<void> {

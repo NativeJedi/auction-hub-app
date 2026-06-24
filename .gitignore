@@ -5,3 +5,5 @@
 .env.prod
 .claude
 node_modules
+# TLS material placed on the server only (Cloudflare Origin cert + key)
+nginx/certs/

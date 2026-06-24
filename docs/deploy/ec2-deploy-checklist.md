@@ -61,17 +61,17 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Add an **A record**: `@` (apex) → Elastic IP `51.21.146.183`, **DNS only (no proxy)**
 - [x] Verify: `dig +short auctionshub.net` returns `51.21.146.183`
 
-## 6. nginx + HTTPS
+## 6. nginx + HTTPS ✅
 
-- [ ] Add an **nginx** service to `docker-compose.yml` (ports 80/443)
-- [ ] Remove `ports:` from `api` and `client` (keep them on the internal network)
-- [ ] Write `nginx.conf`: `/api` + `/ws/room` → `api:3000` (with WebSocket upgrade), everything else → `client:3001`
-- [ ] Bring nginx up on **80**, serve the ACME challenge
-- [ ] **Certbot** (HTTP-01): obtain the certificate for the domain
-- [ ] Enable the **443** server block, reload nginx
-- [ ] Set up **auto-renewal** (`certbot renew` + nginx reload)
-- [ ] Update `CLIENT_URL` / `NEXT_PUBLIC_APP_DOMAIN` / `NEXT_PUBLIC_WS_ORIGIN` to `https://auctionshub.net` (WS origin has no port in prod; `/ws/room` is appended in code)
-- [ ] Verify: `https://<domain>` loads, WebSocket bidding works
+- [x] Add an **nginx** service to `docker-compose.yml` (ports 80/443)
+- [x] Remove `ports:` from `api` and `client` (now `expose` only — internal network)
+- [x] Write `nginx.conf`: **`/socket.io/` → api:3000** (WS upgrade), everything else (pages + `/api` BFF) → `client:3001`. NOTE: `/api` is the Next.js BFF, NOT NestJS — it goes to client.
+- [x] Bring nginx up on **80**, serve the ACME challenge
+- [x] **Certbot** (HTTP-01): certificate obtained for `auctionshub.net` (expires 2026-09-22)
+- [x] Enable the **443** server block, reload nginx (80 redirects → 443, keeps ACME location)
+- [x] Set up **auto-renewal** (certbot renew loop every 12h + nginx reload every 6h)
+- [x] Update `CLIENT_URL` / `NEXT_PUBLIC_APP_DOMAIN` / `NEXT_PUBLIC_WS_ORIGIN` to `https://auctionshub.net` (port-less; `/ws/room` appended in code)
+- [x] Verify: `https://auctionshub.net` loads, WebSocket bidding works
 
 ## 7. CloudFront for images
 

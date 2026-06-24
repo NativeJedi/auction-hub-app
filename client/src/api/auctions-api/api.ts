@@ -1,6 +1,7 @@
 import { getServerConfig } from '@/config/server';
 import {
   authRequestInterceptor,
+  forwardClientIpInterceptor,
   dataResponseInterceptor,
   errorResponseInterceptor,
 } from '@/src/api/auctions-api/interceptors';
@@ -21,7 +22,7 @@ const baseUrlInterceptor: RequestInterceptor = (config) => {
 
 const auctionsAPI = createApiInstance<AuctionsApiCustomConfigProps>(
   { baseURL: '' },
-  [baseUrlInterceptor, authRequestInterceptor],
+  [baseUrlInterceptor, forwardClientIpInterceptor, authRequestInterceptor],
   [responseInterceptor]
 );
 
