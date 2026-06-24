@@ -124,6 +124,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - certbot-www:/var/www/certbot:ro
       - certbot-conf:/etc/letsencrypt:ro
+    # Reload every 6h so renewed certs are picked up; nginx runs in foreground.
+    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     depends_on:
       api:
         condition: service_healthy
