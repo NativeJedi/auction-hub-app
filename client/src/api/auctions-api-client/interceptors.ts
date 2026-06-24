@@ -20,6 +20,17 @@ interface ApiError<T = unknown> extends Error {
 }
 
 export const errorResponseInterceptor: ErrorResponseInterceptor = (error) => {
+  // Session died while the user was on the page (refresh failed) → BFF returns
+  // 401. Bounce to login. Guard against a loop when already on the auth page
+  // (e.g. a wrong-credentials 401 during login).
+  if (
+    error.response?.status === 401 &&
+    typeof window !== 'undefined' &&
+    !window.location.pathname.startsWith('/crm/auth')
+  ) {
+    window.location.href = `/crm/auth?from=${encodeURIComponent(window.location.pathname)}`;
+  }
+
   const apiError: ApiError = new Error(error.message);
   apiError._originalError = error;
 

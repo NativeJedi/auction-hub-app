@@ -11,8 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/ui-k
 
 const locales = [
   { code: 'EN', active: true },
-  { code: 'FR', active: false },
-  { code: 'DE', active: false },
+  { code: 'UA', active: false },
 ];
 
 export default function LanguageSwitcher() {
