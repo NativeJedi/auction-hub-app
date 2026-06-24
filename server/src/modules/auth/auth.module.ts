@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthController } from './auth.controller';
@@ -11,11 +10,7 @@ import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [
-    UsersModule,
-    EmailModule,
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
-  ],
+  imports: [UsersModule, EmailModule],
   controllers: [AuthController],
   providers: [
     AuthService,

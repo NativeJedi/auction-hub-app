@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProxyThrottlerGuard } from './modules/auth/proxy-throttler.guard';
 import { AppConfig } from './config/app.config';
 import { TypeOrmConfig } from './config/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
@@ -29,6 +32,11 @@ export const APP_MODULES = [
     }),
     TypeOrmModule.forRoot(TypeOrmConfig),
     StorageModule,
+    // Global rate limit (generous backstop against floods). Per-endpoint
+    // overrides via @Throttle (e.g. stricter on auth). Counted per real client
+    // IP through ProxyThrottlerGuard (X-Forwarded-For forwarded by the BFF).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
   ],
+  providers: [{ provide: APP_GUARD, useClass: ProxyThrottlerGuard }],
 })
 export class AppModule {}

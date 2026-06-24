@@ -9,7 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ProxyThrottlerGuard } from './proxy-throttler.guard';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard, AuthorizedRequest } from './auth.guard';
@@ -28,7 +27,11 @@ import {
 import { GoogleAuthDto } from './dto/google-auth.dto';
 
 @ApiBearerAuth('access-token')
-@UseGuards(ProxyThrottlerGuard)
+// Stricter than the global default across the whole auth surface (brute-force
+// target). Counted per real client IP, and per endpoint independently (login,
+// register, refresh, … each get their own counter). resend-confirmation is
+// tightened further at the method level.
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -42,6 +45,7 @@ export class AuthController {
     description: 'Registration initiated; confirmation email sent',
     type: RegisterResponseDto,
   })
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   register(@Body() createAuthDto: CreateAuthDto): Promise<RegisterResponseDto> {
     return this.authService.register(createAuthDto);
@@ -53,6 +57,7 @@ export class AuthController {
     description: 'User logged in successfully',
     type: AuthResponseDto,
   })
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @HttpCode(200)
   @Post('login')
   login(@Body() loginAuthDto: LoginAuthDto): Promise<AuthResponseDto> {
@@ -112,6 +117,7 @@ export class AuthController {
     description: 'Confirmation email sent',
     type: ResendConfirmationResponseDto,
   })
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(200)
   @Post('resend-confirmation')
   resendConfirmation(

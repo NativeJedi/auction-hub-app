@@ -123,29 +123,12 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/certs:/etc/nginx/certs:ro
-      - certbot-www:/var/www/certbot:ro
-      - certbot-conf:/etc/letsencrypt:ro
-    # Reload every 6h so renewed certs are picked up; nginx runs in foreground.
-    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     depends_on:
       api:
         condition: service_healthy
       client:
         condition: service_healthy
 
-  # Certbot: running container keeps certs renewed (checks every 12h).
-  # Initial issuance is a one-off `docker compose run` command (see checklist).
-  certbot:
-    image: certbot/certbot
-    container_name: auction-certbot
-    restart: unless-stopped
-    volumes:
-      - certbot-www:/var/www/certbot
-      - certbot-conf:/etc/letsencrypt
-    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'
-
 volumes:
   redis-data:
   pgdata:
-  certbot-www:
-  certbot-conf:
