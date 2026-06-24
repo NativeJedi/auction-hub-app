@@ -5,6 +5,11 @@ services:
     image: redis/redis-stack:latest
     container_name: auction-redis
     restart: unless-stopped
+    # AOF persistence: every write is appended to disk, so sessions (and auction
+    # state) survive a restart. Without it redis-stack only does periodic RDB
+    # snapshots and recent writes are lost on restart.
+    environment:
+      REDIS_ARGS: "--appendonly yes"
     volumes:
       - redis-data:/data
     healthcheck:
