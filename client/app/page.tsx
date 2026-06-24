@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
 import LandingPage from '@/src/modules/landing/LandingPage';
 
-const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
+const siteOrigin = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'http://localhost:3001';
 
 const title = 'AuctionHub — Capture every bid in the room';
 const description =

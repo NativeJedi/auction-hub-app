@@ -60,7 +60,7 @@ Out-of-contract files in the diff (none appear in any FEAT-009 task — see **S-
 | `client/app/crm/auth/page.tsx` | No | Adds `logoHref="/"` so the auth logo points at the landing — sensible |
 | `client/app/api/auth/logout/route.ts` (+test) | No | Logout cookie-clear bug fix — correct, but unrelated to FEAT-009 |
 | `server/.../auctions.service.ts`, `lots.service.ts` (+specs) | No | Per-owner limits (100 auctions / 50 lots) — tested, but unrelated; see S-1 |
-| `.env.example`, `docker-compose.yml` | No | `CLIENT_DOMAIN`-derived env — unrelated; see open questions |
+| `.env.example`, `docker-compose.yml` | No | `APP_DOMAIN`-derived env — unrelated; see open questions |
 
 ---
 
@@ -87,7 +87,7 @@ Then add a `middleware.test.ts` case: `/robots.txt` (and `/sitemap.xml`) pass th
 
 #### S-1 — Four unrelated concerns bundled into one FEAT-009 commit
 **Where:** N/A — diff-wide (`server/**`, `client/app/api/auth/logout/**`, `.env.example`, `docker-compose.yml`)
-**What:** The commit mixes the landing feature with (a) server-side per-owner auction/lot limits, (b) the logout cookie-clear fix, and (c) the `CLIENT_DOMAIN` env refactor. None is in any FEAT-009 task's Files-to-Touch. Each of (a)–(c) looks individually reasonable (the limits even ship with Jest specs, the logout fix is correct), but they never had their own task, ADR scope, or review boundary.
+**What:** The commit mixes the landing feature with (a) server-side per-owner auction/lot limits, (b) the logout cookie-clear fix, and (c) the `APP_DOMAIN` env refactor. None is in any FEAT-009 task's Files-to-Touch. Each of (a)–(c) looks individually reasonable (the limits even ship with Jest specs, the logout fix is correct), but they never had their own task, ADR scope, or review boundary.
 **Why:** Breaks the Files-to-Touch contract for all three tasks (skill §2 — out-of-contract files are at least Significant) and couples unrelated risk: B-1 cannot be reverted without also touching server-limit / logout / env work in the same commit.
 **Suggested fix:** No code change required to the bundled work itself; going forward land these as separate commits/tasks so each gets its own review and revert boundary.
 
@@ -137,7 +137,7 @@ The bundled server work also added Jest specs (`auctions.service.spec.ts`, `lots
 
 ## Open questions for the user
 
-- **Env interpolation (out of scope):** `.env.example` now uses nested references — `CLIENT_URL=${CLIENT_DOMAIN}:3001`, `NEXT_PUBLIC_SITE_URL=${CLIENT_URL}`, `STORAGE_PUBLIC_URL=${CLIENT_DOMAIN}:9000`. The derivation design is sound (one source of truth, storage keeps port 9000), but plain `.env` files don't always expand one variable inside another's value depending on the loader. Worth a quick check that `CLIENT_URL`/`NEXT_PUBLIC_SITE_URL` actually resolve at runtime rather than landing as literal `${CLIENT_DOMAIN}:3001` strings.
+- **Env interpolation (out of scope):** `.env.example` now uses nested references — `CLIENT_URL=${APP_DOMAIN}:3001`, `NEXT_PUBLIC_APP_DOMAIN=${CLIENT_URL}`, `STORAGE_PUBLIC_URL=${APP_DOMAIN}:9000`. The derivation design is sound (one source of truth, storage keeps port 9000), but plain `.env` files don't always expand one variable inside another's value depending on the loader. Worth a quick check that `CLIENT_URL`/`NEXT_PUBLIC_APP_DOMAIN` actually resolve at runtime rather than landing as literal `${APP_DOMAIN}:3001` strings.
 - **S-3:** is the live product flow genuinely "start, then invite", or is the landing copy wrong? Your answer decides reorder-section vs back-port-FR-4.
 - **S-1:** do you want the bundled server-limit / logout / env work split into their own tasks retroactively, or is one-off bundling acceptable here?
 

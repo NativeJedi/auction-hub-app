@@ -39,8 +39,9 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Generate **fresh JWT secrets** (not the dev ones)
 - [x] **Rotate the AWS access key** from the old `.env.prod` (old IAM key deleted)
 - [x] Move app S3 access to the **instance IAM role** (code: keys optional → SDK uses instance role; `auction-hub-ec2-ssm` got inline S3 policy; keys removed from `.env.prod`)
-- [ ] **Set up a real SMTP server** (replace Mailtrap sandbox `sandbox.smtp.mailtrap.io` — it only captures, never delivers). Pick a provider (Mailtrap Production / AWS SES / Postmark / etc.), fill `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USER` / `EMAIL_PASSWORD`, verify a real invite email is delivered
-- [ ] Fill real values in `.env` (domain in `CLIENT_DOMAIN`, SMTP, etc.)
+- [ ] **Legal / data-protection setup (before real users)** — decide target jurisdiction & audience (UA / EU-GDPR / etc.); publish a **Privacy Policy** (also required by Google to move the OAuth consent screen to production) and **Terms of Service**; define lawful basis, data retention, and account/data deletion. Gates real registration. (Not a lawyer — get it reviewed.)
+- [ ] **Set up a real SMTP server** (replace Mailtrap sandbox `sandbox.smtp.mailtrap.io` — it only captures, never delivers). Pick a provider (Mailtrap Production / AWS SES / Postmark / etc.), fill `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USER` / `EMAIL_PASSWORD`, verify a real invite email is delivered. **Note: until SMTP works, email confirmation can't complete → users can't register.**
+- [ ] Fill real values in `.env` (domain in `APP_DOMAIN`, SMTP, etc.)
 - [ ] Verify: no `<...>` placeholders left
 
 ## 4. First manual deploy ✅
@@ -52,13 +53,13 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Verify: reach api/client via `curl localhost` on the server
 - Notes: prod uses instance IAM role for S3 (no keys); had to `down -v` once
   because pgdata kept the old DB password (postgres ignores POSTGRES_PASSWORD
-  on an already-initialized volume). api/client have no healthcheck → show `Up`.
+  on an already-initialized volume). api & client now have healthchecks.
 
-## 5. Domain
+## 5. Domain ✅
 
-- [ ] Buy a domain (Route 53, or Cloudflare/Namecheap — cheaper)
-- [ ] Add an **A record**: `auction.<domain>` → Elastic IP
-- [ ] Verify: `dig auction.<domain>` returns the Elastic IP
+- [x] Buy a domain — `auctionshub.net` (apex, no subdomain)
+- [x] Add an **A record**: `@` (apex) → Elastic IP `51.21.146.183`, **DNS only (no proxy)**
+- [x] Verify: `dig +short auctionshub.net` returns `51.21.146.183`
 
 ## 6. nginx + HTTPS
 
@@ -69,7 +70,7 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [ ] **Certbot** (HTTP-01): obtain the certificate for the domain
 - [ ] Enable the **443** server block, reload nginx
 - [ ] Set up **auto-renewal** (`certbot renew` + nginx reload)
-- [ ] Update `CLIENT_URL` / `NEXT_PUBLIC_SITE_URL` to `https://<domain>`
+- [ ] Update `CLIENT_URL` / `NEXT_PUBLIC_APP_DOMAIN` / `NEXT_PUBLIC_WS_ORIGIN` to `https://auctionshub.net` (WS origin has no port in prod; `/ws/room` is appended in code)
 - [ ] Verify: `https://<domain>` loads, WebSocket bidding works
 
 ## 7. CloudFront for images
