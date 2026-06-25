@@ -73,12 +73,13 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Update `CLIENT_URL` / `NEXT_PUBLIC_APP_DOMAIN` / `NEXT_PUBLIC_WS_ORIGIN` to `https://auctionshub.net` (port-less; `/ws/room` appended in code)
 - [x] Verify: `https://auctionshub.net` loads, WebSocket bidding works
 
-## 7. CloudFront for images
+## 7. CloudFront for images ✅
 
-- [ ] Create a **CloudFront distribution** over the private S3 bucket
-- [ ] Configure **OAC** (Origin Access Control) to read the private bucket
-- [ ] Set the CloudFront domain in `STORAGE_PUBLIC_URL`
-- [ ] Verify: a lot image loads through the CloudFront URL
+- [x] Create a **CloudFront distribution** over the private S3 bucket (`auction-hub-images`)
+- [x] Configure **OAC** (Origin Access Control) to read the private bucket (wizard auto-applied the bucket policy)
+- [x] Set the CloudFront domain in `STORAGE_PUBLIC_URL` (+ `STORAGE_FORCE_PATH_STYLE=false`)
+- [x] Verify: a lot image loads through the CloudFront URL
+- Code: `getPublicUrl` is path-style-aware (no bucket in path for S3/CloudFront). Bucket CORS updated to allow `https://auctionshub.net` for presigned PUT uploads.
 
 ## 8. CI/CD + closed SSH
 

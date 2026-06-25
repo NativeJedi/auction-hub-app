@@ -14,10 +14,16 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
         <Logo href="/" />
 
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          <a href="#how" className="transition-colors hover:text-foreground">
+          <a
+            href="#how"
+            className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             How it works
           </a>
-          <a href="#features" className="transition-colors hover:text-foreground">
+          <a
+            href="#features"
+            className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             Features
           </a>
         </nav>
