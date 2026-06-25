@@ -1,9 +1,10 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
 
-const { mockCookieGet } = vi.hoisted(() => ({
-  mockCookieGet: vi.fn(),
+const { mockGetValidSession } = vi.hoisted(() => ({
+  mockGetValidSession: vi.fn(),
 }));
 
 // constants.ts (imported transitively via middleware.ts) pulls in config/server,
@@ -17,20 +18,29 @@ vi.mock('@/config/server', () => ({
   }),
 }));
 
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(async () => ({ get: mockCookieGet })),
+// The middleware validates the ACTUAL session via sessionStorage (Redis lookup +
+// token refresh). Mock it so tests can drive the auth decision without infra.
+vi.mock('@/src/services/session', () => ({
+  sessionStorage: { getValidSession: mockGetValidSession },
 }));
 
 import middleware from './middleware';
 
+// NextRequest parses the standard Cookie header, so this is how the middleware's
+// `req.cookies.get(SESSION_COOKIE_NAME)` sees a session cookie.
+const withSession = (url: string) =>
+  new NextRequest(url, {
+    headers: { cookie: `${SESSION_COOKIE_NAME}=sess-1` },
+  });
+
 describe('middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no valid session unless a test opts in.
+    mockGetValidSession.mockResolvedValue(null);
   });
 
   it("allows '/' through without a session (does not redirect to /crm/auth)", async () => {
-    mockCookieGet.mockReturnValue(undefined);
-
     const res = await middleware(new NextRequest('http://localhost/'));
 
     expect(res.headers.get('location')).toBeNull();
@@ -39,8 +49,15 @@ describe('middleware', () => {
   it.each(['/robots.txt', '/sitemap.xml'])(
     'allows the SEO endpoint %s through without a session (crawlers send no cookie)',
     async (path) => {
-      mockCookieGet.mockReturnValue(undefined);
+      const res = await middleware(new NextRequest(`http://localhost${path}`));
 
+      expect(res.headers.get('location')).toBeNull();
+    }
+  );
+
+  it.each(['/privacy', '/terms'])(
+    'allows the legal page %s through without a session',
+    async (path) => {
       const res = await middleware(new NextRequest(`http://localhost${path}`));
 
       expect(res.headers.get('location')).toBeNull();
@@ -48,8 +65,6 @@ describe('middleware', () => {
   );
 
   it('redirects a protected route to /crm/auth and preserves the original path without a session', async () => {
-    mockCookieGet.mockReturnValue(undefined);
-
     const res = await middleware(new NextRequest('http://localhost/crm/auctions'));
 
     const location = res.headers.get('location');
@@ -60,18 +75,25 @@ describe('middleware', () => {
   });
 
   it('passes a known public slice (e.g. /room) through without a session', async () => {
-    mockCookieGet.mockReturnValue(undefined);
-
     const res = await middleware(new NextRequest('http://localhost/room/abc'));
 
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('passes a protected route through when a session cookie is present', async () => {
-    mockCookieGet.mockReturnValue({ value: 'sess-1' });
+  it('passes a protected route through when a valid session is present', async () => {
+    mockGetValidSession.mockResolvedValue({ id: 'sess-1' });
 
-    const res = await middleware(new NextRequest('http://localhost/crm/auctions'));
+    const res = await middleware(withSession('http://localhost/crm/auctions'));
 
     expect(res.headers.get('location')).toBeNull();
+    expect(mockGetValidSession).toHaveBeenCalledWith('sess-1');
+  });
+
+  it('redirects when a session cookie is present but the session is invalid', async () => {
+    mockGetValidSession.mockResolvedValue(null);
+
+    const res = await middleware(withSession('http://localhost/crm/auctions'));
+
+    expect(res.headers.get('location')).not.toBeNull();
   });
 });

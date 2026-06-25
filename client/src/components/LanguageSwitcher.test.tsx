@@ -12,13 +12,13 @@ describe('LanguageSwitcher', () => {
     expect(screen.getByRole('button', { name: /en/i })).toBeInTheDocument();
   });
 
-  it('opening the dropdown shows three locale items', async () => {
+  it('opening the dropdown shows two locale items', async () => {
     const user = userEvent.setup();
     render(<LanguageSwitcher />);
 
     await user.click(screen.getByRole('button', { name: /en/i }));
 
-    expect(await screen.findAllByRole('menuitem')).toHaveLength(3);
+    expect(await screen.findAllByRole('menuitem')).toHaveLength(2);
   });
 
   it('EN item contains a checkmark element', async () => {
@@ -31,27 +31,26 @@ describe('LanguageSwitcher', () => {
     expect(enItem.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('FR and DE items have aria-disabled="true"', async () => {
+  it('the UA item has aria-disabled="true"', async () => {
     const user = userEvent.setup();
     render(<LanguageSwitcher />);
 
     await user.click(screen.getByRole('button', { name: /en/i }));
 
-    expect(await screen.findByRole('menuitem', { name: /fr/i })).toHaveAttribute(
+    expect(await screen.findByRole('menuitem', { name: /ua/i })).toHaveAttribute(
       'aria-disabled',
       'true'
     );
-    expect(screen.getByRole('menuitem', { name: /de/i })).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('"Coming soon" tooltip text is accessible on FR and DE items', async () => {
+  it('"Coming soon" tooltip text is accessible on the UA item', async () => {
     const user = userEvent.setup();
     render(<LanguageSwitcher />);
 
     await user.click(screen.getByRole('button', { name: /en/i }));
 
     // hover triggers the Tooltip; Radix default delayDuration is 700ms
-    await user.hover(await screen.findByRole('menuitem', { name: /fr/i }));
+    await user.hover(await screen.findByRole('menuitem', { name: /ua/i }));
 
     // Radix renders <span role="tooltip"> as the accessible description
     const tooltip = await screen.findByRole('tooltip', {}, { timeout: 2000 });

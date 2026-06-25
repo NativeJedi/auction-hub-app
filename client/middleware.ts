@@ -5,8 +5,9 @@ import { sessionStorage } from '@/src/services/session';
 const publicRoutes = ['/crm/auth', '/room', '/results', '/confirm-email'];
 
 // Crawlable, session-less endpoints that must never be gated. Exact-match only:
-// the landing owns `/`, and the SEO files must reach anonymous crawlers (ADR-FEAT-009-01 §7).
-const alwaysPublicPaths = ['/', '/robots.txt', '/sitemap.xml'];
+// the landing owns `/`, the SEO files must reach anonymous crawlers (ADR-FEAT-009-01 §7),
+// and the legal pages must be publicly reachable (also required for Google's OAuth review).
+const alwaysPublicPaths = ['/', '/robots.txt', '/sitemap.xml', '/privacy', '/terms'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
