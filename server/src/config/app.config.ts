@@ -43,6 +43,12 @@ const envSchema = z.object({
   EMAIL_PORT: z.coerce.number().int().positive(),
   EMAIL_USER: z.string().min(1),
   EMAIL_PASSWORD: z.string().min(1),
+  // Envelope "From". Must be an address on a domain verified with the SMTP
+  // provider (e.g. @auctionshub.net for SES) or the provider rejects the mail.
+  EMAIL_FROM: z
+    .string()
+    .min(1)
+    .default('"Auction Hub" <no-reply@auctionshub.net>'),
 
   // Optional: when omitted, the AWS SDK falls back to the default credential
   // provider chain (EC2 instance IAM role via IMDS). Set explicitly only for
@@ -100,6 +106,7 @@ interface AppConfigInterface {
   EMAIL_PORT: number;
   EMAIL_USER: string;
   EMAIL_PASSWORD: string;
+  EMAIL_FROM: string;
 
   // storage settings
   STORAGE_ACCESS_KEY?: string;
@@ -137,6 +144,7 @@ const AppConfig: AppConfigInterface = {
   EMAIL_PORT: env.EMAIL_PORT,
   EMAIL_USER: env.EMAIL_USER,
   EMAIL_PASSWORD: env.EMAIL_PASSWORD,
+  EMAIL_FROM: env.EMAIL_FROM,
 
   STORAGE_ACCESS_KEY: env.STORAGE_ACCESS_KEY,
   STORAGE_SECRET_KEY: env.STORAGE_SECRET_KEY,

@@ -13,8 +13,11 @@ export class EmailService {
 
     this.transporter = nodemailer.createTransport({
       host: EMAIL_HOST,
+      // Port 465 speaks TLS immediately (implicit TLS) and needs secure: true.
+      // 587/2525 start plaintext and upgrade via STARTTLS (secure: false).
+      // Deriving it from the port lets the same code work with any provider.
       port: EMAIL_PORT,
-      secure: false,
+      secure: EMAIL_PORT === 465,
       requireTLS: true, // L-2: refuse connections that don't offer STARTTLS/TLS
       auth: {
         user: EMAIL_USER,
@@ -43,7 +46,7 @@ export class EmailService {
 
   async sendEmail(to: string, subject: string, text: string) {
     const info = (await this.transporter.sendMail({
-      from: '"Auction hub" <no-reply@auction-hub.com>',
+      from: this.appConfig.emailSettings.EMAIL_FROM,
       to,
       subject,
       text,

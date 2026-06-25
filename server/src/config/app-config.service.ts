@@ -51,12 +51,14 @@ export class AppConfigService {
     const EMAIL_PORT = this.config.get<number>('EMAIL_PORT')!;
     const EMAIL_USER = this.config.get<string>('EMAIL_USER')!;
     const EMAIL_PASSWORD = this.config.get<string>('EMAIL_PASSWORD')!;
+    const EMAIL_FROM = this.config.get<string>('EMAIL_FROM')!;
 
     return {
       EMAIL_HOST,
       EMAIL_PORT,
       EMAIL_USER,
       EMAIL_PASSWORD,
+      EMAIL_FROM,
     };
   }
 

@@ -25,6 +25,7 @@ const loadTestConfig = ({
     EMAIL_PORT: 0,
     EMAIL_USER: '',
     EMAIL_PASSWORD: '',
+    EMAIL_FROM: '"Auction Hub" <no-reply@auctionshub.net>',
     CLIENT_URL: 'http://localhost:3001',
     STORAGE_ACCESS_KEY: '',
     STORAGE_SECRET_KEY: '',

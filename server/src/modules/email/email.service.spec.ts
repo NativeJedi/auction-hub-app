@@ -9,6 +9,7 @@ const mockAppConfig = {
     EMAIL_PORT: 587,
     EMAIL_USER: 'user',
     EMAIL_PASSWORD: 'pass',
+    EMAIL_FROM: '"Auction Hub" <no-reply@auctionshub.net>',
   },
   urls: {
     CLIENT_URL: 'https://app.example.com',
@@ -67,6 +68,37 @@ describe('EmailService', () => {
       const [[mailOptions]] = sendMailMock.mock.calls as [[{ text: string }]];
 
       expect(mailOptions.text).toContain('safely ignore');
+    });
+
+    it('sends from the configured EMAIL_FROM address', async () => {
+      await service.sendAlreadyRegisteredEmail('user@example.com');
+
+      expect(sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: '"Auction Hub" <no-reply@auctionshub.net>',
+        }),
+      );
+    });
+  });
+
+  describe('transporter TLS configuration', () => {
+    it('uses STARTTLS (secure: false) on port 587', () => {
+      expect(nodemailer.createTransport).toHaveBeenCalledWith(
+        expect.objectContaining({ port: 587, secure: false, requireTLS: true }),
+      );
+    });
+
+    it('uses implicit TLS (secure: true) on port 465', () => {
+      (nodemailer.createTransport as jest.Mock).mockClear();
+
+      new EmailService({
+        emailSettings: { ...mockAppConfig.emailSettings, EMAIL_PORT: 465 },
+        urls: mockAppConfig.urls,
+      } as unknown as AppConfigService);
+
+      expect(nodemailer.createTransport).toHaveBeenCalledWith(
+        expect.objectContaining({ port: 465, secure: true }),
+      );
     });
   });
 });
