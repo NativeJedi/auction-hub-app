@@ -45,10 +45,12 @@ const envSchema = z.object({
   EMAIL_PASSWORD: z.string().min(1),
   // Envelope "From". Must be an address on a domain verified with the SMTP
   // provider (e.g. @auctionshub.net for SES) or the provider rejects the mail.
-  EMAIL_FROM: z
-    .string()
-    .min(1)
-    .default('"Auction Hub" <no-reply@auctionshub.net>'),
+  // Treat an empty value (e.g. an unset ${EMAIL_FROM} in docker-compose) as
+  // missing so it falls back to the default instead of failing validation.
+  EMAIL_FROM: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(1).default('AuctionHub <no-reply@auctionshub.net>'),
+  ),
 
   // Optional: when omitted, the AWS SDK falls back to the default credential
   // provider chain (EC2 instance IAM role via IMDS). Set explicitly only for
