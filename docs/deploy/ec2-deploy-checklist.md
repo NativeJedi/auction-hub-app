@@ -34,15 +34,15 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Update the OS (`apt update && apt upgrade`)
 - [x] Verify: `docker run hello-world` works
 
-## 3. Production secrets
+## 3. Production secrets ✅
 
 - [x] Generate **fresh JWT secrets** (not the dev ones)
 - [x] **Rotate the AWS access key** from the old `.env.prod` (old IAM key deleted)
 - [x] Move app S3 access to the **instance IAM role** (code: keys optional → SDK uses instance role; `auction-hub-ec2-ssm` got inline S3 policy; keys removed from `.env.prod`)
-- [ ] **Legal / data-protection setup (before real users)** — decide target jurisdiction & audience (UA / EU-GDPR / etc.); publish a **Privacy Policy** (also required by Google to move the OAuth consent screen to production) and **Terms of Service**; define lawful basis, data retention, and account/data deletion. Gates real registration. (Not a lawyer — get it reviewed.)
-- [ ] **Set up a real SMTP server** (replace Mailtrap sandbox `sandbox.smtp.mailtrap.io` — it only captures, never delivers). Pick a provider (Mailtrap Production / AWS SES / Postmark / etc.), fill `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USER` / `EMAIL_PASSWORD`, verify a real invite email is delivered. **Note: until SMTP works, email confirmation can't complete → users can't register.**
-- [ ] Fill real values in `.env` (domain in `APP_DOMAIN`, SMTP, etc.)
-- [ ] Verify: no `<...>` placeholders left
+- [x] **Legal / data-protection setup** — UA + EU/GDPR. `/privacy` + `/terms` pages live (Next.js, `LegalLayout` in landing module), linked in footer, public via middleware `alwaysPublicPaths`. Covers controller, data inventory, Art. 6 bases, processors (AWS/Google/SMTP), retention, rights, **deletion by email request** (no self-serve endpoint yet — known gap). Placeholders for controller name/contact email still to fill; get a lawyer review before relying on it.
+- [x] **Real SMTP — AWS SES** (`eu-north-1`). Domain `auctionshub.net` verified: DKIM (3× CNAME) + custom MAIL FROM (`mail.auctionshub.net`, MX+SPF) + DMARC, all SUCCESS. Code made provider-agnostic: `secure` derived from port (465 vs 587), `from` via new `EMAIL_FROM`. Prod `.env` → host `email-smtp.eu-north-1.amazonaws.com`, port 587, **SMTP** creds (not the IAM user name — must be the `AKIA…` SMTP username). **Pending:** AWS asked for more use-case detail on the production-access request (still in sandbox → only verified recipients until granted).
+- [x] Fill real values in `.env` (domain in `APP_DOMAIN`, SMTP, `EMAIL_FROM`, etc.)
+- [x] Verify: no `<...>` placeholders left
 
 ## 4. First manual deploy ✅
 
@@ -83,9 +83,15 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 
 ## 8. CI/CD + closed SSH
 
-- [ ] Set up **OIDC** between GitHub Actions and AWS (no long-lived keys)
-- [ ] Add a deploy job to Actions: pull code + restart via **SSM Run Command**
-- [ ] Verify: pushing to `main` deploys automatically
+**Approach:** build images in CI → push to **ECR** → instance pulls (build off the prod box).
+Repo-side is done; AWS console wiring per `docs/deploy/ci-cd-oidc-setup.md`.
+
+- [x] Repo-side: `.github/workflows/deploy.yml` (OIDC → build+push to ECR → SSM deploy), `scripts/deploy.sh` (ECR login + `docker compose pull` + restart), `docker-compose.yml` api/client now `image:` (build kept as fallback), `ECR_REGISTRY` in `.env`.
+- [ ] Set up **OIDC** between GitHub Actions and AWS (no long-lived keys) — identity provider + `github-actions-deploy` role (trust scoped to `main`)
+- [ ] Create 2 **ECR repos** (`auction-hub-server`, `auction-hub-client`) + lifecycle policy; add `AmazonEC2ContainerRegistryReadOnly` to the instance role
+- [ ] One-time on instance: `usermod -aG docker ssm-user`, `git pull` so `scripts/deploy.sh` is present, set `ECR_REGISTRY` in `.env`
+- [ ] GitHub secrets (`AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`) + variables (`NEXT_PUBLIC_*`)
+- [ ] Verify: manual **Run workflow** (workflow_dispatch from `main`) builds → pushes to ECR → deploys
 - [ ] Verify: port 22 is still closed, deploy runs without SSH
 
 ## 9. Backups

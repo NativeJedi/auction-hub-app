@@ -1,0 +1,106 @@
+name: Deploy
+
+# Build the prod images, push them to ECR, then tell the EC2 instance to pull
+# and restart over SSM. No long-lived AWS keys (OIDC) and no SSH (port 22 closed).
+#
+# Manual trigger only — run it from the Actions tab ("Run workflow"). Deploys the
+# ref you launch it from (use the `main` branch so it matches the OIDC trust policy).
+on:
+  workflow_dispatch:
+
+# Required for GitHub's OIDC token, which is exchanged for short-lived AWS creds.
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-north-1
+
+jobs:
+  deploy:
+    name: Build, push to ECR, deploy via SSM
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push server image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t "$REGISTRY/auction-hub-server:$TAG" \
+            -t "$REGISTRY/auction-hub-server:latest" \
+            ./server
+          docker push "$REGISTRY/auction-hub-server:$TAG"
+          docker push "$REGISTRY/auction-hub-server:latest"
+
+      - name: Build & push client image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        # NEXT_PUBLIC_* are public (inlined into the browser bundle), so they
+        # live in repo *variables*, not secrets.
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID="${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}" \
+            --build-arg NEXT_PUBLIC_APP_DOMAIN="${{ vars.NEXT_PUBLIC_APP_DOMAIN }}" \
+            --build-arg NEXT_PUBLIC_WS_ORIGIN="${{ vars.NEXT_PUBLIC_WS_ORIGIN }}" \
+            -t "$REGISTRY/auction-hub-client:$TAG" \
+            -t "$REGISTRY/auction-hub-client:latest" \
+            ./client
+          docker push "$REGISTRY/auction-hub-client:$TAG"
+          docker push "$REGISTRY/auction-hub-client:latest"
+
+      - name: Deploy on EC2 via SSM Run Command
+        env:
+          INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+          TAG: ${{ github.sha }}
+        run: |
+          command_id=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy $TAG" \
+            --parameters commands="sudo -u ssm-user -H bash /home/ssm-user/auction-hub-app/scripts/deploy.sh $TAG" \
+            --query "Command.CommandId" --output text)
+
+          echo "SSM command: $command_id"
+
+          # Block until the command reaches a terminal state.
+          aws ssm wait command-executed \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" || true
+
+          status=$(aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" --output text)
+
+          echo "----- deploy output -----"
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query "StandardOutputContent" --output text
+          echo "----- deploy errors -----"
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query "StandardErrorContent" --output text
+
+          echo "Final status: $status"
+          test "$status" = "Success"

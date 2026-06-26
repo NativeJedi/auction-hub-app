@@ -33,6 +33,9 @@ services:
       retries: 10
 
   api:
+    # Prod pulls a prebuilt image from ECR (tag set by the deploy). The build:
+    # block is kept as a local/offline fallback (`docker compose build api`).
+    image: ${ECR_REGISTRY}/auction-hub-server:${IMAGE_TAG:-latest}
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -81,6 +84,9 @@ services:
         condition: service_healthy
 
   client:
+    # Prebuilt image from ECR. NEXT_PUBLIC_* are baked at build time in CI
+    # (see deploy.yml); the build: block below is a local/offline fallback.
+    image: ${ECR_REGISTRY}/auction-hub-client:${IMAGE_TAG:-latest}
     build:
       context: ./client
       dockerfile: Dockerfile
