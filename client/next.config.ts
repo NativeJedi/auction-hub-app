@@ -13,14 +13,14 @@ const isProd = process.env.NODE_ENV === 'production';
 // policy is adopted project-wide.
 const cspDirectives = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' ${isProd ? '' : "'unsafe-eval'"} https://accounts.google.com/gsi/client`,
+  `script-src 'self' 'unsafe-inline' ${isProd ? '' : "'unsafe-eval'"} https://accounts.google.com/gsi/client https://static.cloudflareinsights.com`,
   `style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style`,
   `img-src 'self' data: blob: ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net https://*.googleusercontent.com`,
   `font-src 'self' data:`,
   // connect-src must allow presigned PUT uploads (S3: bucket.s3.<region>.amazonaws.com)
   // and reads/fetches via CloudFront. Wildcards are used because the exact bucket /
   // distribution host isn't known at build time (headers() is computed during next build).
-  `connect-src 'self' https://accounts.google.com/gsi/ ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
+  `connect-src 'self' https://accounts.google.com/gsi/ https://cloudflareinsights.com ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
   `frame-src https://accounts.google.com/`,
   `frame-ancestors 'self'`,
   `object-src 'none'`,
@@ -33,6 +33,10 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  // Google Identity Services uses a popup that talks back via window.postMessage.
+  // 'same-origin-allow-popups' keeps cross-origin isolation for the app while
+  // still allowing the GSI popup → opener postMessage. Recommended by Google.
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
   ...(isProd
     ? [

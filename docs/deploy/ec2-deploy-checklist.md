@@ -81,24 +81,25 @@ Working checklist to get the app live on a single EC2 instance. Step through one
 - [x] Verify: a lot image loads through the CloudFront URL
 - Code: `getPublicUrl` is path-style-aware (no bucket in path for S3/CloudFront). Bucket CORS updated to allow `https://auctionshub.net` for presigned PUT uploads.
 
-## 8. CI/CD + closed SSH
+## 8. CI/CD + closed SSH ✅
 
 **Approach:** build images in CI → push to **ECR** → instance pulls (build off the prod box).
-Repo-side is done; AWS console wiring per `docs/deploy/ci-cd-oidc-setup.md`.
+Manual trigger (workflow_dispatch). Full AWS wiring in `docs/deploy/ci-cd-oidc-setup.md`.
 
 - [x] Repo-side: `.github/workflows/deploy.yml` (OIDC → build+push to ECR → SSM deploy), `scripts/deploy.sh` (ECR login + `docker compose pull` + restart), `docker-compose.yml` api/client now `image:` (build kept as fallback), `ECR_REGISTRY` in `.env`.
-- [ ] Set up **OIDC** between GitHub Actions and AWS (no long-lived keys) — identity provider + `github-actions-deploy` role (trust scoped to `main`)
-- [ ] Create 2 **ECR repos** (`auction-hub-server`, `auction-hub-client`) + lifecycle policy; add `AmazonEC2ContainerRegistryReadOnly` to the instance role
-- [ ] One-time on instance: `usermod -aG docker ssm-user`, `git pull` so `scripts/deploy.sh` is present, set `ECR_REGISTRY` in `.env`
-- [ ] GitHub secrets (`AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`) + variables (`NEXT_PUBLIC_*`)
-- [ ] Verify: manual **Run workflow** (workflow_dispatch from `main`) builds → pushes to ECR → deploys
-- [ ] Verify: port 22 is still closed, deploy runs without SSH
+- [x] **OIDC** identity provider + `github-actions-deploy` role (Web-identity wizard; trust scoped to `NativeJedi/auction-hub-app` `main`) + inline policy (ECR push + SSM)
+- [x] 2 **ECR repos** (`auction-hub-server`, `auction-hub-client`) + lifecycle (keep last 5); `AmazonEC2ContainerRegistryReadOnly` on the instance role
+- [x] Instance prep: `usermod -aG docker ssm-user`, **install AWS CLI v2** (was missing → `aws: command not found`), `ECR_REGISTRY` in `.env`. Gotcha: `chmod +x deploy.sh` made git see a mode change → `git restore` before pull. Script invoked via `bash`, so +x not needed; deploy.sh hardens `PATH` for snap-installed aws.
+- [x] GitHub secrets (`AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`) + variables (`NEXT_PUBLIC_*`)
+- [x] Verify: **Run workflow** builds → pushes to ECR → deploys; port 22 still closed, no SSH
 
 ## 9. Backups
 
-- [ ] Cron `pg_dump` (via `docker compose exec db`) → a separate S3 backup bucket
-- [ ] EBS snapshots via Data Lifecycle Manager
-- [ ] **Test a restore** from a backup at least once
+Repo-side ready (`scripts/backup-db.sh`, `BACKUP_BUCKET` in `.env`); AWS wiring in `docs/deploy/backups-setup.md`.
+
+- [ ] Cron `pg_dump` (via `docker compose exec -T db`) → a separate S3 backup bucket — create bucket (private + lifecycle expire 30d), add S3 inline policy to instance role, set `BACKUP_BUCKET` in `.env`, install cron (03:00 UTC as ssm-user)
+- [ ] EBS snapshots via Data Lifecycle Manager (tag-targeted, daily, keep 7)
+- [ ] **Test a restore** from a backup at least once (throwaway-container drill in the doc)
 
 ## 10. Cost + operations
 
