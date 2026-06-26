@@ -7,9 +7,18 @@
 # Usage: deploy.sh <image-tag>   (tag is the git SHA from the workflow)
 set -euo pipefail
 
+# sudo/SSM run the script with a minimal PATH that can miss the AWS CLI
+# (e.g. snap installs it under /snap/bin). Make sure the usual locations are seen.
+export PATH="/usr/local/bin:/usr/bin:/snap/bin:$PATH"
+
 TAG="${1:-latest}"
 APP_DIR="/home/ssm-user/auction-hub-app"
 REGION="eu-north-1"
+
+if ! command -v aws >/dev/null 2>&1; then
+  echo "ERROR: AWS CLI not found. Install AWS CLI v2 on the instance." >&2
+  exit 1
+fi
 
 cd "$APP_DIR"
 
