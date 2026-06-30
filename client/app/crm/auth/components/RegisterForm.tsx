@@ -1,9 +1,12 @@
 import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
-import { register } from '@/src/api/auctions-api-client/requests/auth';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { registerAction } from '@/src/api/actions/auth.actions';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import ChangeFormViewButton from '@/app/crm/auth/components/ChangeFormViewButton';
 import { EmailField, FormValues, PasswordField, validationSchema } from '../utils/fields';
+
+const register = makeSARequest(registerAction);
 
 const fields: FormField[] = [EmailField, PasswordField];
 

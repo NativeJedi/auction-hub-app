@@ -15,7 +15,7 @@ export function getAuctionActions(auction: Auction, hasLots: boolean): Action[] 
   return [
     {
       component: (
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="min-w-[100px]" asChild>
           <Link href={`/results/${auction.id}?role=admin`}>
             <BarChart2Icon className="size-4" />
             Results

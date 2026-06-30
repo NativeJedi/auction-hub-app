@@ -1,10 +1,13 @@
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useRouter } from 'next/navigation';
-import { login } from '@/src/api/auctions-api-client/requests/auth';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { loginAction } from '@/src/api/actions/auth.actions';
 import { EmailField, FormValues, PasswordField, validationSchema } from '../utils/fields';
 import ChangeFormViewButton from '@/app/crm/auth/components/ChangeFormViewButton';
-import { isEmailNotVerifiedError } from '@/app/crm/auth/utils/errors';
+import { isEmailNotVerifiedError } from '@/src/api/errors';
+
+const login = makeSARequest(loginAction);
 
 const loginFields: FormField[] = [
   EmailField,

@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
-import { fetchAuctionResultsServer } from '@/src/api/auctions-api/requests/auctions';
 import { formatISODate } from '@/src/utils/date';
 import AuctionPageHeader from '@/src/components/AuctionPageHeader';
 import ResultsStats from './components/ResultsStats';
 import LotResultsTable from './components/LotResultsTable';
 import HeadedLayout from '@/src/layouts/HeadedLayout';
+import { fetchAuctionResultsServer } from '@/src/api/requests/auctions';
+import { makeSCRequest } from '@/src/api/makeSCRequest';
 
 // Per-auction results are not public search content — keep them out of the index.
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
+
+const getAuctionResults = makeSCRequest(fetchAuctionResultsServer);
 
 type ResultsPageProps = {
   params: Promise<{ auctionId: string }>;
@@ -19,7 +22,8 @@ type ResultsPageProps = {
 const AuctionResultsPage = async ({ params, searchParams }: ResultsPageProps) => {
   const [{ auctionId }, { role }] = await Promise.all([params, searchParams]);
 
-  const results = await fetchAuctionResultsServer(auctionId);
+  const results = await getAuctionResults(auctionId);
+
   const isAdmin = role === 'admin';
 
   return (

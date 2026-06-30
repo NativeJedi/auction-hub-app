@@ -20,8 +20,12 @@ vi.mock('@/src/modules/notifications/NotifcationContext', () => ({
   useNotification: () => ({ showToast: mockShowToast }),
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/auth', () => ({
-  logout: mockLogout,
+vi.mock('@/src/api/actions/auth.actions', () => ({
+  logoutAction: mockLogout,
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 vi.mock('@/src/modules/room-engine/core/RoomEngine', () => ({

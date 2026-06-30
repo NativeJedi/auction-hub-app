@@ -3,9 +3,12 @@
 import { Currency, Lot } from '@/src/api/dto/lot.dto';
 import { FormBuilder, FormField } from '@/src/modules/forms';
 import { z } from 'zod';
-import { createLots } from '@/src/api/auctions-api-client/requests/lots';
+import { createLotsAction } from '@/src/api/actions/lots.actions';
+import { makeSARequest } from '@/src/api/makeSARequest';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { ModalControllerProps } from '@/src/modules/modals/modalRenderer';
+
+const createLots = makeSARequest(createLotsAction);
 
 const options = Object.values(Currency).map((currency) => ({
   label: currency,

@@ -2,11 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminRoomEngine } from './AdminRoomEngine';
 import { RoomEngine } from '../core/RoomEngine';
 
-vi.mock('@/src/api/auctions-api-client/requests/room', () => ({
-  startAuction: vi.fn(),
-  fetchAdminRoomInfo: vi.fn(),
-  finishAuction: vi.fn(),
-  resetAuction: vi.fn(),
+vi.mock('@/src/api/actions/room.actions', () => ({
+  startAuctionAction: vi.fn(),
+  finishAuctionAction: vi.fn(),
+  resetAuctionAction: vi.fn(),
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
 }));
 
 describe('AdminRoomEngine.resetAuction', () => {
@@ -35,8 +38,8 @@ describe('AdminRoomEngine.startAuction', () => {
   });
 
   it('startAuction stores token under room:${auctionId}:token key in localStorage', async () => {
-    const { startAuction } = await import('@/src/api/auctions-api-client/requests/room');
-    (startAuction as ReturnType<typeof vi.fn>).mockResolvedValue({
+    const { startAuctionAction } = await import('@/src/api/actions/room.actions');
+    (startAuctionAction as ReturnType<typeof vi.fn>).mockResolvedValue({
       room: { auctionId: 'auction-1' },
       token: 'admin-token',
     });

@@ -28,6 +28,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
       const room = await AdminRoomEngine.startAuction(auctionId);
 
+      router.refresh();
       router.push(`/room/${room.auctionId}/admin`);
     } catch (error) {
       onError(error);
@@ -37,7 +38,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <Button loading={loading} variant="success" onClick={handleStartAuction}>
+    <Button loading={loading} variant="success" onClick={handleStartAuction} className="min-w-[100px]">
       <Play />
       Start
     </Button>

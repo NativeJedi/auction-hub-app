@@ -8,11 +8,11 @@ const { mockFetchAuction, mockFetchLots } = vi.hoisted(() => ({
   mockFetchLots: vi.fn(),
 }));
 
-vi.mock('@/src/api/auctions-api/requests/auctions', () => ({
+vi.mock('@/src/api/requests/auctions', () => ({
   fetchAuctionByIdServer: mockFetchAuction,
 }));
 
-vi.mock('@/src/api/auctions-api/requests/lots', () => ({
+vi.mock('@/src/api/requests/lots', () => ({
   fetchLotsServer: mockFetchLots,
 }));
 
@@ -52,53 +52,53 @@ const params = (auctionId = 'auction-1') => Promise.resolve({ auctionId });
 describe('AuctionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchLots.mockResolvedValue([]);
+    mockFetchLots.mockResolvedValue({ status: 200, data: [] });
   });
 
   it('renders status badge for CREATED status', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(AuctionStatus.CREATED)).toBeInTheDocument();
   });
 
   it('renders status badge for STARTED status', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.STARTED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.STARTED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(AuctionStatus.STARTED)).toBeInTheDocument();
   });
 
   it('renders status badge for FINISHED status', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z'));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z') });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(AuctionStatus.FINISHED)).toBeInTheDocument();
   });
 
   it('shows finishedAt date when status is FINISHED', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z'));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z') });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(/finished at/i)).toBeInTheDocument();
   });
 
   it('hides finishedAt date when status is CREATED', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.queryByText(/finished at/i)).not.toBeInTheDocument();
   });
 
   it('hides finishedAt date when status is STARTED', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.STARTED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.STARTED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.queryByText(/finished at/i)).not.toBeInTheDocument();
   });
 
   it('renders back link with "Auctions" text pointing to /crm/auctions', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     const link = screen.getByRole('link', { name: /auctions/i });
@@ -106,7 +106,7 @@ describe('AuctionPage', () => {
   });
 
   it('does not render a Card element wrapping auction info', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     // shadcn Card uses data-slot="card"; the redesign removed the Card wrapper
@@ -114,7 +114,7 @@ describe('AuctionPage', () => {
   });
 
   it('renders auction name in H1 with status badge in the same row', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByRole('heading', { level: 1, name: 'Test Auction' })).toBeInTheDocument();
@@ -122,39 +122,39 @@ describe('AuctionPage', () => {
   });
 
   it('renders Lots section header with "Lots" title', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText('Lots')).toBeInTheDocument();
   });
 
   it('shows Add button in header when lots exist', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
-    mockFetchLots.mockResolvedValue([{ id: 'lot-1' }]);
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
+    mockFetchLots.mockResolvedValue({ status: 200, data: [{ id: 'lot-1' }] });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
   });
 
   it('hides Add button in header when lots list is empty', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
-    mockFetchLots.mockResolvedValue([]);
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
+    mockFetchLots.mockResolvedValue({ status: 200, data: [] });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
   });
 
   it('shows Start button when status is CREATED and lots exist', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
-    mockFetchLots.mockResolvedValue([{ id: 'lot-1' }]);
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
+    mockFetchLots.mockResolvedValue({ status: 200, data: [{ id: 'lot-1' }] });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
   });
 
   it('hides Start button when status is CREATED but no lots', async () => {
-    mockFetchAuction.mockResolvedValue(makeAuction(AuctionStatus.CREATED));
-    mockFetchLots.mockResolvedValue([]);
+    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.CREATED) });
+    mockFetchLots.mockResolvedValue({ status: 200, data: [] });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.queryByRole('button', { name: /start/i })).not.toBeInTheDocument();

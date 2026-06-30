@@ -1,18 +1,10 @@
-import { NextResponse } from 'next/server';
-import { withNextErrorResponse } from '@/src/api/core/middlewares';
-import { confirmEmailServer } from '@/src/api/auctions-api/requests/auth';
-import { sessionStorage } from '@/src/services/session';
-import { SESSION_COOKIE_NAME, SESSION_COOKIE_SETTINGS } from '@/src/services/session/constants';
+import { withNextErrorResponse } from '@/src/api/middlewares';
+import { confirmEmailServer } from '@/src/api/requests/auth';
 
-const confirmEmail = async (req: Request) => {
-  const code = new URL(req.url).searchParams.get('code') ?? '';
-  const { accessToken, refreshToken, user } = await confirmEmailServer(code);
-
-  const response = NextResponse.json({ user });
-  const { id } = await sessionStorage.create({ accessToken, refreshToken });
-  response.cookies.set(SESSION_COOKIE_NAME, id, SESSION_COOKIE_SETTINGS);
-
-  return response;
-};
-
-export const GET = withNextErrorResponse(confirmEmail);
+export const GET = withNextErrorResponse(async (req) => {
+  const code = new URL(req.url).searchParams.get('code');
+  if (!code) {
+    return { status: 400, message: 'Missing code parameter', reason: 'BAD_REQUEST' };
+  }
+  return confirmEmailServer(code);
+});

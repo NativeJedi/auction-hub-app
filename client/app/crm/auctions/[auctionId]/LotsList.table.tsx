@@ -4,8 +4,8 @@ import { Auction } from '@/src/api/dto/auction.dto';
 import { Badge } from '@/ui-kit/ui/badge';
 import { StatusMap } from '@/src/components/StatusBadge';
 import { Columns, DataTable } from '@/src/modules/tables';
-import ManageLotImagesButton from '@/app/crm/auctions/[auctionId]/ManageLotImages.button';
 import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
+import ManageLotImagesButton from '@/app/crm/auctions/[auctionId]/components/LotImages/ManageLotImages.button';
 
 const LotBuyerValue = ({ lot }: { lot: Lot }) => {
   if (!lot.buyer) return '-';

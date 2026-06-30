@@ -93,13 +93,13 @@ Manual trigger (workflow_dispatch). Full AWS wiring in `docs/deploy/ci-cd-oidc-s
 - [x] GitHub secrets (`AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`) + variables (`NEXT_PUBLIC_*`)
 - [x] Verify: **Run workflow** builds → pushes to ECR → deploys; port 22 still closed, no SSH
 
-## 9. Backups
+## 9. Backups ✅
 
 Repo-side ready (`scripts/backup-db.sh`, `BACKUP_BUCKET` in `.env`); AWS wiring in `docs/deploy/backups-setup.md`.
 
-- [ ] Cron `pg_dump` (via `docker compose exec -T db`) → a separate S3 backup bucket — create bucket (private + lifecycle expire 30d), add S3 inline policy to instance role, set `BACKUP_BUCKET` in `.env`, install cron (03:00 UTC as ssm-user)
-- [ ] EBS snapshots via Data Lifecycle Manager (tag-targeted, daily, keep 7)
-- [ ] **Test a restore** from a backup at least once (throwaway-container drill in the doc)
+- [x] Cron `pg_dump` (via `docker compose exec -T db`) → S3 — bucket `auctionhub-db-backups-prod` (private + lifecycle 30d), S3 inline policy on instance role, `BACKUP_BUCKET` in `.env`, cron 03:00 UTC (invoked via `bash`). Manual run verified upload to `postgres/`.
+- [x] EBS snapshots via DLM — daily 03:30 UTC, keep 7, target by tag `Backup=auction-hub` (⚠️ volume must carry that tag)
+- [x] **Test a restore** — drill on a throwaway `postgres:16` container, tables loaded and queried OK
 
 ## 10. Cost + operations
 

@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { is429Error } from '@/app/crm/auth/utils/errors';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
-import { resendConfirmation } from '@/src/api/auctions-api-client/requests/auth';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { resendConfirmationAction } from '@/src/api/actions/auth.actions';
+import { is429Error } from '@/src/api/errors';
+
+const resendConfirmation = makeSARequest(resendConfirmationAction);
 
 export const useResendConfirmation = () => {
   const { showToast } = useNotification();

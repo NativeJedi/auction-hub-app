@@ -3,12 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockCreateLots } = vi.hoisted(() => ({
-  mockCreateLots: vi.fn(),
+const { mockCreateLotsAction } = vi.hoisted(() => ({
+  mockCreateLotsAction: vi.fn(),
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/lots', () => ({
-  createLots: mockCreateLots,
+vi.mock('@/src/api/actions/lots.actions', () => ({
+  createLotsAction: mockCreateLotsAction,
 }));
 
 // Radix Select does not work in jsdom; replace with a native <select> so
@@ -57,7 +57,7 @@ describe('CreateLotForm', () => {
   it('calls onSubmit with form data on valid submission', async () => {
     const user = userEvent.setup();
     const lot = { id: 'lot-1', name: 'Watch' } as any;
-    mockCreateLots.mockResolvedValue([lot]);
+    mockCreateLotsAction.mockResolvedValue({ status: 200, data: [lot] });
 
     render(<CreateLotForm {...defaultProps} />);
 
@@ -67,7 +67,7 @@ describe('CreateLotForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(mockCreateLots).toHaveBeenCalledWith(
+      expect(mockCreateLotsAction).toHaveBeenCalledWith(
         'auction-1',
         expect.objectContaining({ name: 'Watch', currency: 'UAH' })
       );
@@ -84,13 +84,12 @@ describe('CreateLotForm', () => {
     await waitFor(() => {
       expect(screen.getByText('Name is required')).toBeInTheDocument();
     });
-    expect(mockCreateLots).not.toHaveBeenCalled();
+    expect(mockCreateLotsAction).not.toHaveBeenCalled();
   });
 
-  it('calls onError when createLots API throws', async () => {
+  it('calls onError when the action returns a failure status', async () => {
     const user = userEvent.setup();
-    const error = new Error('Network error');
-    mockCreateLots.mockRejectedValue(error);
+    mockCreateLotsAction.mockResolvedValue({ status: 500, message: 'Network error', reason: 'Error' });
 
     render(<CreateLotForm {...defaultProps} />);
 
@@ -100,8 +99,11 @@ describe('CreateLotForm', () => {
     await user.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(defaultProps.onError).toHaveBeenCalledWith(error);
+      expect(defaultProps.onError).toHaveBeenCalledTimes(1);
     });
+    const error = defaultProps.onError.mock.calls[0][0] as Error;
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Network error');
     expect(defaultProps.onSubmit).not.toHaveBeenCalled();
   });
 });

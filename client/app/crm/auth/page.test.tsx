@@ -35,10 +35,14 @@ vi.mock('@/src/modules/notifications/NotifcationContext', () => ({
   useErrorNotification: () => mockHandleError,
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/auth', () => ({
-  register: mockRegister,
-  login: mockLogin,
-  resendConfirmation: mockResendConfirmation,
+vi.mock('@/src/api/actions/auth.actions', () => ({
+  loginAction: mockLogin,
+  registerAction: mockRegister,
+  resendConfirmationAction: mockResendConfirmation,
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 vi.mock('@/src/modules/google-auth', () => ({
@@ -53,6 +57,7 @@ vi.mock('next/link', () => ({
   default: ({ href, children }: any) => <a href={href}>{children}</a>,
 }));
 
+import { ApiError } from '@/src/api/errors';
 import AuthPage from './page';
 
 beforeEach(() => {
@@ -110,7 +115,9 @@ describe('AuthPage — login flow', () => {
   it('redirects to the confirm view with the email when login rejects with EMAIL_NOT_VERIFIED', async () => {
     // AC-3 / FR-2: unverified accounts are redirected to the "check your inbox" screen
     const user = userEvent.setup();
-    mockLogin.mockRejectedValue({ data: { message: 'EMAIL_NOT_VERIFIED' } });
+    mockLogin.mockRejectedValue(
+      new ApiError({ message: 'EMAIL_NOT_VERIFIED', status: 403, reason: 'EMAIL_NOT_VERIFIED' })
+    );
 
     render(<AuthPage />); // default type=login
 
@@ -146,7 +153,9 @@ describe('AuthPage — login flow', () => {
     const user = userEvent.setup();
     queryParams.type = 'confirm';
     queryParams.pending = encodeURIComponent('test@example.com');
-    mockResendConfirmation.mockRejectedValue({ data: { statusCode: 429 } });
+    mockResendConfirmation.mockRejectedValue(
+      new ApiError({ message: 'Too many requests', status: 429, reason: 'TOO_MANY_REQUESTS' })
+    );
 
     render(<AuthPage />);
 

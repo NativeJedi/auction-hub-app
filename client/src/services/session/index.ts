@@ -1,9 +1,10 @@
-import { cookies } from 'next/headers';
 import { getRedis } from '../redis';
 import { randomUUID } from 'crypto';
 import { getServerConfig } from '@/config/server';
 import { getSessionTtl, getSessionExpirationGap } from '@/src/services/session/constants';
-import { refreshTokenServer } from '@/src/api/auctions-api/requests/auth';
+import { serverFetch } from '@/src/api/serverFetch';
+import { AuthResponseDto } from '@/src/api/dto/auth.dto';
+import { isServerErrorResponse } from '@/src/api/types';
 
 type SessionData = {
   accessToken: string;
@@ -89,16 +90,22 @@ class SessionStorage {
     }
 
     if (!global.sessionRefreshingPromise) {
-      global.sessionRefreshingPromise = refreshTokenServer({ refreshToken: session.refreshToken })
-        .then(async ({ accessToken, refreshToken }) => {
-          const data = { accessToken, refreshToken };
+      global.sessionRefreshingPromise = serverFetch<AuthResponseDto>('/auth/refresh', {
+        method: 'POST',
+        body: { refreshToken: session.refreshToken },
+        skipAuth: true,
+      })
+        .then(async (response) => {
+          if (!isServerErrorResponse(response) && response.data) {
+            const updatedSession = await this.update(id, response.data);
 
-          const updatedSession = await this.update(id, data);
+            console.log('[session] refreshed', id);
 
-          return updatedSession;
-        })
-        .catch((e) => {
-          console.error(e);
+            return updatedSession;
+          }
+
+          console.error('Failed to refresh session:', response);
+
           return undefined;
         })
         .finally(() => {

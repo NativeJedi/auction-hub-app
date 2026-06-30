@@ -3,8 +3,8 @@
 import { Loader2 } from 'lucide-react';
 import { useGoogleSignIn } from './useGoogleSignIn';
 
-export default function GoogleSignInButton() {
-  const { containerRef, isLoading, error } = useGoogleSignIn();
+export default function GoogleSignInButton({ promptKey }: { promptKey?: string | null }) {
+  const { containerRef, isLoading, error } = useGoogleSignIn(promptKey);
 
   return (
     <div>

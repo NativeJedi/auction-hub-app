@@ -6,11 +6,13 @@ import {
 } from '@/src/modules/notifications/NotifcationContext';
 import { Auction } from '@/src/api/dto/auction.dto';
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
-import { useRouter } from 'next/navigation';
-import { deleteAuction } from '@/src/api/auctions-api-client/requests/auctions';
+import { deleteAuctionAction } from '@/src/api/actions/auctions.actions';
+import { makeSARequest } from '@/src/api/makeSARequest';
 import { Button } from '@/ui-kit/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
+
+const deleteAuction = makeSARequest(deleteAuctionAction);
 
 type DeleteAuctionButtonProps = {
   auction: Auction;
@@ -19,7 +21,6 @@ type DeleteAuctionButtonProps = {
 export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
   const { showToast } = useNotification();
   const handleError = useErrorNotification();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -40,8 +41,6 @@ export const DeleteAuctionButton = ({ auction }: DeleteAuctionButtonProps) => {
         title: 'Auction deleted',
         message: `The auction ${auction.name} has been successfully deleted.`,
       });
-
-      router.refresh();
     } catch (err) {
       handleError(err);
     } finally {

@@ -3,6 +3,7 @@ import React from 'react';
 
 // Bidder rooms are per-auction, invite/token-gated and dynamic — never index them.
 export const metadata: Metadata = {
+  title: 'Auction Room',
   robots: { index: false, follow: false },
 };
 

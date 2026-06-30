@@ -17,8 +17,8 @@ vi.mock('@/src/modules/notifications/NotifcationContext', () => ({
   useNotification: () => ({ showToast: mockShowToast }),
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/auth', () => ({
-  confirmEmail: mockConfirmEmail,
+vi.mock('@/src/api/clientFetch', () => ({
+  clientFetch: mockConfirmEmail,
 }));
 
 vi.mock('@/src/utils/url', () => ({
@@ -51,7 +51,9 @@ describe('ConfirmEmailPage', () => {
 
     render(<ConfirmEmailPage />);
 
-    await waitFor(() => expect(mockConfirmEmail).toHaveBeenCalledWith('abc123'));
+    await waitFor(() =>
+      expect(mockConfirmEmail).toHaveBeenCalledWith('/auth/confirm-email', { params: { code: 'abc123' } })
+    );
   });
 
   it('redirects to /crm/auctions when confirmEmail resolves (auto-login after confirmation)', async () => {

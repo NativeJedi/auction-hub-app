@@ -54,7 +54,7 @@ function AuthForms() {
         <CardTitle className="text-center">{FormView.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {type !== 'confirm' && <GoogleSignInButton />}
+        {type !== 'confirm' && <GoogleSignInButton promptKey={type} />}
         <FormView.Component />
       </CardContent>
     </>

@@ -69,13 +69,13 @@ Add this inline policy to the instance role (`auction-hub-ec2-ssm`):
 ```bash
 crontab -e
 # add:
-0 3 * * * /home/ssm-user/auction-hub-app/scripts/backup-db.sh >> /home/ssm-user/auction-backup.log 2>&1
+0 3 * * * bash /home/ssm-user/auction-hub-app/scripts/backup-db.sh >> /home/ssm-user/auction-backup.log 2>&1
 ```
 
 - Run it once by hand to confirm it works end-to-end:
 
 ```bash
-/home/ssm-user/auction-hub-app/scripts/backup-db.sh
+bash /home/ssm-user/auction-hub-app/scripts/backup-db.sh
 aws s3 ls s3://<BACKUP_BUCKET>/postgres/
 ```
 

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 import { Plus } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
-import { lotImagesModal } from '@/app/crm/auctions/[auctionId]/LotImages.modal';
+import { lotImagesModal } from './components/LotImages/LotImages.modal';
 import { PropsWithChildren, useState } from 'react';
 
 type Props = PropsWithChildren<{
@@ -25,17 +25,11 @@ const CreateLotButton = ({ auctionId, disabled, children }: Props) => {
       return;
     }
 
-    router.refresh();
-
-    const imagesModalResult = await lotImagesModal.show({
+    await lotImagesModal.show({
       auctionId,
       lot: modalResult.data,
       onError: handleError,
     });
-
-    if (imagesModalResult.result === 'closed') {
-      return;
-    }
 
     router.refresh();
   };

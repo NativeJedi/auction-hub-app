@@ -21,11 +21,19 @@ vi.mock('./gisLoader', () => ({
   loadGisScript: mockLoadGisScript,
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/auth', () => ({
-  getGoogleNonce: mockGetGoogleNonce,
-  googleAuth: mockGoogleAuth,
+vi.mock('@/src/api/clientFetch', () => ({
+  clientFetch: mockGetGoogleNonce,
 }));
 
+vi.mock('@/src/api/actions/auth.actions', () => ({
+  googleAuthAction: mockGoogleAuth,
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
+import { ApiError } from '@/src/api/errors';
 import { GoogleAuthService } from './googleAuthService';
 import type { GoogleAuthCallbacks, GoogleIdInitializeConfig } from './types';
 
@@ -39,11 +47,8 @@ const makeCallbacks = (over: Partial<GoogleAuthCallbacks> = {}): GoogleAuthCallb
   ...over,
 });
 
-const nonceErrorWith = (reason: string, status = 401) => {
-  const err = new Error('Authorization error') as Error & { data?: unknown };
-  err.data = { message: 'Authorization error', reason, status };
-  return err;
-};
+const nonceErrorWith = (reason: string, status = 401) =>
+  new ApiError({ message: 'Authorization error', reason, status });
 
 describe('GoogleAuthService', () => {
   let container: HTMLDivElement;

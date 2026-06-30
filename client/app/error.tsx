@@ -1,9 +1,6 @@
 'use client';
 
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { isUnauthorizedError } from '@/src/utils/errors';
-import { useEffect } from 'react';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { Button } from '@/ui-kit/ui/button';
 
@@ -13,12 +10,6 @@ interface ErrorProps {
 }
 
 export default function GlobalError({ error, reset }: ErrorProps) {
-  useEffect(() => {
-    if (isUnauthorizedError(error)) {
-      redirect('/crm/auth');
-    }
-  }, [error]);
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md text-center">

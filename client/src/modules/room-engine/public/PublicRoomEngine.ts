@@ -5,10 +5,14 @@ import type {
   RoomLot,
   SendInviteDto,
 } from '@/src/api/dto/room.dto';
-import { fetchRoomInfo, sendRoomInvite } from '@/src/api/auctions-api-client/requests/room';
+import { fetchRoomInfo } from '@/src/api/requests/room.client';
 import { RoomEngine } from '../core/RoomEngine';
 import { sortBidsByAmountDesc } from '../core/sortBids';
 import type { PublicRoomData } from './types';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { sendRoomInviteAction } from '@/src/api/actions/room.actions';
+
+export const sendRoomInvite = makeSARequest(sendRoomInviteAction);
 
 export interface PublicRoomApi {
   fetchRoomInfo: (params: { auctionId: string }) => Promise<RoomInfoResponseDto>;

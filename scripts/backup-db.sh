@@ -3,7 +3,7 @@
 # Dumps the PostgreSQL database and uploads it (gzipped) to an S3 backup bucket.
 # Meant to run on the EC2 instance from cron, as the ssm-user.
 #
-#   crontab -e  ->  0 3 * * * /home/ssm-user/auction-hub-app/scripts/backup-db.sh >> /home/ssm-user/auction-backup.log 2>&1
+#   crontab -e  ->  0 3 * * * bash /home/ssm-user/auction-hub-app/scripts/backup-db.sh >> /home/ssm-user/auction-backup.log 2>&1
 #
 # Retention of old dumps is handled by the S3 bucket lifecycle policy, not here.
 set -euo pipefail

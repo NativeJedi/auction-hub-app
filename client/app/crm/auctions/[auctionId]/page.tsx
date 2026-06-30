@@ -2,11 +2,15 @@ import { formatISODate } from '@/src/utils/date';
 import CreateLotButton from '@/app/crm/auctions/[auctionId]/CreateLot.button';
 import LotsList from '@/app/crm/auctions/[auctionId]/LotsList.table';
 import AuctionStatusBadge from '@/app/crm/auctions/Auction.status';
-import { fetchAuctionByIdServer } from '@/src/api/auctions-api/requests/auctions';
-import { fetchLotsServer } from '@/src/api/auctions-api/requests/lots';
 import { AuctionStatus } from '@/src/api/dto/auction.dto';
 import AuctionPageHeader from '@/src/components/AuctionPageHeader';
 import { getAuctionActions } from './auctionActions';
+import { makeSCRequest } from '@/src/api/makeSCRequest';
+import { fetchAuctionByIdServer } from '@/src/api/requests/auctions';
+import { fetchLotsServer } from '@/src/api/requests/lots';
+
+const getAuction = makeSCRequest(fetchAuctionByIdServer);
+const getLots = makeSCRequest(fetchLotsServer);
 
 type LotsPageProps = {
   params: Promise<{
@@ -17,10 +21,7 @@ type LotsPageProps = {
 const AuctionPage = async ({ params }: LotsPageProps) => {
   const { auctionId } = await params;
 
-  const [auction, lots] = await Promise.all([
-    fetchAuctionByIdServer(auctionId),
-    fetchLotsServer(auctionId),
-  ]);
+  const [auction, lots] = await Promise.all([getAuction(auctionId), getLots(auctionId)]);
 
   const isLocked = auction.status !== AuctionStatus.CREATED;
 

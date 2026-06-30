@@ -5,10 +5,14 @@ import type {
   RoomInfoResponseDto,
   RoomLot,
 } from '@/src/api/dto/room.dto';
-import { confirmRoomInvite, fetchRoomInfo } from '@/src/api/auctions-api-client/requests/room';
+import { fetchRoomInfo } from '@/src/api/requests/room.client';
 import { RoomEngine } from '../core/RoomEngine';
 import { sortBidsByAmountDesc } from '../core/sortBids';
 import { MemberRoomData } from './types';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { confirmRoomInviteAction } from '@/src/api/actions/room.actions';
+
+export const confirmRoomInvite = makeSARequest(confirmRoomInviteAction);
 
 export interface MemberRoomApi {
   fetchRoomInfo: (params: { auctionId: string }) => Promise<RoomInfoResponseDto>;

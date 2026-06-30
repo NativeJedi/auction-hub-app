@@ -10,8 +10,12 @@ const { mockRouter, mockOnError, mockConfirmModal, mockResetAuction } = vi.hoist
   mockResetAuction: vi.fn(),
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/room', () => ({
-  resetAuction: mockResetAuction,
+vi.mock('@/src/api/actions/room.actions', () => ({
+  resetAuctionAction: mockResetAuction,
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
 }));
 
 vi.mock('@/src/modules/modals/ConfirmModal', () => ({

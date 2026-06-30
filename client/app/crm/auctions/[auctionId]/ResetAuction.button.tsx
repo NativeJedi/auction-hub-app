@@ -5,7 +5,10 @@ import { confirmModal } from '@/src/modules/modals/ConfirmModal';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/ui-kit/ui/button';
 import { RotateCcwIcon } from 'lucide-react';
-import { resetAuction } from '@/src/api/auctions-api-client/requests/room';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { resetAuctionAction } from '@/src/api/actions/room.actions';
+
+const resetAuction = makeSARequest(resetAuctionAction);
 import { useErrorNotification } from '@/src/modules/notifications/NotifcationContext';
 
 const ResetAuctionButton = ({ auctionId }: { auctionId: string }) => {
@@ -35,7 +38,7 @@ const ResetAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <Button variant="outline" onClick={handleReset} loading={isLoading}>
+    <Button variant="outline" onClick={handleReset} loading={isLoading} className="min-w-[100px]">
       <RotateCcwIcon className="size-4" />
       Reset
     </Button>

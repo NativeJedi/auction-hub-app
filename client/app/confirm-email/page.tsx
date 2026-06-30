@@ -4,8 +4,10 @@ import { Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
 import { useQueryParam } from '@/src/utils/url';
-import { confirmEmail } from '@/src/api/auctions-api-client/requests/auth';
+import { clientFetch } from '@/src/api/clientFetch';
 import { Loader2 } from 'lucide-react';
+
+const confirmEmail = (code: string) => clientFetch('/auth/confirm-email', { params: { code } });
 
 function Spinner() {
   return (

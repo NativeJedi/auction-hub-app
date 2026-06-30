@@ -5,12 +5,14 @@ import {
   useNotification,
 } from '@/src/modules/notifications/NotifcationContext';
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
-import { useRouter } from 'next/navigation';
 import { Lot } from '@/src/api/dto/lot.dto';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { deleteLot } from '@/src/api/auctions-api-client/requests/lots';
+import { deleteLotAction } from '@/src/api/actions/lots.actions';
+import { makeSARequest } from '@/src/api/makeSARequest';
 import { Button } from '@/ui-kit/ui/button';
 import { Trash2 } from 'lucide-react';
+
+const deleteLot = makeSARequest(deleteLotAction);
 
 type Props = {
   lot: Lot;
@@ -21,7 +23,6 @@ type Props = {
 export const DeleteLotButton = ({ lot, auctionId, disabled }: Props) => {
   const { showToast } = useNotification();
   const handleError = useErrorNotification();
-  const router = useRouter();
 
   const handleDelete = async () => {
     const { result } = await confirmModal.show({
@@ -39,8 +40,6 @@ export const DeleteLotButton = ({ lot, auctionId, disabled }: Props) => {
         title: 'Lot deleted',
         message: `The lot ${lot.name} has been successfully deleted.`,
       });
-
-      router.refresh();
     } catch (err) {
       handleError(err);
     }

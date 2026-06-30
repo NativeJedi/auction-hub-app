@@ -4,9 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/ui-kit/ui/button';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
-import { logout } from '@/src/api/auctions-api-client/requests/auth';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { logoutAction } from '@/src/api/actions/auth.actions';
 import { RoomEngine } from '@/src/modules/room-engine/core/RoomEngine';
 import { confirmModal } from '@/src/modules/modals/ConfirmModal';
+
+const logout = makeSARequest(logoutAction);
 
 export default function LogoutButton() {
   const router = useRouter();

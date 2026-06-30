@@ -6,8 +6,12 @@ vi.mock('@/src/modules/modals/ConfirmModal', () => ({
   confirmModal: { show: vi.fn() },
 }));
 
-vi.mock('@/src/api/auctions-api-client/requests/lots', () => ({
-  deleteLot: vi.fn(),
+vi.mock('@/src/api/actions/lots.actions', () => ({
+  deleteLotAction: vi.fn(),
+}));
+
+vi.mock('@/src/api/makeSARequest', () => ({
+  makeSARequest: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
 }));
 
 vi.mock('next/navigation', () => ({

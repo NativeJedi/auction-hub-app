@@ -1,9 +1,12 @@
 import { CreateAuctionButton } from '@/app/crm/auctions/CreateAuction.button';
 import AuctionsList from '@/app/crm/auctions/AuctionsList.table';
-import { fetchAuctionsServer } from '@/src/api/auctions-api/requests/auctions';
+import { makeSCRequest } from '@/src/api/makeSCRequest';
+import { fetchAuctionsServer } from '@/src/api/requests/auctions';
+
+const getAuctions = makeSCRequest(fetchAuctionsServer);
 
 const AuctionsPage = async () => {
-  const { items } = await fetchAuctionsServer();
+  const { items } = await getAuctions();
 
   return (
     <>

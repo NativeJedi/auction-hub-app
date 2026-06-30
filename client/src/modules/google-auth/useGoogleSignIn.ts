@@ -12,9 +12,11 @@ type SignInState = {
   error: unknown;
 };
 
-export const useGoogleSignIn = (): SignInState => {
+export const useGoogleSignIn = (promptKey?: string | null): SignInState => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const serviceRef = useRef<GoogleAuthService | null>(null);
+  const isFirstRun = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
@@ -31,11 +33,23 @@ export const useGoogleSignIn = (): SignInState => {
         setError(cause);
       },
     });
+    serviceRef.current = service;
 
     void service.init();
 
-    return () => service.stopInit();
+    return () => {
+      service.stopInit();
+      serviceRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    serviceRef.current?.reprompt();
+  }, [promptKey]);
 
   return { containerRef, isLoading, error };
 };

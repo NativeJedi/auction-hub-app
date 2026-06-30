@@ -1,4 +1,7 @@
-import { getGoogleNonce, googleAuth } from '@/src/api/auctions-api-client/requests/auth';
+import { ApiError } from '@/src/api/errors';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import { googleAuthAction } from '@/src/api/actions/auth.actions';
+import { clientFetch } from '@/src/api/clientFetch';
 import { loadGisScript } from './gisLoader';
 import type {
   GoogleAccountsId,
@@ -9,13 +12,11 @@ import type {
 
 const NONCE_NOT_FOUND_REASON = 'NONCE_NOT_FOUND';
 
-const extractReason = (err: unknown): string | undefined => {
-  if (typeof err !== 'object' || err === null) return undefined;
-  const data = (err as { data?: unknown }).data;
-  if (typeof data !== 'object' || data === null) return undefined;
-  const reason = (data as { reason?: unknown }).reason;
-  return typeof reason === 'string' ? reason : undefined;
-};
+const extractReason = (err: unknown): string | undefined =>
+  err instanceof ApiError ? err.reason : undefined;
+
+const getNonce = () => clientFetch<{ nonce: string }>('/auth/google/nonce');
+const signInWithGoogle = makeSARequest(googleAuthAction);
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -45,6 +46,11 @@ export class GoogleAuthService {
     this.gis?.cancel();
   }
 
+  reprompt(): void {
+    if (this.disposed || !this.gis) return;
+    this.gis.prompt();
+  }
+
   async init(): Promise<void> {
     if (!CLIENT_ID) {
       this.notify('onFatalError', 'client_id is not set');
@@ -55,7 +61,7 @@ export class GoogleAuthService {
     if (this.disposed) return;
     this.gis = gis;
 
-    const { nonce } = await getGoogleNonce();
+    const { nonce } = await getNonce();
     if (this.disposed) return;
 
     gis.initialize({
@@ -88,7 +94,7 @@ export class GoogleAuthService {
     async (response: GoogleCredentialResponse): Promise<void> => {
       this.notify('onLoading');
       try {
-        await googleAuth({ credential: response.credential, nonce });
+        await signInWithGoogle({ credential: response.credential, nonce });
         this.notify('onSuccess');
         this.retried = false;
       } catch (err) {

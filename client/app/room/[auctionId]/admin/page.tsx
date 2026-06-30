@@ -5,6 +5,7 @@ import { Skeleton } from '@/ui-kit/ui/skeleton';
 import { MonitorIcon, PowerIcon } from 'lucide-react';
 import LotStrip from './LotStrip';
 import Participants from '@/app/room/[auctionId]/admin/Participants';
+import { useRouter } from 'next/navigation';
 import { useAuctionId } from '@/app/room/[auctionId]/hooks';
 import { AdminRoomProvider } from '@/src/modules/room-engine/admin/AdminRoomContext';
 import { useAdminRoom } from '@/src/modules/room-engine/admin/hooks/useAdminRoom';
@@ -17,11 +18,19 @@ const RoomAdminPage = () => {
   const { engine, isLoading, auction, activeLot, lots, bids, members, invites, isLastLot } =
     useAdminRoom();
   const auctionId = useAuctionId();
+  const router = useRouter();
+
+  // Finishing flips the auction status to FINISHED, which the CRM list/detail render.
+  // Refresh the Router Cache so those views are fresh when the admin navigates back.
+  const handleFinishAuction = async () => {
+    await engine.finishAuction();
+    router.refresh();
+  };
 
   const lotButton = isLoading ? (
     <Skeleton className="h-8 w-24 rounded-md" />
   ) : isLastLot ? (
-    <Button size="sm" variant="destructive" onClick={() => engine.finishAuction()}>
+    <Button size="sm" variant="destructive" onClick={handleFinishAuction}>
       Finish lot
     </Button>
   ) : (
@@ -39,7 +48,7 @@ const RoomAdminPage = () => {
             <span className="hidden sm:inline">Open display</span>
           </a>
         </Button>
-        <Button variant="destructive" onClick={() => engine.finishAuction()}>
+        <Button variant="destructive" onClick={handleFinishAuction}>
           <PowerIcon className="size-3.5" />
           <span className="hidden sm:inline">Finish auction</span>
         </Button>

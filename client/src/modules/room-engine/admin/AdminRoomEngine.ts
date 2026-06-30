@@ -1,14 +1,19 @@
 import type BaseSocket from '@/src/sockets/base-socket';
 import type { PublicBidInfo, Room, RoomInvite, RoomLot, RoomMember } from '@/src/api/dto/room.dto';
-import {
-  startAuction,
-  fetchAdminRoomInfo,
-  finishAuction,
-  resetAuction,
-} from '@/src/api/auctions-api-client/requests/room';
+import { fetchAdminRoomInfo } from '@/src/api/requests/room.client';
 import { AdminRoomData } from './types';
 import { RoomEngine } from '../core/RoomEngine';
 import { sortBidsByAmountDesc } from '../core/sortBids';
+import { makeSARequest } from '@/src/api/makeSARequest';
+import {
+  finishAuctionAction,
+  resetAuctionAction,
+  startAuctionAction,
+} from '@/src/api/actions/room.actions';
+
+export const startAuction = makeSARequest(startAuctionAction);
+export const finishAuction = makeSARequest(finishAuctionAction);
+export const resetAuction = makeSARequest(resetAuctionAction);
 
 export interface AdminRoomApi {
   fetchAdminRoomInfo: typeof fetchAdminRoomInfo;

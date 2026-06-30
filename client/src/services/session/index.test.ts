@@ -19,8 +19,8 @@ vi.mock('../redis', () => ({
   getRedis: () => ({ get: mockRedisGet, set: vi.fn(), del: vi.fn() }),
 }));
 
-vi.mock('@/src/api/auctions-api/requests/auth', () => ({
-  refreshTokenServer: mockRefreshToken,
+vi.mock('@/src/api/serverFetch', () => ({
+  serverFetch: mockRefreshToken,
 }));
 
 import { sessionStorage } from './index';
@@ -40,7 +40,11 @@ describe('SessionStorage.getValidSession', () => {
       accessTokenExpiresAt: 0, // epoch — always expired
     };
     mockRedisGet.mockResolvedValue(JSON.stringify(expiredSession));
-    mockRefreshToken.mockRejectedValue(new Error('Refresh token expired'));
+    mockRefreshToken.mockResolvedValue({
+      status: 401,
+      message: 'Refresh token expired',
+      reason: 'UNAUTHORIZED',
+    });
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
