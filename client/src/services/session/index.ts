@@ -99,8 +99,6 @@ class SessionStorage {
           if (!isServerErrorResponse(response) && response.data) {
             const updatedSession = await this.update(id, response.data);
 
-            console.log('[session] refreshed', id);
-
             return updatedSession;
           }
 
