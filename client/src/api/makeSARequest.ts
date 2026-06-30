@@ -1,4 +1,4 @@
-import  { isServerErrorResponse, ServerResponse } from '@/src/api/types';
+import { isServerErrorResponse, ServerResponse } from '@/src/api/types';
 import { redirectOnUnauthorized } from '@/src/api/middlewares';
 import { ApiError } from '@/src/api/errors';
 

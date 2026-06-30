@@ -13,9 +13,7 @@ import { nextSessionStorage } from '@/src/services/session/nextSessionStorage';
 
 type AuthUserResponse = Pick<AuthResponseDto, 'user'>;
 
-export const loginAction = async (
-  body: AuthDto
-): Promise<ServerResponse<AuthUserResponse>> => {
+export const loginAction = async (body: AuthDto): Promise<ServerResponse<AuthUserResponse>> => {
   const response = await serverFetch<AuthResponseDto>('/auth/login', {
     method: 'POST',
     body,
@@ -30,9 +28,7 @@ export const loginAction = async (
   return response;
 };
 
-export const registerAction = async (
-  body: AuthDto
-): Promise<ServerResponse<RegisterResponseDto>> =>
+export const registerAction = async (body: AuthDto): Promise<ServerResponse<RegisterResponseDto>> =>
   serverFetch<RegisterResponseDto>('/auth/register', {
     method: 'POST',
     body,

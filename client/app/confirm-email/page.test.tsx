@@ -52,7 +52,9 @@ describe('ConfirmEmailPage', () => {
     render(<ConfirmEmailPage />);
 
     await waitFor(() =>
-      expect(mockConfirmEmail).toHaveBeenCalledWith('/auth/confirm-email', { params: { code: 'abc123' } })
+      expect(mockConfirmEmail).toHaveBeenCalledWith('/auth/confirm-email', {
+        params: { code: 'abc123' },
+      })
     );
   });
 

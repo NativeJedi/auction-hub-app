@@ -15,7 +15,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 @Injectable()
 export class ProxyThrottlerGuard extends ThrottlerGuard {
   protected getTracker(req: Record<string, any>): Promise<string> {
-    const xff: unknown = req.headers?.['x-forwarded-for'];
+    const headers = req.headers as Record<
+      string,
+      string | string[] | undefined
+    >;
+    const xff = headers['x-forwarded-for'];
     const forwarded = Array.isArray(xff)
       ? xff[0]
       : typeof xff === 'string'

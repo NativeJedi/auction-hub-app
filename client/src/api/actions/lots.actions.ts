@@ -2,7 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { Auction } from '@/src/api/dto/auction.dto';
-import { AddLotImagesDto, CreateLotDto, Lot, LotImage, PresignedUrlsResponseDto } from '@/src/api/dto/lot.dto';
+import {
+  AddLotImagesDto,
+  CreateLotDto,
+  Lot,
+  LotImage,
+  PresignedUrlsResponseDto,
+} from '@/src/api/dto/lot.dto';
 import { serverFetch } from '@/src/api/serverFetch';
 import type { ServerResponse } from '@/src/api/types';
 

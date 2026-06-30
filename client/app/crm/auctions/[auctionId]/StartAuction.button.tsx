@@ -38,7 +38,12 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <Button loading={loading} variant="success" onClick={handleStartAuction} className="min-w-[100px]">
+    <Button
+      loading={loading}
+      variant="success"
+      onClick={handleStartAuction}
+      className="min-w-[100px]"
+    >
       <Play />
       Start
     </Button>

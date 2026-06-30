@@ -89,7 +89,11 @@ describe('CreateLotForm', () => {
 
   it('calls onError when the action returns a failure status', async () => {
     const user = userEvent.setup();
-    mockCreateLotsAction.mockResolvedValue({ status: 500, message: 'Network error', reason: 'Error' });
+    mockCreateLotsAction.mockResolvedValue({
+      status: 500,
+      message: 'Network error',
+      reason: 'Error',
+    });
 
     render(<CreateLotForm {...defaultProps} />);
 

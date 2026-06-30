@@ -70,14 +70,20 @@ describe('AuctionPage', () => {
   });
 
   it('renders status badge for FINISHED status', async () => {
-    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z') });
+    mockFetchAuction.mockResolvedValue({
+      status: 200,
+      data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z'),
+    });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(AuctionStatus.FINISHED)).toBeInTheDocument();
   });
 
   it('shows finishedAt date when status is FINISHED', async () => {
-    mockFetchAuction.mockResolvedValue({ status: 200, data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z') });
+    mockFetchAuction.mockResolvedValue({
+      status: 200,
+      data: makeAuction(AuctionStatus.FINISHED, '2025-06-01T18:00:00Z'),
+    });
     render(await AuctionPage({ params: params() }));
 
     expect(screen.getByText(/finished at/i)).toBeInTheDocument();
