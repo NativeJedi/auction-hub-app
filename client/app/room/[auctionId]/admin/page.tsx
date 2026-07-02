@@ -42,14 +42,14 @@ const RoomAdminPage = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <RoomHeader isLoading={isLoading} title={auction?.name} description={auction?.description}>
-        <Button variant="outline" asChild>
+        <Button variant="outline" size="sm" asChild>
           <a href={`/room/${auctionId}`} target="_blank" rel="noreferrer">
-            <MonitorIcon className="size-3.5" />
+            <MonitorIcon />
             <span className="hidden sm:inline">Open display</span>
           </a>
         </Button>
-        <Button variant="destructive" onClick={handleFinishAuction}>
-          <PowerIcon className="size-3.5" />
+        <Button variant="destructive" size="sm" onClick={handleFinishAuction}>
+          <PowerIcon />
           <span className="hidden sm:inline">Finish auction</span>
         </Button>
       </RoomHeader>

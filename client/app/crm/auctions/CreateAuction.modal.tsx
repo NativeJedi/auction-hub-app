@@ -13,7 +13,7 @@ const validationSchema = z.object({
 
 const fields: FormField[] = [
   { name: 'name', type: 'text', label: 'Name', placeholder: 'Auction name' },
-  { name: 'description', type: 'text', label: 'Description', placeholder: 'Auction description"' },
+  { name: 'description', type: 'text', label: 'Description', placeholder: 'Auction description' },
 ];
 
 type FormFields = {
@@ -28,7 +28,7 @@ const CreateAuctionModal = ({ onClose, onSubmit }: ModalControllerProps<CreatedA
   };
 
   return (
-    <ModalLayout title="Create Auction" onClose={onClose}>
+    <ModalLayout title="Create auction" onClose={onClose}>
       <FormBuilder
         schema={validationSchema}
         fields={fields}

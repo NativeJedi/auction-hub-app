@@ -51,7 +51,7 @@ describe('CreateLotForm', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByLabelText('Currency')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Start Price')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
   });
 
   it('calls onSubmit with form data on valid submission', async () => {
@@ -64,7 +64,7 @@ describe('CreateLotForm', () => {
     await user.type(screen.getByLabelText('Name'), 'Watch');
     await user.type(screen.getByPlaceholderText('Start Price'), '1000');
     await user.selectOptions(screen.getByLabelText('Currency'), 'UAH');
-    await user.click(screen.getByRole('button', { name: /create/i }));
+    await user.click(screen.getByRole('button', { name: /add/i }));
 
     await waitFor(() => {
       expect(mockCreateLotsAction).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('CreateLotForm', () => {
     const user = userEvent.setup();
     render(<CreateLotForm {...defaultProps} />);
 
-    await user.click(screen.getByRole('button', { name: /create/i }));
+    await user.click(screen.getByRole('button', { name: /add/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Name is required')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('CreateLotForm', () => {
     await user.type(screen.getByLabelText('Name'), 'Watch');
     await user.type(screen.getByPlaceholderText('Start Price'), '1000');
     await user.selectOptions(screen.getByLabelText('Currency'), 'UAH');
-    await user.click(screen.getByRole('button', { name: /create/i }));
+    await user.click(screen.getByRole('button', { name: /add/i }));
 
     await waitFor(() => {
       expect(defaultProps.onError).toHaveBeenCalledTimes(1);

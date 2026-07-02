@@ -4,6 +4,7 @@ import { ModalLayout } from '@/src/modules/modals/ModalLayout';
 type ConfirmModalProps = {
   title?: string;
   description?: string;
+  submitLabel?: string;
 };
 
 const ConfirmModal = ({
@@ -11,9 +12,10 @@ const ConfirmModal = ({
   onSubmit,
   title,
   description,
+  submitLabel,
 }: ModalControllerProps<void> & ConfirmModalProps) => {
   const submit = {
-    label: 'Confirm',
+    label: submitLabel || 'Confirm',
     onClick: () => onSubmit(),
   };
 

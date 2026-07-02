@@ -40,7 +40,7 @@ export const CreateAuctionButton = () => {
   };
 
   return (
-    <Button loading={loading} onClick={handleCreateClick} className="min-w-[100px]">
+    <Button size="sm" loading={loading} onClick={handleCreateClick}>
       <Plus />
       Create
     </Button>

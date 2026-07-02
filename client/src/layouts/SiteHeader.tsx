@@ -1,4 +1,3 @@
-import LanguageSwitcher from '@/src/components/LanguageSwitcher';
 import LogoutButton from '@/src/components/LogoutButton';
 import Logo from '@/src/components/Logo';
 
@@ -14,10 +13,7 @@ const SiteHeader = ({ showLogout, showControls, logoHref = '/crm/auctions' }: Pr
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
         <Logo href={logoHref} />
         {showControls && (
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            {showLogout && <LogoutButton />}
-          </div>
+          <div className="flex items-center gap-2">{showLogout && <LogoutButton />}</div>
         )}
       </div>
     </header>

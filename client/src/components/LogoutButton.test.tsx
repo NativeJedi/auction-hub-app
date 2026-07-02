@@ -64,7 +64,7 @@ describe('LogoutButton', () => {
 
     await waitFor(() =>
       expect(mockConfirmModalShow).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Log out', description: expect.any(String) })
+        expect.objectContaining({ title: 'Log out?', description: expect.any(String) })
       )
     );
   });
@@ -126,8 +126,8 @@ describe('LogoutButton', () => {
 
     await user.click(screen.getByRole('button', { name: /log out/i }));
 
-    // Button renders "Loading..." text and is disabled while isPending=true
-    await waitFor(() => expect(screen.getByRole('button', { name: /loading/i })).toBeDisabled());
+    // Button keeps its label (visually hidden behind a spinner) and is disabled while isPending=true
+    await waitFor(() => expect(screen.getByRole('button', { name: /log out/i })).toBeDisabled());
 
     resolveLogout();
   });

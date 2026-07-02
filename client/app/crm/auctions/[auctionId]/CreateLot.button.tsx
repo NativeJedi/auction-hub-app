@@ -35,10 +35,10 @@ const CreateLotButton = ({ auctionId, disabled, children }: Props) => {
   };
 
   return (
-    <Button className="min-w-[100px]" onClick={handleCreateClick} disabled={disabled}>
+    <Button size="sm" onClick={handleCreateClick} disabled={disabled}>
       {children || (
         <>
-          <Plus /> Add
+          <Plus /> Add lot
         </>
       )}
     </Button>

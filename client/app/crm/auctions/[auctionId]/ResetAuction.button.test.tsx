@@ -80,7 +80,7 @@ describe('ResetAuctionButton', () => {
     render(<ResetAuctionButton auctionId="auction-1" />);
     await user.click(screen.getByRole('button', { name: /reset/i }));
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /loading/i })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /reset/i })).toBeDisabled());
 
     resolveReset();
     await waitFor(() => expect(screen.getByRole('button', { name: /reset/i })).toBeEnabled());

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/ui-kit/ui/button';
+import { LogOut } from 'lucide-react';
 import { useNotification } from '@/src/modules/notifications/NotifcationContext';
 import { makeSARequest } from '@/src/api/makeSARequest';
 import { logoutAction } from '@/src/api/actions/auth.actions';
@@ -18,8 +19,9 @@ export default function LogoutButton() {
 
   const handleClick = async () => {
     const { result } = await confirmModal.show({
-      title: 'Log out',
+      title: 'Log out?',
       description: 'Are you sure you want to log out?',
+      submitLabel: 'Log out',
     });
 
     if (result === 'closed') return;
@@ -42,10 +44,12 @@ export default function LogoutButton() {
   return (
     <Button
       variant="outline"
+      size="sm"
       className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
       loading={isPending}
       onClick={handleClick}
     >
+      <LogOut />
       Log out
     </Button>
   );

@@ -38,7 +38,7 @@ const ResetAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <Button variant="outline" onClick={handleReset} loading={isLoading} className="min-w-[100px]">
+    <Button variant="outline" onClick={handleReset} loading={isLoading} size="sm">
       <RotateCcwIcon className="size-4" />
       Reset
     </Button>

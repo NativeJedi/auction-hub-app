@@ -23,7 +23,7 @@ const buttonVariants = cva(
       },
       size: {
         default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
+        sm: 'h-8 gap-1.5 rounded-md px-3 text-xs [&_svg]:size-3.5',
         lg: 'h-10 rounded-md px-8',
         icon: 'h-9 w-9',
       },
@@ -42,13 +42,6 @@ export interface ButtonProps
   loading?: boolean;
 }
 
-const Loader = () => (
-  <>
-    <Loader2 className="h-4 w-4 animate-spin" />
-    Loading
-  </>
-);
-
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
@@ -61,8 +54,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
         disabled={disabled}
+        aria-busy={loading}
       >
-        {loading ? <Loader /> : props.children}
+        {loading ? (
+          <span className="grid place-items-center gap-[inherit]">
+            {/* Invisible original content reserves the button width */}
+            <span className="col-start-1 row-start-1 inline-flex items-center gap-[inherit] opacity-0">
+              {props.children}
+            </span>
+            <Loader2 className="col-start-1 row-start-1 animate-spin" />
+          </span>
+        ) : (
+          props.children
+        )}
       </Comp>
     );
   }

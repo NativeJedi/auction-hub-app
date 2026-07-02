@@ -20,7 +20,7 @@ const CreateLotForm = dynamic(() => import('./CreateLotForm'), {
 });
 
 const CreateLotModal = ({ auctionId, onClose, onSubmit, onError }: Props) => (
-  <ModalLayout title="Create Lot" onClose={onClose}>
+  <ModalLayout title="Add lot" onClose={onClose}>
     <CreateLotForm auctionId={auctionId} onClose={onClose} onSubmit={onSubmit} onError={onError} />
   </ModalLayout>
 );

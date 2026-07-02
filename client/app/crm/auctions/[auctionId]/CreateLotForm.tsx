@@ -62,7 +62,7 @@ const CreateLotForm = ({ auctionId, onSubmit, onError }: Props) => {
     <FormBuilder
       schema={validationSchema}
       fields={fields}
-      submitLabel="Create"
+      submitLabel="Add"
       onSubmit={handleSubmit}
     />
   );

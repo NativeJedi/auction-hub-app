@@ -17,8 +17,9 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
 
   const handleStartAuction = async () => {
     const { result } = await confirmModal.show({
-      title: 'Start Auction?',
-      description: "If auction starts, you won't be able to edit it anymore.",
+      title: 'Start auction?',
+      description: "Once the auction starts, you won't be able to edit it anymore.",
+      submitLabel: 'Start',
     });
 
     if (result === 'closed') return;
@@ -38,12 +39,7 @@ const StartAuctionButton = ({ auctionId }: { auctionId: string }) => {
   };
 
   return (
-    <Button
-      loading={loading}
-      variant="success"
-      onClick={handleStartAuction}
-      className="min-w-[100px]"
-    >
+    <Button loading={loading} variant="success" onClick={handleStartAuction} size="sm">
       <Play />
       Start
     </Button>

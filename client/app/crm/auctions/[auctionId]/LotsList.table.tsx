@@ -86,9 +86,7 @@ const LotsList = ({ auctionId, lots, isLocked }: Props) => {
   const emptyState = (
     <>
       <p className="text-sm text-muted-foreground">No lots yet</p>
-      <CreateLotButton auctionId={auctionId} disabled={isLocked}>
-        Create
-      </CreateLotButton>
+      <CreateLotButton auctionId={auctionId} disabled={isLocked} />
     </>
   );
 
