@@ -16,6 +16,18 @@ const secret = (label: string) =>
 const envSchema = z.object({
   NODE_ENV: z.string().default('production'),
 
+  // Pino log level. debug is useful locally; info keeps prod signal-to-noise
+  // sane (debug logs are still written by code, just filtered out).
+  LOG_LEVEL: z
+    .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
+    .default('info'),
+
+  // Optional: error tracking is a no-op when unset (dev, tests).
+  SENTRY_DSN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().url().optional(),
+  ),
+
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -84,6 +96,8 @@ const env = parsed.data;
 
 interface AppConfigInterface {
   ENV: string;
+  LOG_LEVEL: string;
+  SENTRY_DSN?: string;
 
   // env urls
   DATABASE_URL: string;
@@ -126,6 +140,8 @@ interface AppConfigInterface {
 
 const AppConfig: AppConfigInterface = {
   ENV: env.NODE_ENV,
+  LOG_LEVEL: env.LOG_LEVEL,
+  SENTRY_DSN: env.SENTRY_DSN,
 
   DATABASE_URL: env.DATABASE_URL,
   REDIS_URL: env.REDIS_URL,

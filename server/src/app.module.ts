@@ -3,8 +3,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerModule } from 'nestjs-pino';
 import { ProxyThrottlerGuard } from './modules/auth/proxy-throttler.guard';
 import { AppConfig } from './config/app.config';
+import { LoggerConfig } from './config/logger.config';
 import { TypeOrmConfig } from './config/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './modules/redis/redis.module';
@@ -25,6 +27,9 @@ export const APP_MODULES = [
 
 @Module({
   imports: [
+    // Structured logging (pino). Must be first so request logging middleware
+    // is registered before anything else handles the request.
+    LoggerModule.forRoot(LoggerConfig),
     ...APP_MODULES,
     ConfigModule.forRoot({
       isGlobal: true,
