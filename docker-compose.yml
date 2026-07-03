@@ -1,10 +1,22 @@
 name: auction-hub-prod
 
+# Default logging: local JSON files with rotation, so container logs can never
+# fill the disk (json-file keeps everything forever out of the box). Max
+# 5 x 10MB per container. `docker logs <name>` works as usual.
+# For CloudWatch shipping, layer docker-compose.cloudwatch.yml on top
+# (see `npm run prod:cloudwatch`).
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   redis:
     image: redis/redis-stack:latest
     container_name: auction-redis
     restart: unless-stopped
+    logging: *default-logging
     # AOF persistence: every write is appended to disk, so sessions (and auction
     # state) survive a restart. Without it redis-stack only does periodic RDB
     # snapshots and recent writes are lost on restart.
@@ -21,6 +33,7 @@ services:
     image: postgres:16
     container_name: auction-postgres
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -41,9 +54,12 @@ services:
       dockerfile: Dockerfile
     container_name: auction-api
     restart: unless-stopped
+    logging: *default-logging
     environment:
       NODE_ENV: production
       PORT: ${API_PORT}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SENTRY_DSN: ${SENTRY_DSN:-}
       REDIS_URL: redis://redis:6379
       DATABASE_URL: ${DATABASE_URL}
       CLIENT_URL: ${CLIENT_URL}
@@ -94,8 +110,11 @@ services:
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         NEXT_PUBLIC_APP_DOMAIN: ${NEXT_PUBLIC_APP_DOMAIN}
         NEXT_PUBLIC_WS_ORIGIN: ${NEXT_PUBLIC_WS_ORIGIN}
+        # DSN is baked into the browser bundle at build time (it's public by design)
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     container_name: auction-client
     restart: unless-stopped
+    logging: *default-logging
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -112,6 +131,8 @@ services:
       NEXT_PUBLIC_APP_DOMAIN: ${NEXT_PUBLIC_APP_DOMAIN}
       NEXT_PUBLIC_WS_ORIGIN: ${NEXT_PUBLIC_WS_ORIGIN}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      # For the Next.js server runtime (RSC / route handlers)
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     # No published ports: reachable only via nginx (nginx -> client:3001).
     expose:
       - "3001"
@@ -129,6 +150,7 @@ services:
     image: nginx:alpine
     container_name: auction-nginx
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - "80:80"
       - "443:443"

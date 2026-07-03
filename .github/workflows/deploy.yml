@@ -61,6 +61,7 @@ jobs:
             --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID="${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}" \
             --build-arg NEXT_PUBLIC_APP_DOMAIN="${{ vars.NEXT_PUBLIC_APP_DOMAIN }}" \
             --build-arg NEXT_PUBLIC_WS_ORIGIN="${{ vars.NEXT_PUBLIC_WS_ORIGIN }}" \
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="${{ vars.NEXT_PUBLIC_SENTRY_DSN }}" \
             -t "$REGISTRY/auction-hub-client:$TAG" \
             -t "$REGISTRY/auction-hub-client:latest" \
             ./client
