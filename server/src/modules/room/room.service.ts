@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -30,6 +31,10 @@ import { AppConfigService } from '../../config/app-config.service';
 
 @Injectable()
 export class RoomService {
+  // Business-event log. Every entry carries { roomId, userId } so the full
+  // history of a room is one query away (grep / CloudWatch Insights).
+  private readonly logger = new Logger(RoomService.name);
+
   constructor(
     private readonly appConfig: AppConfigService,
     private readonly auctionsService: AuctionsService,
@@ -78,6 +83,13 @@ export class RoomService {
     });
 
     await this.auctionsService.startAuction(auctionId);
+
+    this.logger.log({
+      msg: 'Room created, auction started',
+      roomId: auctionId,
+      userId: id,
+      lotsCount: lots.length,
+    });
 
     return { room, token };
   }
@@ -167,6 +179,13 @@ export class RoomService {
       `Hi, you registered as ${name} for auction. Here is your invite link: ${inviteLink}`,
     );
 
+    // inviteId instead of email: keep PII out of the logs
+    this.logger.log({
+      msg: 'Invite sent',
+      roomId: auctionId,
+      inviteId: invite.id,
+    });
+
     return { invite, room };
   }
 
@@ -190,6 +209,12 @@ export class RoomService {
       role: RoomRole.MEMBER,
     });
 
+    this.logger.log({
+      msg: 'Invite confirmed, member joined',
+      roomId: auctionId,
+      userId: member.id,
+    });
+
     return {
       room,
       member,
@@ -209,6 +234,12 @@ export class RoomService {
 
     await this.finishActiveLot(owner);
     await this.completeAuction(owner);
+
+    this.logger.log({
+      msg: 'Auction finished',
+      roomId: owner.auctionId,
+      userId: owner.id,
+    });
   }
 
   private async completeAuction(owner: RoomAuthorizedOwner): Promise<void> {
@@ -239,6 +270,12 @@ export class RoomService {
         activeLotId,
       );
 
+      this.logger.log({
+        msg: 'Lot unsold (no bids)',
+        roomId: owner.auctionId,
+        lotId: activeLotId,
+      });
+
       return;
     }
 
@@ -254,6 +291,14 @@ export class RoomService {
         email: activeBid.email,
       }),
     ]);
+
+    this.logger.log({
+      msg: 'Lot sold',
+      roomId: owner.auctionId,
+      lotId: activeLotId,
+      userId: activeBid.userId,
+      amount: activeBid.amount,
+    });
   }
 
   async placeNextLot(
@@ -267,10 +312,21 @@ export class RoomService {
 
     if (!nextLot) {
       await this.completeAuction(owner);
+      this.logger.log({
+        msg: 'Auction auto-finished (no more lots)',
+        roomId: owner.auctionId,
+        userId: owner.id,
+      });
       return { lot: null, autoFinished: true };
     }
 
     await this.roomRepository.setActiveLot(owner.auctionId, nextLot.id);
+
+    this.logger.log({
+      msg: 'Next lot placed',
+      roomId: owner.auctionId,
+      lotId: nextLot.id,
+    });
 
     return { lot: nextLot, autoFinished: false };
   }
@@ -284,6 +340,12 @@ export class RoomService {
 
     await this.roomRepository.clearRoom(auctionId);
     await this.auctionsService.resetAuction(ownerId, auctionId);
+
+    this.logger.log({
+      msg: 'Auction reset',
+      roomId: auctionId,
+      userId: ownerId,
+    });
   }
 
   async placeBid(
@@ -295,6 +357,14 @@ export class RoomService {
       member,
       bid,
     );
+
+    this.logger.log({
+      msg: 'Bid placed',
+      roomId: member.auctionId,
+      userId: member.id,
+      lotId: bid.lotId,
+      amount: bid.amount,
+    });
 
     return newBid;
   }

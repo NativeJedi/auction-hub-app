@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui-kit/ui/card';
 import { LucideCircleAlert } from 'lucide-react';
 import { Button } from '@/ui-kit/ui/button';
@@ -34,6 +35,10 @@ export class RoomErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('RoomErrorBoundary caught:', error, info);
+    // Class boundaries swallow errors — without this Sentry never sees them
+    Sentry.captureException(error, {
+      extra: { componentStack: info.componentStack },
+    });
   }
 
   render() {

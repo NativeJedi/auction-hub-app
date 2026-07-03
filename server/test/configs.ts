@@ -13,6 +13,7 @@ const loadTestConfig = ({
     REDIS_URL,
     PORT: 3000,
     ENV: 'test',
+    LOG_LEVEL: 'error',
     JWT_ACCESS_TTL: 60 * 15,
     JWT_REFRESH_TTL: 60 * 60 * 24 * 2, // 2 days in seconds
     JWT_ACCESS_SECRET: 'test-access',

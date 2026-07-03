@@ -20,7 +20,8 @@ const cspDirectives = [
   // connect-src must allow presigned PUT uploads (S3: bucket.s3.<region>.amazonaws.com)
   // and reads/fetches via CloudFront. Wildcards are used because the exact bucket /
   // distribution host isn't known at build time (headers() is computed during next build).
-  `connect-src 'self' https://accounts.google.com/gsi/ https://cloudflareinsights.com ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
+  // *.ingest.de.sentry.io: browser error reports to Sentry (EU region ingest).
+  `connect-src 'self' https://accounts.google.com/gsi/ https://cloudflareinsights.com https://*.ingest.de.sentry.io ${storageUrl.origin} https://*.amazonaws.com https://*.cloudfront.net ${isProd ? `${serverOrigin} ${wsServerOrigin}` : 'ws: wss:'}`,
   `frame-src https://accounts.google.com/`,
   `frame-ancestors 'self'`,
   `object-src 'none'`,
@@ -75,9 +76,19 @@ const nextConfig: NextConfig = {
 };
 
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-export default withBundleAnalyzer(nextConfig);
+// withSentryConfig instruments the build. Source-map upload (readable stack
+// traces for minified prod code) activates only when SENTRY_AUTH_TOKEN is set
+// in CI; without it the build works as before.
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  disableLogger: true,
+});

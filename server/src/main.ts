@@ -1,15 +1,25 @@
+// MUST stay the first import — see the comment inside.
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { RedisIoAdapter } from './redis-io.adapter';
 import { AppConfig } from './config/app.config';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 const BASE_URL = 'api/v1';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // bufferLogs: hold logs written during startup until useLogger() below
+  // swaps Nest's default logger for pino — nothing is lost or double-formatted.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // From here on, every `new Logger(...)` in the app (email, redis, auth...)
+  // writes through pino: JSON in prod, pretty in dev. No call sites change.
+  app.useLogger(app.get(Logger));
 
   const redisIoAdapter = new RedisIoAdapter(app);
   await redisIoAdapter.connectToRedis(process.env.REDIS_URL!);
@@ -26,6 +36,10 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix(BASE_URL);
+
+  // Catch-all: logs every unhandled exception (5xx with stack) and keeps
+  // internal details out of client responses.
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({

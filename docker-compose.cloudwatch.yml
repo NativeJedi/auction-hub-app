@@ -1,0 +1,55 @@
+# CloudWatch Logs shipping — an OVERLAY on top of docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.cloudwatch.yml up -d
+#   (or: npm run prod:cloudwatch)
+#
+# The awslogs driver sends each container's stdout straight to CloudWatch;
+# nothing changes in the app — it keeps writing JSON to stdout.
+#
+# Requirements on the EC2 instance:
+#   1. IAM role attached to the instance with:
+#        logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents
+#      (the docker daemon picks up the role credentials automatically)
+#   2. AWS_REGION in .env (must match the instance region)
+#
+# After first deploy, cap storage cost by setting retention (one-time):
+#   aws logs put-retention-policy --log-group-name /auction-hub/api --retention-in-days 30
+#   aws logs put-retention-policy --log-group-name /auction-hub/client --retention-in-days 30
+#   aws logs put-retention-policy --log-group-name /auction-hub/nginx --retention-in-days 14
+#
+# Trade-off vs json-file: `docker logs` stops working (logs go only to
+# CloudWatch); read them in the AWS console or `aws logs tail /auction-hub/api --follow`.
+#
+# db/redis are not shipped: their noise is rarely useful remotely, and local
+# rotation from the base file still applies to them.
+
+x-aws-logging-api: &aws-logging-api
+  driver: awslogs
+  options:
+    awslogs-region: ${AWS_REGION}
+    awslogs-group: /auction-hub/api
+    awslogs-create-group: "true"
+
+x-aws-logging-client: &aws-logging-client
+  driver: awslogs
+  options:
+    awslogs-region: ${AWS_REGION}
+    awslogs-group: /auction-hub/client
+    awslogs-create-group: "true"
+
+x-aws-logging-nginx: &aws-logging-nginx
+  driver: awslogs
+  options:
+    awslogs-region: ${AWS_REGION}
+    awslogs-group: /auction-hub/nginx
+    awslogs-create-group: "true"
+
+services:
+  api:
+    logging: *aws-logging-api
+
+  client:
+    logging: *aws-logging-client
+
+  nginx:
+    logging: *aws-logging-nginx

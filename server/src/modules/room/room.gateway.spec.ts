@@ -170,20 +170,21 @@ describe('RoomGateway', () => {
       });
     });
 
-    it('emits an error to the client when the service throws', async () => {
+    it('propagates service errors to the exception filter (no local catch)', async () => {
       const { gateway, placeBid } = buildGateway();
       placeBid.mockRejectedValue(new Error('bid too low'));
-      const { server } = buildServerWithEmit();
+      const { server, emit } = buildServerWithEmit();
       gateway.server = server;
-      const clientEmit = jest.fn();
-      const client = { emit: clientEmit } as unknown as Socket;
+      const client = { emit: jest.fn() } as unknown as Socket;
 
       const bid: CreateBidDto = { lotId: 'lot-1', amount: 1 };
-      await gateway.handleBid(bid, client, buildMember());
 
-      expect(clientEmit).toHaveBeenCalledWith('error', {
-        message: 'bid too low',
-      });
+      // WsExceptionFilter (see its own spec) logs the error and notifies
+      // the client; the handler itself must just rethrow.
+      await expect(
+        gateway.handleBid(bid, client, buildMember()),
+      ).rejects.toThrow('bid too low');
+      expect(emit).not.toHaveBeenCalled();
     });
   });
 
@@ -201,9 +202,8 @@ describe('RoomGateway', () => {
       placeNextLot.mockResolvedValue({ autoFinished: false, lot });
       const { server, to, emit } = buildServerWithEmit();
       gateway.server = server;
-      const client = { emit: jest.fn() } as unknown as Socket;
 
-      await gateway.handlePlaceLot(client, buildOwner());
+      await gateway.handlePlaceLot(buildOwner());
 
       expect(to).toHaveBeenCalledWith('room:auction-1');
       expect(emit).toHaveBeenCalledWith('newLot', lot);
@@ -214,9 +214,8 @@ describe('RoomGateway', () => {
       placeNextLot.mockResolvedValue({ autoFinished: true });
       const { server, emit } = buildServerWithEmit();
       gateway.server = server;
-      const client = { emit: jest.fn() } as unknown as Socket;
 
-      await gateway.handlePlaceLot(client, buildOwner());
+      await gateway.handlePlaceLot(buildOwner());
 
       expect(emit).toHaveBeenCalledWith('auctionFinished', {});
     });
