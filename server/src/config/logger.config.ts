@@ -51,6 +51,22 @@ export const LoggerConfig: Params = {
       }),
     },
 
+    // Attach the authenticated user to every request log. Runs at response
+    // time, AFTER guards populated the request: `user` comes from AuthGuard
+    // (JWT, sub = userId), `roomUser` from RoomAuthGuard (room token).
+    // Anonymous requests simply get no fields (pino drops undefined).
+    customProps: (req: IncomingMessage) => {
+      const { user, roomUser } = req as IncomingMessage & {
+        user?: { sub: string };
+        roomUser?: { id: string; auctionId: string };
+      };
+
+      return {
+        userId: user?.sub ?? roomUser?.id,
+        roomId: roomUser?.auctionId,
+      };
+    },
+
     // 4xx/5xx responses are logged by the exception filter with full context;
     // the auto request log just reflects the status level.
     customLogLevel: (req: IncomingMessage, res: ServerResponse, err) => {
