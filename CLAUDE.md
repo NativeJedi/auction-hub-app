@@ -8,7 +8,9 @@ Monorepo auction platform with real-time bidding. Two workspaces:
 - `client/` — Next.js 15 + React 19 frontend
 - `server/` — NestJS 11 backend
 
-Infrastructure (Docker): PostgreSQL 16, Redis 7, MinIO (S3-compatible storage).
+Infrastructure (Docker): PostgreSQL 16, Redis Stack, MinIO (S3-compatible storage); Nginx reverse proxy in production. Sentry error tracking on both client and server.
+
+Docs: C4 diagrams in `docs/c4/`, feature specs and ADRs in `docs/features/`, feature list in `README.md`.
 
 ## Commands
 
@@ -56,7 +58,7 @@ cd server && npx jest --testPathPattern="<filename>"
 ### Client-Server Communication
 - **REST API**: `http://localhost:3000/api/v1` — Swagger docs at `/api/v1/docs`
 - **WebSocket**: Socket.io namespace `/ws/room`, authenticated via token in `handshake.auth`
-- **Auth**: JWT Bearer tokens on HTTP; room-scoped tokens stored in `localStorage` as `room:${roomId}:token`
+- **Auth**: JWT Bearer tokens on HTTP (access + refresh with rotation); Google Sign-In (GIS, verified server-side by `GoogleAuthService`); room-scoped tokens stored in `localStorage` as `room:${auctionId}:token`. Rooms are identified by `auctionId` (see ADR FEAT-002).
 
 ### Room Engine (client-side state management)
 The core client pattern lives in `client/src/modules/room-engine/`. It's an OOP state machine that integrates directly with React via `useSyncExternalStore`.
@@ -71,30 +73,45 @@ Each engine has a matching React Context Provider and `useXxxRoom()` hook. Compo
 ### Server Module Structure
 ```
 server/src/modules/
-├── room/       # Core: controller (REST) + gateway (WebSocket) + service + repository
-├── auth/       # JWT guards, token service
-├── auctions/   # Auction CRUD
-├── lots/       # Lot management
-├── buyers/     # Buyer records
-├── email/      # Nodemailer invite emails
-├── users/      # User accounts
-├── storage/    # AWS S3 / MinIO uploads
-└── redis/      # Redis client + pub/sub repositories
+├── room/        # Core: controller (REST) + gateway (WebSocket) + service + repository
+├── auth/        # JWT guards, token service, GoogleAuthService, throttler
+├── auctions/    # Auction CRUD
+├── lots/        # Lot management
+├── buyers/      # Buyer records
+├── email/       # Nodemailer invite / confirmation emails
+├── users/       # User accounts
+├── storage/     # AWS S3 / MinIO presigned uploads
+├── pagination/  # Pagination DTO + decorator
+└── redis/       # Redis client + repositories
 ```
 
-### Real-Time Broadcasting Pattern
-`RoomGateway` uses Redis pub/sub for multi-instance fanout:
-- Room-level channel: `room:${roomId}`
-- User-level channel: `room:${roomId}:${userId}`
+Config: `server/src/config/app.config.ts` — Zod-validated env, fails fast on boot.
 
-Bid flow: client socket → `RoomGateway.handleBid()` → `RoomService.placeBid()` → Redis store → publish `newBid` → all subscribed clients update via socket event.
+### Real-Time Broadcasting Pattern
+`RoomGateway` uses Socket.IO rooms with the Redis adapter (`@socket.io/redis-adapter`, wired in `server/src/redis-io.adapter.ts`) for multi-instance fanout:
+- Room-level: `room:${auctionId}` (all participants)
+- User-level: `room:${auctionId}:${userId}` (admin-only personal channel: `newInvite`, `newMember`)
+
+Bid flow: client socket → `RoomGateway` handler → `RoomService` → Redis store → `publishRoomEvent()` emits `newBid` → all instances broadcast via the Redis adapter.
 
 ### API Client (client-side)
-`client/src/api/` has two API clients:
-- `auctions-api-client/` — Axios instance for the main REST API with three interceptors: auth (adds Bearer), data (extracts `.data`), error (normalizes errors)
-- `auctions-api/` — Server-side fetch wrapper (used in Next.js route handlers / RSC)
+`client/src/api/` — fetch-based wrappers, no Axios:
+- `clientFetch.ts` — browser fetch via the BFF `/api` proxy (normalizes errors, redirects on 401)
+- `serverFetch.ts` — server-side fetch to the NestJS API with JWT from session
+- `makeSCRequest.ts` / `makeSARequest.ts` — wrappers for Server Components / Server Actions that map errors to `redirect()` / `notFound()` / `ApiError`
+- `requests/`, `actions/`, `dto/` — endpoint definitions, server actions, shared DTOs
 
-Next.js API routes in `client/app/api/` act as a BFF proxy, forwarding requests to the NestJS server with server-side auth.
+Next.js API routes in `client/app/api/` (auctions, auth, room) act as a BFF proxy, forwarding requests to the NestJS server with server-side auth. Sessions are managed in Redis via `client/src/services/session/`.
+
+### Client Module Structure
+```
+client/src/modules/
+├── room-engine/    # Admin / Member / Public engines (see above)
+├── google-auth/    # GIS loader, GoogleSignInButton, useGoogleSignIn
+├── forms/ modals/ notifications/ tables/  # UI modules
+├── landing/        # Marketing landing page
+└── sentry/         # Sentry init (client / server / edge)
+```
 
 ## Key Conventions
 
