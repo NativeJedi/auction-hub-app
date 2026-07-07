@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     url: '/',
     siteName: 'AuctionHub',
     type: 'website',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
 };
 
