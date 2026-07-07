@@ -1,6 +1,6 @@
 # 🏦 Auction Hub
 
-**Auction Hub** is a simple server and client app for creating auctions, managing lots, and running real-time bidding rooms.
+**Auction Hub** is a server and client app for creating auctions, managing lots, and running real-time bidding rooms.
 
 ## 🚀 Flow
 
