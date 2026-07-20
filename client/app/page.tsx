@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE_NAME } from '@/src/services/session/constants';
 import LandingPage from '@/src/modules/landing/LandingPage';
+import StructuredData from '@/src/components/StructuredData';
 
 const siteOrigin = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'http://localhost:3001';
 
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),
   title,
   description,
+  alternates: { canonical: '/' },
   openGraph: {
     title,
     description,
@@ -29,5 +31,10 @@ export default async function RootPage() {
   const sessionId = requestCookies.get(SESSION_COOKIE_NAME)?.value;
   const isAuthenticated = Boolean(sessionId);
 
-  return <LandingPage isAuthenticated={isAuthenticated} />;
+  return (
+    <>
+      <StructuredData />
+      <LandingPage isAuthenticated={isAuthenticated} />
+    </>
+  );
 }

@@ -1,16 +1,18 @@
 import { ImageResponse } from 'next/og';
 
-export const size = { width: 48, height: 48 };
+export const size = { width: 180, height: 180 };
 export const contentType = 'image/png';
 
-export default function Icon() {
+// Apple touch icon (home-screen / bookmark). Same gavel mark as app/icon.tsx,
+// scaled to the 180x180 Apple recommends.
+export default function AppleIcon() {
   return new ImageResponse(
     (
       <div
         style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
+          width: 180,
+          height: 180,
+          borderRadius: 40,
           background: '#dbeafe',
           display: 'flex',
           alignItems: 'center',
@@ -18,8 +20,8 @@ export default function Icon() {
         }}
       >
         <svg
-          width="27"
-          height="27"
+          width="100"
+          height="100"
           viewBox="0 0 24 24"
           fill="none"
           stroke="#3b82f6"

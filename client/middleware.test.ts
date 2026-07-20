@@ -55,6 +55,15 @@ describe('middleware', () => {
     }
   );
 
+  it.each(['/favicon.ico', '/icon', '/apple-icon'])(
+    'allows the icon endpoint %s through without a session (else Google shows a generic favicon)',
+    async (path) => {
+      const res = await middleware(new NextRequest(`http://localhost${path}`));
+
+      expect(res.headers.get('location')).toBeNull();
+    }
+  );
+
   it.each(['/privacy', '/terms'])(
     'allows the legal page %s through without a session',
     async (path) => {

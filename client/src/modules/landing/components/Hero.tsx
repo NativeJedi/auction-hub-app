@@ -13,6 +13,7 @@ export default function Hero() {
       </Badge>
 
       <h1 className="mx-auto mb-4 max-w-4xl font-bold leading-tight tracking-tight">
+        <span className="mb-1 block text-xl font-semibold text-primary">AuctionHub</span>
         <span className="block text-3xl sm:text-4xl">Capture every bid in the room.</span>
         <span className="block text-2xl sm:text-3xl">No raised hands, no lost money.</span>
       </h1>

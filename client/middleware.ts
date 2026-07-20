@@ -7,7 +7,19 @@ const publicRoutes = ['/crm/auth', '/room', '/results', '/confirm-email'];
 // Crawlable, session-less endpoints that must never be gated. Exact-match only:
 // the landing owns `/`, the SEO files must reach anonymous crawlers (ADR-FEAT-009-01 §7),
 // and the legal pages must be publicly reachable (also required for Google's OAuth review).
-const alwaysPublicPaths = ['/', '/robots.txt', '/sitemap.xml', '/privacy', '/terms'];
+// The icon metadata routes (favicon.ico, icon, apple-icon) must also stay public — the
+// matcher only excludes `.png`, so without these Googlebot's favicon fetch would 307 to
+// /crm/auth and Google would fall back to a generic globe in search results.
+const alwaysPublicPaths = [
+  '/',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/privacy',
+  '/terms',
+  '/favicon.ico',
+  '/icon',
+  '/apple-icon',
+];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
